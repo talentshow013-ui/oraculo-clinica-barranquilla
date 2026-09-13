@@ -71,12 +71,26 @@ campaña/anuncio). `anguloDetectado`, `nivelConsciencia`, `confianzaClasificacio
 `senalesDeteccion`: usa `clasificarAngulo` y `nivelConscienciaTexto` de
 `lib/competitive/angles.ts` (puedes correr un script con `npx tsx`), no tu criterio.
 
-## Paso 5 — Radar (opcional)
+## Paso 5 — Radar de mercado (Apify)
 
-Si el conector de Apify está configurado, trae anuncios activos de los competidores listados
-en `config/competidores.json` (si existe) y mapea a `AnuncioCompetidor`. `alcanceRango` solo si
-la fuente lo expone; **jamás estimes**. `puntuacionLongevidad` ponla en 0: el motor la recalcula.
-Si no hay conector, deja `competidores` y `anunciosCompetencia` vacíos y avisa.
+La Biblioteca de anuncios de Meta **no expone anuncios comerciales de Colombia por su API**
+(solo UE/UK). Se usa el actor `apify/facebook-ads-scraper` vía el MCP de Apify
+(`https://mcp.apify.com?tools=apify/facebook-ads-scraper`). Si el MCP no está configurado,
+avisa y deja `competidores`/`anunciosCompetencia` como estaban.
+
+1. Lee `config/competidores.json` (lista de páginas: `pageId` o URL de la página, `nombre`, `ciudad`).
+2. Llama `call-actor` con `apify/facebook-ads-scraper` y esta entrada (una URL por competidor):
+   - `startUrls`: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=CO&view_all_page_id=<pageId>`
+   - `activeStatus: "all"` (activos e inactivos: las salidas rápidas enseñan gratis)
+   - `scrapeAdsNewerThan`: "6 months" la primera vez; después "5 weeks" (solape para no perder cambios de estado)
+   - `resultsLimit`: 200 por página
+3. Con `get-actor-output` descarga el dataset completo y guárdalo en `datos/radar-apify.json`.
+4. Ejecuta `npm run importar-radar -- datos/radar-apify.json --ciudades config/competidores.json`.
+   El script mapea al contrato (`lib/adapters/radar.apify.ts`), agrupa competidores, valida y
+   fusiona en `datos/lote.json`. `collationCount` → variantes; `reachEstimate` null → alcance `—`.
+5. Costo orientativo: ~$3,40–5,80 USD por 1.000 anuncios; el plan gratuito incluye $5/mes.
+   10 competidores × 50 anuncios = 500 anuncios ≈ $2-3 por corrida. Se cobra contra el crédito
+   prepagado del plan (no por búsqueda ni por corrida).
 
 ## Paso 6 — Escribir y validar
 

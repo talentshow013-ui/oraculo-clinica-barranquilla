@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "seed": "tsx scripts/seed.ts",
     "verificar": "tsx scripts/verificar.ts",
-    "validar-lote": "tsx scripts/validar-lote.ts"
+    "validar-lote": "tsx scripts/validar-lote.ts",
+    "importar-radar": "tsx scripts/importar-radar.ts"
   },
   "dependencies": {
     "date-fns": "4.4.0",

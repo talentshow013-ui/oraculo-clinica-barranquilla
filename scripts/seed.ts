@@ -485,12 +485,12 @@ function generarCreativos(fechas: string[]): Creativo[] {
 }
 
 const COMPETIDORES: Competidor[] = [
-  { id: "comp_dermalux", nombre: "Dermalux Estética", ciudad: "Barranquilla", serviciosConocidos: ["toxina", "acido", "laser_facial"], urlPagina: null },
-  { id: "comp_bellavista", nombre: "Clínica Bellavista", ciudad: "Barranquilla", serviciosConocidos: ["criolipolisis", "radiofrecuencia", "depilacion"], urlPagina: null },
-  { id: "comp_nordskin", nombre: "NordSkin Medical", ciudad: "Puerto Colombia", serviciosConocidos: ["toxina", "prp", "peeling"], urlPagina: null },
-  { id: "comp_essenza", nombre: "Essenza Spa Médico", ciudad: "Barranquilla", serviciosConocidos: ["limpieza", "peeling", "radiofrecuencia"], urlPagina: null },
-  { id: "comp_laserline", nombre: "LaserLine Caribe", ciudad: "Soledad", serviciosConocidos: ["depilacion", "laser_facial"], urlPagina: null },
-  { id: "comp_drvargas", nombre: "Dr. Vargas Medicina Estética", ciudad: "Barranquilla", serviciosConocidos: ["toxina", "acido", "criolipolisis"], urlPagina: null },
+  { id: "comp_dermalux", nombre: "Dermalux Estética", ciudad: "Barranquilla", serviciosConocidos: ["toxina", "acido", "laser_facial"], urlPagina: null, seguidoresPagina: null },
+  { id: "comp_bellavista", nombre: "Clínica Bellavista", ciudad: "Barranquilla", serviciosConocidos: ["criolipolisis", "radiofrecuencia", "depilacion"], urlPagina: null, seguidoresPagina: null },
+  { id: "comp_nordskin", nombre: "NordSkin Medical", ciudad: "Puerto Colombia", serviciosConocidos: ["toxina", "prp", "peeling"], urlPagina: null, seguidoresPagina: null },
+  { id: "comp_essenza", nombre: "Essenza Spa Médico", ciudad: "Barranquilla", serviciosConocidos: ["limpieza", "peeling", "radiofrecuencia"], urlPagina: null, seguidoresPagina: null },
+  { id: "comp_laserline", nombre: "LaserLine Caribe", ciudad: "Soledad", serviciosConocidos: ["depilacion", "laser_facial"], urlPagina: null, seguidoresPagina: null },
+  { id: "comp_drvargas", nombre: "Dr. Vargas Medicina Estética", ciudad: "Barranquilla", serviciosConocidos: ["toxina", "acido", "criolipolisis"], urlPagina: null, seguidoresPagina: null },
 ];
 
 const COPIES_COMPETENCIA: [string, Angulo, string][] = [

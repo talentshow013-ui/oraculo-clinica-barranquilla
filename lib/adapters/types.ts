@@ -227,6 +227,8 @@ export const CompetidorSchema = z.object({
   ciudad: z.string(),
   serviciosConocidos: z.array(z.string()),
   urlPagina: textoNullable,
+  /** Seguidores de la página, si la fuente los expone. Tamaño del competidor, no su gasto. */
+  seguidoresPagina: z.number().min(0).nullable().default(null),
 });
 export type Competidor = z.infer<typeof CompetidorSchema>;
 

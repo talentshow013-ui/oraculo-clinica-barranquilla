@@ -1,4 +1,4 @@
 [
-  { "id": "comp_1", "nombre": "Nombre del competidor 1", "ciudad": "Barranquilla", "paginaFacebook": "https://www.facebook.com/…", "instagram": "@…" },
-  { "id": "comp_2", "nombre": "Nombre del competidor 2", "ciudad": "Soledad", "paginaFacebook": "", "instagram": "" }
+  { "pageId": "123456789012345", "nombre": "Nombre del competidor 1", "ciudad": "Barranquilla", "urlPagina": "https://www.facebook.com/…" },
+  { "pageId": "234567890123456", "nombre": "Nombre del competidor 2", "ciudad": "Soledad", "urlPagina": "" }
 ]

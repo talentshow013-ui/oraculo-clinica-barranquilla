@@ -65,15 +65,37 @@ grandes de insights usar trabajos asíncronos. Rango recomendado por sincronizac
 - Mapeo: gancho a 2 s (`reproducciones2s`) y 6 s (`reproducciones6s`); el motor cae a ellos cuando
   no hay 3 s / ThruPlay. `fuente: "tiktok"`.
 
-## Radar — Apify MCP (opcional)
+## Radar — Apify MCP (verificado 2026-09-13)
 
-- `https://mcp.apify.com` · OAuth o `Authorization: Bearer <token>`.
-- Por qué Apify: la API pública de la Biblioteca de anuncios de Meta cubre principalmente anuncios
-  políticos y sociales; los **comerciales** (lo que pauta una clínica) se ven en la interfaz pública
-  pero no en esa API. Los actores de Apify resuelven ese hueco.
-- Mapeo a `AnuncioCompetidor`: `alcanceRango` solo si el actor lo expone; **jamás estimado**.
-  `puntuacionLongevidad` en 0 (el motor la recalcula). Ángulo y consciencia con `lib/competitive/angles.ts`.
-- Lista de competidores a vigilar: `config/competidores.json` (6-10 del radio real).
+**Por qué Apify y no la API oficial:** la API de la Biblioteca de anuncios de Meta devuelve
+anuncios comerciales (`ad_type=ALL`) **solo cuando `ad_reached_countries` es de la UE o UK**; para
+Colombia solo entrega políticos y de temas sociales. Los comerciales se ven en la interfaz pública,
+y eso es lo que raspa el actor `apify/facebook-ads-scraper`.
+
+- MCP: `https://mcp.apify.com?tools=apify/facebook-ads-scraper` · OAuth (el navegador pide
+  sesión la primera vez; sin token en archivos) · alternativa `Authorization: Bearer <token>`.
+- Alta rápida: `apify mcp install claude-code` (usa el token guardado del CLI de Apify), o
+  `claude mcp add --transport http apify "https://mcp.apify.com?tools=apify/facebook-ads-scraper"`.
+- Herramientas: `call-actor` (ejecuta) y `get-actor-output` (dataset completo; la primera
+  respuesta viene recortada para no saturar el contexto).
+- Entrada del actor: URLs de la Biblioteca (`view_all_page_id=<pageId>`, `country=CO`), estado
+  activo/inactivo/todos, tipo de medio, "más nuevos que N días/meses", límite de resultados.
+- Salida (campos reales): `adArchiveID`, `pageID`, `pageName`, `pageLikeCount`, `isActive`,
+  `startDate`/`startDateFormatted`, `endDate`/`endDateFormatted`, `publisherPlatform[]`,
+  **`collationCount`** (variantes del concepto), `categories[]`, `snapshot.{title, body.text,
+  ctaText, linkUrl, images[], videos[], cards[]}`, `reachEstimate`, `spend`, `impressionsWithIndex`.
+  Para comerciales fuera de la UE `reachEstimate`, `spend` e `impressions` vienen **null** →
+  `alcanceRango: null`. Consistente con el contrato: jamás se estima.
+- Mapeo: `lib/adapters/radar.apify.ts` (con tests). Importación: `npm run importar-radar -- <dataset.json>`.
+- Costo: pago por resultado, ~$3,40–5,80 USD por 1.000 anuncios según plan; se descuenta del
+  crédito prepagado mensual (gratis $5/mes; Starter $19/mes con $19 de uso). No hay cargo por
+  búsqueda ni por corrida aparte de los resultados y el cómputo del actor. Una corrida semanal de
+  10 competidores cabe en el plan gratuito.
+- Retención: los anuncios comerciales fuera de la UE solo aparecen mientras están activos; por
+  eso se corre semanalmente y se conserva el histórico en `datos/lote.json` (el importador
+  reemplaza el bloque de radar: si se quiere histórico de inactivos, fusionar antes de importar —
+  pendiente de implementar cuando haya datos reales).
+- Lista de competidores: `config/competidores.json` (copiar de `config/competidores.example.json`).
 
 ## Agenda y ventas — planilla de la clínica
 
