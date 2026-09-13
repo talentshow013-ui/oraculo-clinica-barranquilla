@@ -1,0 +1,4 @@
+[
+  { "id": "comp_1", "nombre": "Nombre del competidor 1", "ciudad": "Barranquilla", "paginaFacebook": "https://www.facebook.com/…", "instagram": "@…" },
+  { "id": "comp_2", "nombre": "Nombre del competidor 2", "ciudad": "Soledad", "paginaFacebook": "", "instagram": "" }
+]
