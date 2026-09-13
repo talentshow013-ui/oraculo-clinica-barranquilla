@@ -51,6 +51,11 @@ Write-Host "[extra] Radar de competencia: intentando instalar el navegador (Chro
 & npx playwright install chromium 2>$null
 if ($LASTEXITCODE -ne 0) { Write-Host "  Aviso: no se pudo descargar Chromium ahora. El panel funciona igual; el radar se puede instalar después con: npx playwright install chromium" -ForegroundColor Yellow } else { Ok "Chromium listo para el radar" }
 
+Write-Host ""
+Write-Host "[chequeo] Qué tiene y qué le falta a este equipo:" -ForegroundColor Cyan
+& npm run doctor --silent
+Write-Host ""
+
 Paso 5 "Abriendo el panel"
 Write-Host "  El panel quedará en http://localhost:3000/panel" -ForegroundColor White
 Write-Host "  Para cerrarlo: presiona Ctrl+C en esta ventana." -ForegroundColor DarkGray

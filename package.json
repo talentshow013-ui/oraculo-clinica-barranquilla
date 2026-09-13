@@ -14,7 +14,8 @@
     "verificar": "tsx scripts/verificar.ts",
     "validar-lote": "tsx scripts/validar-lote.ts",
     "importar-radar": "tsx scripts/importar-radar.ts",
-    "radar:capturar": "tsx scripts/radar-capturar.ts"
+    "radar:capturar": "tsx scripts/radar-capturar.ts",
+    "doctor": "tsx scripts/doctor.ts"
   },
   "dependencies": {
     "date-fns": "4.4.0",

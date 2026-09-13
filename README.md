@@ -6,7 +6,7 @@ mensuales. El análisis semanal se hace con el asistente (Claude Code) usando tu
 
 ---
 
-## Para la coordinadora — 5 pasos
+## Para la coordinadora — 6 pasos
 
 1. **Instala Node.js** (una sola vez): descarga la versión *LTS* en <https://nodejs.org> e instálala con todo por defecto.
 2. **Descarga el proyecto**: en GitHub, botón verde **Code → Download ZIP**, descomprime en `Documentos\Oraculo`
@@ -15,7 +15,8 @@ mensuales. El análisis semanal se hace con el asistente (Claude Code) usando tu
    Si Windows pregunta por permisos, acepta. Al terminar, se abre el panel en el navegador con datos de demostración.
 4. **Cada semana, actualiza los datos**: abre la carpeta del proyecto en VS Code con Claude Code y escribe
    `/oraculo-sincronizar`. Cuando termine, escribe `/oraculo-semana` para generar el informe de la semana.
-5. **Para volver a abrir el panel** otro día: doble clic en `instalar.ps1` de nuevo (ya no reinstala nada),
+5. **¿Algo no aparece?** En una terminal dentro de la carpeta: `npm run doctor` te dice qué falta y cómo resolverlo.
+6. **Para volver a abrir el panel** otro día: doble clic en `instalar.ps1` de nuevo (ya no reinstala nada),
    o en una terminal dentro de la carpeta: `npm run dev` y entra a <http://localhost:3000/panel>.
 
 ¿Una duda sobre la cuenta? Escríbele al asistente `/oraculo-pregunta` seguido de la pregunta.
@@ -62,6 +63,7 @@ npm run seed          # datos de demostración (180 días, deterministas)
 npm run typecheck     # TypeScript strict
 npm test              # 233 tests (Vitest)
 npm run verificar     # corre el motor sin interfaz e imprime hallazgos por plata
+npm run doctor        # qué tiene y qué le falta a este equipo (Meta, radar, calibración)
 npm run radar:capturar -- --q "clínica estética barranquilla"   # radar de competencia (Biblioteca pública, gratis)
 npm run importar-radar -- datos/radar-ui.json                   # fusiona el radar en datos/lote.json
 npm run dev           # http://localhost:3000/panel
