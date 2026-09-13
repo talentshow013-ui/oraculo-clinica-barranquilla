@@ -1,50 +1,106 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: (template) → 1.0.0
+- Modified principles: n/a (initial ratification)
+- Added sections: Core Principles (I–X), Restricciones de Stack y Despliegue, Flujo de Desarrollo y Puertas de Calidad, Governance
+- Removed sections: none
+- Templates: plan/spec/tasks templates read this file at runtime; no changes required
+- Follow-up TODOs: none
+-->
+
+# ORÁCULO Constitution
+
+Panel de inteligencia de marketing para una clínica estética en Barranquilla. El documento
+funcional de referencia es `PROMPT_ORACULO_v2.md`; esta constitución fija lo que NO se negocia.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Contract-first
+`lib/adapters/types.ts` (esquemas Zod + tipos derivados) es la única fuente de verdad del dato.
+Toda fuente —seed, archivo local, conector real— se mapea AL contrato; el contrato nunca se
+modifica para acomodar una fuente. La UI se alimenta de datos de demostración que pasan el mismo
+Zod que usará la fuente real. Conectar la fuente real NO DEBE tocar ningún componente.
+Un campo obligatorio no se vuelve opcional para "arreglar" un seed: se arregla el seed.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Cero API propia
+No se desarrollan wrappers de plataformas ni se pasan revisiones de app. Los datos reales entran
+por conectores MCP oficiales (Meta, TikTok, Apify) invocados desde Claude Code, que escribe un
+lote validado en `datos/lote.json`. No se guardan credenciales de largo plazo en el repositorio;
+`.env` está en `.gitignore` y `.env.example` documenta lo configurable.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. `null` no es `0`
+Si una fuente no entrega un dato, el valor es `null` y la UI muestra `—`. "No hubo" y "no
+sabemos" son afirmaciones distintas. `razon(num, den)` devuelve `null` si el denominador es 0 o
+falta cualquiera; nunca `Infinity` ni `NaN`. Existe un test por cada uno de estos casos.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Nunca se promedian promedios
+Solo se suman campos crudos (gasto, impresiones, clics, resultados…). Toda razón se recalcula
+desde las sumas. NO DEBE existir ninguna función que promedie razones. Test obligatorio:
+1/100 y 90/900 agregan a 91/1000 = 9,1 %, no 5,5 %.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Filtro estético comercial
+En texto visible al cliente jamás aparecen "API", "MCP", "endpoint", "Zod", "LLM", "sincronización
+vía integración". Se dice "Campañas y audiencias", "Video corto", "Radar de mercado", "Agenda y
+ventas". Los hallazgos se redactan en lenguaje de dueño de clínica.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### VI. Privacidad por esquema (Ley 1581 de 2012)
+No existe en el contrato dónde guardar un dato identificable de paciente (nombre, cédula,
+teléfono, correo, dirección, historia clínica). `RegistroEmbudo` es agregado. `validarSinPII`
+lanza `ErrorDatoSensible` y detiene la carga. Cruces con `nRegistros < 5` se enmascaran
+(k-anonimato, k=5) y la UI informa cuántos segmentos quedaron ocultos.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### VII. Cero invención
+Nunca se muestra un estimado disfrazado de dato. No existe forma pública de ver presupuesto ni
+retorno de un competidor: `alcanceRango` es `null` si la fuente no lo expone. Ningún benchmark
+de industria va quemado en código; los umbrales viven en `config/benchmarks.ts` con origen
+declarado y se calibran contra la historia del cliente.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### VIII. Motor determinista, no generativo
+Las 26 reglas de diagnóstico, el embudo, el laboratorio creativo y el radar son código puro,
+auditable y versionado: misma entrada, misma salida. Cada hallazgo declara evidencia exacta,
+acciones concretas y plata en riesgo en COP, y se ordena por plata, no por severidad. Una regla
+que falla no tumba el panel. Claude Code interpreta lo calculado; NUNCA calcula ni inventa cifras.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### IX. Tiempo y comparaciones honestas
+Toda fecha se interpreta en `America/Bogota`; prohibido `toISOString()` crudo para obtener el
+día. Toda comparación de periodos usa ventanas del mismo tamaño. Los huecos de datos se listan en
+`meta.huecos` y la UI los muestra: un hueco puede simular una caída que nunca ocurrió.
+
+### X. Calidad verificable
+TypeScript `strict` + `noUncheckedIndexedAccess`. Vitest para todo `lib/`; en `lib/` se trabaja
+con TDD (test primero, rojo, verde, refactor). `npx tsc --noEmit` limpio y suite verde son
+requisito para cerrar cada fase. `scripts/verificar.ts` corre el motor completo sin UI y debe
+encontrar los patrones plantados en el seed.
+
+## Restricciones de Stack y Despliegue
+
+- Next.js 15 (App Router, Server Components por defecto), React 19, TypeScript, Zod,
+  Tailwind v4 (`@theme`, sin config JS), Vitest, tsx, date-fns-tz.
+- Sin base de datos en fase 1; el adapter lee archivo local. Sin librería de componentes de
+  terceros: primitivas propias (`Kpi`, `Panel`, `Etiqueta`, `Barra`, `Vacio`, `Celda`, `Th`, `Aviso`).
+- Corre 100 % local en Windows en el equipo de la coordinadora; el análisis narrativo lo ejecuta
+  Claude Code con la suscripción de ella. Sin backend, sin nube, sin costos recurrentes.
+- Idioma de todo lo visible: español (Colombia). Pesos sin decimales, formato `es-CO`,
+  `tabular-nums` en toda cifra.
+
+## Flujo de Desarrollo y Puertas de Calidad
+
+- Fases 0→5 de `PROMPT_ORACULO_v2.md` §13 en orden; no se avanza sin cumplir el criterio de
+  aceptación de la fase.
+- Toda regla de diagnóstico, métrica del catálogo y lente de auditoría declara qué decisión
+  cambia; si no cambia ninguna, no existe.
+- Los experimentos y su resultado se registran (`datos/experimentos.json`); una hipótesis ya
+  probada y perdida no se vuelve a proponer sin marcarlo.
+- Commits pequeños y descriptivos por fase/módulo. `.claude/` y `.env` fuera del repositorio
+  salvo los skills del proyecto.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+Esta constitución prevalece sobre cualquier otra práctica del proyecto. Una decisión de
+implementación que contradiga un principio está mal, no el principio. Las enmiendas se
+documentan en este archivo con versión semántica (MAJOR: eliminación o redefinición de
+principios; MINOR: principio o sección nueva; PATCH: aclaraciones) y fecha. Toda revisión de
+código y cada `/speckit-plan` verifican cumplimiento; la complejidad adicional debe
+justificarse por escrito en el plan.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
