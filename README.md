@@ -54,8 +54,10 @@ Por ejemplo: `/oraculo-pregunta ¿subimos el presupuesto de la campaña facial?`
 npm install
 npm run seed          # datos de demostración (180 días, deterministas)
 npm run typecheck     # TypeScript strict
-npm test              # 201 tests (Vitest)
+npm test              # 224 tests (Vitest)
 npm run verificar     # corre el motor sin interfaz e imprime hallazgos por plata
+npm run radar:capturar -- --q "clínica estética barranquilla"   # radar de competencia (Biblioteca pública, gratis)
+npm run importar-radar -- datos/radar-ui.json                   # fusiona el radar en datos/lote.json
 npm run dev           # http://localhost:3000/panel
 npm run build && npm start
 ```
@@ -69,7 +71,7 @@ Estructura:
 ```
 app/(panel)/*        13 pantallas (Server Components)
 components/          primitivas propias (sin librería de componentes)
-lib/adapters/        contrato Zod + fuentes (demostración, archivo)
+lib/adapters/        contrato Zod + fuentes (demostración, archivo) + mapeadores del radar (Biblioteca UI, Apify)
 lib/metrics/         núcleo (razones nulables, solo suma crudos), embudo, creativos, catálogo (145), resolver
 lib/diagnostics/     motor + 26 reglas deterministas
 lib/competitive/     radar por longevidad, clasificador de ángulos, espacios vacíos
@@ -78,7 +80,7 @@ lib/frameworks/      7 lentes de auditoría con fuente
 lib/privacy/         k-anonimato, guardián de datos sensibles
 lib/format/          COP, porcentajes, fechas Bogotá, etiquetas públicas
 config/              cliente (tickets en cero hasta calibrar), umbrales con origen
-scripts/             seed, verificar, validar-lote
+scripts/             seed, verificar, validar-lote, radar-capturar (Playwright), importar-radar
 .claude/skills/      oraculo-sincronizar · oraculo-semana · oraculo-pregunta
 docs/                CONTRATO_DATOS · REGLAS_DIAGNOSTICO · CUMPLIMIENTO · CONEXION_MCP (interno) · PROMPT-FRONTEND
 specs/               especificación, plan y tareas (spec-kit)

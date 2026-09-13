@@ -71,26 +71,33 @@ campaña/anuncio). `anguloDetectado`, `nivelConsciencia`, `confianzaClasificacio
 `senalesDeteccion`: usa `clasificarAngulo` y `nivelConscienciaTexto` de
 `lib/competitive/angles.ts` (puedes correr un script con `npx tsx`), no tu criterio.
 
-## Paso 5 — Radar de mercado (Apify)
+## Paso 5 — Radar de mercado (Biblioteca de anuncios)
 
 La Biblioteca de anuncios de Meta **no expone anuncios comerciales de Colombia por su API**
-(solo UE/UK). Se usa el actor `apify/facebook-ads-scraper` vía el MCP de Apify
-(`https://mcp.apify.com?tools=apify/facebook-ads-scraper`). Si el MCP no está configurado,
-avisa y deja `competidores`/`anunciosCompetencia` como estaban.
+(solo UE/UK), pero la interfaz pública sí los muestra. Hay dos caminos al mismo contrato:
 
-1. Lee `config/competidores.json` (lista de páginas: `pageId` o URL de la página, `nombre`, `ciudad`).
-2. Llama `call-actor` con `apify/facebook-ads-scraper` y esta entrada (una URL por competidor):
-   - `startUrls`: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=CO&view_all_page_id=<pageId>`
-   - `activeStatus: "all"` (activos e inactivos: las salidas rápidas enseñan gratis)
-   - `scrapeAdsNewerThan`: "6 months" la primera vez; después "5 weeks" (solape para no perder cambios de estado)
-   - `resultsLimit`: 200 por página
-3. Con `get-actor-output` descarga el dataset completo y guárdalo en `datos/radar-apify.json`.
-4. Ejecuta `npm run importar-radar -- datos/radar-apify.json --ciudades config/competidores.json`.
-   El script mapea al contrato (`lib/adapters/radar.apify.ts`), agrupa competidores, valida y
-   fusiona en `datos/lote.json`. `collationCount` → variantes; `reachEstimate` null → alcance `—`.
-5. Costo orientativo: ~$3,40–5,80 USD por 1.000 anuncios; el plan gratuito incluye $5/mes.
-   10 competidores × 50 anuncios = 500 anuncios ≈ $2-3 por corrida. Se cobra contra el crédito
-   prepagado del plan (no por búsqueda ni por corrida).
+**A) Captura propia (gratis, principal).** Requiere Chromium instalado una vez
+(`npx playwright install chromium`; si la descarga falla, ver docs/CONEXION_MCP.md).
+
+1. Lee `config/competidores.json` (si no existe, cópialo de `config/competidores.example.json`
+   y pregunta a la coordinadora por 6-10 páginas de competidores del radio).
+2. Por cada competidor con `pageId`: `npm run radar:capturar -- --pagina <pageId> --estado all --max 80`
+   (acumula en `datos/radar-ui.json`). Para descubrir quién más pauta:
+   `npm run radar:capturar -- --q "clínica estética barranquilla"` (y variantes: "botox barranquilla",
+   "depilación láser barranquilla", "medicina estética barranquilla").
+3. `npm run importar-radar -- datos/radar-ui.json --ciudades config/competidores.json` → fusiona en
+   `datos/lote.json`, valida y guarda los creativos en `public/radar/<id>.jpg` (el panel los muestra).
+4. Si la captura devuelve 0 tarjetas con identificador, Meta cambió la página: usa el camino B y avisa.
+
+**B) Apify (respaldo, de pago por resultado).** Actor `apify/facebook-ads-scraper` vía MCP
+(`https://mcp.apify.com?tools=apify/facebook-ads-scraper`): `call-actor` con
+`startUrls` = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=CO&view_all_page_id=<pageId>`,
+`scrapeAdsNewerThan: "6 months"` la primera vez y "5 weeks" después; `get-actor-output` → guarda el
+dataset en `datos/radar-apify.json` → `npm run importar-radar -- datos/radar-apify.json --ciudades config/competidores.json`.
+Costo ~$3,40–5,80 USD por 1.000 anuncios contra el crédito prepagado (gratis $5/mes).
+
+En ambos casos: `collationCount`/"N anuncios usan este contenido" → variantes; alcance, gasto e
+impresiones vienen vacíos para comerciales fuera de la UE → `—`. **Jamás se estima.**
 
 ## Paso 6 — Escribir y validar
 

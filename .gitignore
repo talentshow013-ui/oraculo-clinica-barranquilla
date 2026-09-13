@@ -11,3 +11,5 @@ reportes/*
 !reportes/.gitkeep
 .DS_Store
 Thumbs.db
+public/radar/
+datos/radar-*.json

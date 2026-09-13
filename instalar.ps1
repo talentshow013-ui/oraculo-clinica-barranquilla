@@ -46,6 +46,11 @@ if ($LASTEXITCODE -ne 0) { Falla "No se pudieron generar los datos de demostraci
 if ($LASTEXITCODE -ne 0) { Falla "La verificación del motor reportó errores." }
 Ok "Motor verificado"
 
+Write-Host ""
+Write-Host "[extra] Radar de competencia: intentando instalar el navegador (Chromium) para capturar la Biblioteca de anuncios" -ForegroundColor Cyan
+& npx playwright install chromium 2>$null
+if ($LASTEXITCODE -ne 0) { Write-Host "  Aviso: no se pudo descargar Chromium ahora. El panel funciona igual; el radar se puede instalar después con: npx playwright install chromium" -ForegroundColor Yellow } else { Ok "Chromium listo para el radar" }
+
 Paso 5 "Abriendo el panel"
 Write-Host "  El panel quedará en http://localhost:3000/panel" -ForegroundColor White
 Write-Host "  Para cerrarlo: presiona Ctrl+C en esta ventana." -ForegroundColor DarkGray

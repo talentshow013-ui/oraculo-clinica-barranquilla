@@ -1,5 +1,6 @@
 /**
- * Importa un dataset del actor `apify/facebook-ads-scraper` (JSON array) al lote.
+ * Importa anuncios de competencia al lote, desde Apify (arreglo JSON) o desde la captura
+ * propia con Playwright (`npm run radar:capturar`, objeto con `tarjetas`).
  *
  *   npm run importar-radar -- datos/radar-apify.json                 → fusiona en datos/lote.json
  *   npm run importar-radar -- datos/radar-apify.json --destino datos/seed.json
@@ -13,6 +14,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { LoteDatosSchema, type LoteDatos } from "@/lib/adapters/types";
 import { mapearRadarApify, type ItemApify } from "@/lib/adapters/radar.apify";
+import { mapearRadarUI, type TarjetaCruda } from "@/lib/adapters/radar.ui";
 import { hoyBogota } from "@/lib/format/fechas";
 import { validarSinPII } from "@/lib/privacy";
 
@@ -29,9 +31,13 @@ if (!origen || origen.startsWith("--")) {
 const destino = resolve(process.cwd(), arg("--destino") ?? "datos/lote.json");
 const hoy = hoyBogota();
 
-const items = JSON.parse(readFileSync(resolve(process.cwd(), origen), "utf8")) as ItemApify[];
-if (!Array.isArray(items)) {
-  console.error("El archivo de origen debe ser un arreglo JSON (exportación del dataset de Apify).");
+// Dos formatos de entrada, mismo contrato de salida:
+//  - arreglo JSON  → dataset de Apify (apify/facebook-ads-scraper)
+//  - { tarjetas }  → captura propia con Playwright (npm run radar:capturar)
+const crudo = JSON.parse(readFileSync(resolve(process.cwd(), origen), "utf8")) as ItemApify[] | { tarjetas?: TarjetaCruda[] };
+const esApify = Array.isArray(crudo);
+if (!esApify && !Array.isArray((crudo as { tarjetas?: unknown }).tarjetas)) {
+  console.error("El archivo de origen debe ser un arreglo JSON (Apify) o un objeto con `tarjetas` (captura propia).");
   process.exit(1);
 }
 
@@ -42,7 +48,7 @@ if (rutaCiudades && existsSync(resolve(process.cwd(), rutaCiudades))) {
   for (const c of lista) if ((c.pageId ?? c.id) && c.ciudad) ciudades[String(c.pageId ?? c.id)] = c.ciudad;
 }
 
-const radar = mapearRadarApify(items, hoy, ciudades);
+const radar = esApify ? mapearRadarApify(crudo as ItemApify[], hoy, ciudades) : mapearRadarUI((crudo as { tarjetas: TarjetaCruda[] }).tarjetas, hoy, ciudades);
 
 const base: LoteDatos = existsSync(destino)
   ? (JSON.parse(readFileSync(destino, "utf8")) as LoteDatos)

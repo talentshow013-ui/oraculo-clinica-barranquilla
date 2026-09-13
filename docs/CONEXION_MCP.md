@@ -65,7 +65,27 @@ grandes de insights usar trabajos asíncronos. Rango recomendado por sincronizac
 - Mapeo: gancho a 2 s (`reproducciones2s`) y 6 s (`reproducciones6s`); el motor cae a ellos cuando
   no hay 3 s / ThruPlay. `fuente: "tiktok"`.
 
-## Radar — Apify MCP (verificado 2026-09-13)
+## Radar — captura propia con Playwright (principal, gratis; verificado en vivo 2026-09-13)
+
+`npm run radar:capturar -- --q "clínica estética barranquilla"` abre la Biblioteca pública con un
+navegador controlado (Playwright, Chromium), hace scroll, y extrae por tarjeta: identificador,
+"En circulación desde el <fecha>", activo/inactivo, "N anuncios usan este contenido" (variantes),
+nombre de la página y su enlace, copy, CTA, destino real (deshace `l.facebook.com/l.php?u=`),
+imagen de mayor resolución o póster del video. Descarga los creativos a `public/radar/<id>.jpg`
+(Meta caduca sus URLs; el archivo local perdura). Prueba real: 29 resultados → 22 tarjetas → 22 creativos.
+
+- Parser puro y testeado: `lib/adapters/radar.ui.ts` (español e inglés). Capturador: `scripts/radar-capturar.ts`.
+- `--pagina <pageId>` para seguir un competidor; `--estado all` para ver también inactivos (salidas
+  rápidas); `--visible` para depurar con el navegador a la vista.
+- Requiere `npx playwright install chromium` una vez. Si la descarga del CDN se agota, fijar
+  `playwright@1.59.1` (ya está en `package.json`) reutiliza el Chromium 1223 si existe en
+  `%LOCALAPPDATA%\ms-playwright`; o descargar en otro momento.
+- Riesgos: Meta cambia el DOM (el extractor se ancla en el texto "Identificador de la biblioteca" +
+  "Ver detalles del anuncio", no en clases); bloqueos por volumen (correr semanal, no diario; máximo
+  ~80 por página). Si devuelve 0 tarjetas, usar Apify (mismo contrato).
+- Lo que este camino NO puede dar y Apify sí: `pageLikeCount` (tamaño de la página). Nada más.
+
+## Radar — Apify MCP (respaldo; verificado 2026-09-13)
 
 **Por qué Apify y no la API oficial:** la API de la Biblioteca de anuncios de Meta devuelve
 anuncios comerciales (`ad_type=ALL`) **solo cuando `ad_reached_countries` es de la UE o UK**; para
