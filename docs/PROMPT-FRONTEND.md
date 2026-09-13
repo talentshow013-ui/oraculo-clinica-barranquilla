@@ -1,5 +1,13 @@
 # PROMPT DE CONEXIÓN — Agente de diseño (frontend)
 
+> **Estado (2026-09-13, noche): INTEGRADO.** El frontend entregado en `PANEL ANALISTA DE META/app`
+> ya vive en este repositorio (`app/`, `components/`) conectado al motor real. Lo que el agente
+> dedujo del contrato se corrigió aquí (ver `docs/frontend-entrega/PARA-EL-AGENTE-DEL-MOTOR.md`
+> y `git log`). Para futuras iteraciones visuales, este prompt sigue vigente con estas reglas
+> adicionales: **el tema es claro** (el cliente pidió los colores de su panel "Espejo"; los
+> tokens conservan los nombres), `lib/tipos.ts` es el barril de tipos reales (no se edita), y
+> el selector de cuenta publicitaria (cookie `cuenta`) ya está cableado en `lib/datos.ts`.
+
 > Pégalo completo como primer mensaje al agente que va a trabajar la parte visual.
 > El repositorio ya funciona de punta a punta: motor, datos y 13 pantallas cableadas.
 > Tu trabajo es hacerlo **bonito y claro** sin romper el contrato.

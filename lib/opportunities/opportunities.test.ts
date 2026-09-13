@@ -18,7 +18,7 @@ const hallazgoR15: Hallazgo = {
   metricas: ["show_rate"],
 };
 
-const espacio: EspacioVacio = { servicio: "toxina", angulo: "educativo", nivelConsciencia: 2, competidoresQueLoAtacan: 0 };
+const espacio: EspacioVacio = { servicio: "toxina", angulo: "educativo", nivelConsciencia: 2, competidoresQueLoAtacan: 0, porQue: "nadie lo ataca" };
 
 describe("oportunidades — una idea sin criterio de corte es una corazonada", () => {
   test("desdeHallazgos crea hipótesis si→entonces→porque con prueba completa", () => {

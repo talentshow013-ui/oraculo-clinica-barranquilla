@@ -1,36 +1,135 @@
 @import "tailwindcss";
 
-/* Tema de sala de control — PROMPT_ORACULO_v2 §10. Un acento por significado. */
+/*
+ * ORÁCULO — sala de control CLARA: blanco y azules (misma familia que ESPEJO), el marino como
+ * instrumento (riel y tarjetas), no como fondo. Un acento por significado:
+ * bien = va bien · mal = plata en riesgo · ojo = atención · acento = oportunidad / acción.
+ */
 @theme {
-  --color-fondo: #08090c;
-  --color-superficie: #0e1014;
-  --color-superficie-2: #14171d;
-  --color-borde: #1e222b;
-  --color-borde-fuerte: #2c313c;
-  --color-texto: #e8eaed;
-  --color-texto-2: #9aa1ad;
-  --color-texto-3: #646b78;
-  --color-bien: #35d6a4;
-  --color-mal: #ff5f6d;
-  --color-ojo: #ffb454;
-  --color-acento: #6e8cff;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  --color-fondo: #F4F7FB;
+  --color-superficie: #FFFFFF;
+  --color-superficie-2: #EAF2FF;
+  --color-borde: #D9E2EF;
+  --color-borde-fuerte: #B9C7DB;
+  --color-texto: #0F172A;
+  --color-texto-2: #526077;
+  --color-texto-3: #5B6577;
+  --color-bien: #15803D;
+  --color-mal: #B91C1C;
+  --color-ojo: #B45309;
+  --color-acento: #2563EB;
+  --color-marino: #0B1D3A;
+  --color-marino-2: #12295A;
+  --color-celeste: #93C5FD;
+  --color-cobalto: #1D4ED8;
+  --color-hielo: #EAF2FF;
+  --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --radius-pieza: 20px;
+  --ease-casa: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-html {
-  color-scheme: dark;
+@font-face {
+  font-family: 'Geist';
+  src: url('/fuentes/geist.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body {
   background: var(--color-fondo);
   color: var(--color-texto);
-}
-
-body {
-  margin: 0;
   font-family: var(--font-sans);
-  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+  background-image: radial-gradient(900px 500px at 20% -10%, #EAF2FF 0%, transparent 60%);
+  background-attachment: fixed;
+}
+::selection { background: var(--color-acento); color: #fff; }
+:focus-visible { outline: 2px solid var(--color-acento); outline-offset: 3px; }
+h1, h2, h3 { font-weight: 400; letter-spacing: -0.025em; line-height: 1.05; text-wrap: balance; }
+button, input, select { font: inherit; }
+
+/* ── piezas (en @layer components: si no, ganan a las utilidades de Tailwind y `text-celeste` no puede pisar a `.rotulo`) ── */
+@layer components {
+.num { font-variant-numeric: tabular-nums; }
+.cifra { font-weight: 400; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; line-height: 1; }
+.rotulo { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; color: var(--color-texto-2); }
+.pieza { background: var(--color-superficie); border: 1px solid var(--color-borde); border-radius: var(--radius-pieza); box-shadow: 0 1px 0 rgba(11, 29, 58, 0.03), 0 14px 34px -28px rgba(11, 29, 58, 0.28); transition: transform 0.45s var(--ease-casa), box-shadow 0.45s var(--ease-casa), border-color 0.3s; }
+.pieza:hover { transform: translateY(-2px); border-color: #C7D4E6; box-shadow: 0 2px 0 rgba(11, 29, 58, 0.03), 0 26px 48px -26px rgba(11, 29, 58, 0.42), 0 10px 24px -16px rgba(37, 99, 235, 0.28); }
+/* las tarjetas chicas (KPI) se levantan más y encienden su borde de acento */
+.instrumento { position: relative; }
+.instrumento::after { content: ''; position: absolute; inset: auto 14px 0 14px; height: 2px; border-radius: 2px; background: var(--color-acento); transform: scaleX(0); transform-origin: left; transition: transform 0.45s var(--ease-casa); }
+.instrumento:hover { transform: translateY(-4px); }
+.instrumento:hover::after { transform: scaleX(1); }
+.pieza-marina { background-color: var(--color-marino); background-image: linear-gradient(160deg, #10306A 0%, #0B1D3A 58%, #071230 100%); color: #EAF2FF; border-radius: var(--radius-pieza); box-shadow: inset 0 1px 0 rgba(147, 197, 253, 0.18), 0 30px 60px -34px rgba(11, 29, 58, 0.7); transition: transform 0.45s var(--ease-casa), box-shadow 0.45s var(--ease-casa); }
+.pieza-marina:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(147, 197, 253, 0.22), 0 40px 70px -34px rgba(11, 29, 58, 0.75), 0 12px 30px -16px rgba(37, 99, 235, 0.35); }
+.pieza-hielo { background: var(--color-hielo); border: 1px solid var(--color-borde); border-radius: var(--radius-pieza); box-shadow: 0 14px 34px -28px rgba(37, 99, 235, 0.35); transition: transform 0.45s var(--ease-casa), box-shadow 0.45s var(--ease-casa); }
+.pieza-hielo:hover { transform: translateY(-2px); box-shadow: 0 26px 48px -26px rgba(37, 99, 235, 0.45); }
+.flota { box-shadow: 0 30px 60px -30px rgba(11, 29, 58, 0.35), 0 8px 20px -12px rgba(37, 99, 235, 0.25); }
+.sin-barra { scrollbar-width: none; -ms-overflow-style: none; }
+.sin-barra::-webkit-scrollbar { display: none; }
+/* la rejilla de fondo de los instrumentos (marca la sala de control sin oscurecer) */
+.rejilla { background-image: linear-gradient(rgba(11, 29, 58, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(11, 29, 58, 0.05) 1px, transparent 1px); background-size: 24px 24px; }
+.rejilla-marina { background-image: linear-gradient(rgba(147, 197, 253, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(147, 197, 253, 0.08) 1px, transparent 1px); background-size: 24px 24px; }
+
+/* ── movimiento (solo transform y opacity; sin librería) ── */
+/* 🔴 Las entradas se definen con `from` y relleno `backwards`: si se usa `to { transform: none }`
+   con `forwards`, el transform queda BLOQUEADO para siempre y el hover no puede levantar la pieza. */
+.entra { animation: entra 0.7s var(--ease-casa) backwards; animation-delay: var(--retraso, 0ms); }
+.entra-izq { animation: entra-izq 0.8s var(--ease-casa) backwards; animation-delay: var(--retraso, 0ms); }
+.entra-der { animation: entra-der 0.8s var(--ease-casa) backwards; animation-delay: var(--retraso, 0ms); }
+.entra-zoom { animation: entra-zoom 0.7s var(--ease-casa) backwards; animation-delay: var(--retraso, 0ms); }
+@keyframes entra { from { opacity: 0; transform: translate3d(0, 14px, 0); } }
+@keyframes entra-izq { from { opacity: 0; transform: translate3d(-32px, 0, 0); } }
+@keyframes entra-der { from { opacity: 0; transform: translate3d(32px, 0, 0); } }
+@keyframes entra-zoom { from { opacity: 0; transform: scale(0.94); } }
+/* barras que crecen: la anchura final va en --w */
+.crece { transform-origin: left center; transform: scaleX(0); animation: crece 0.9s var(--ease-casa) forwards; animation-delay: var(--retraso, 120ms); }
+.crece-y { transform-origin: center bottom; transform: scaleY(0); animation: crece-y 0.9s var(--ease-casa) forwards; animation-delay: var(--retraso, 120ms); }
+@keyframes crece { to { transform: scaleX(1); } }
+@keyframes crece-y { to { transform: scaleY(1); } }
+/* líneas SVG que se dibujan */
+.traza { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: traza 1.6s var(--ease-casa) forwards; animation-delay: var(--retraso, 150ms); }
+@keyframes traza { to { stroke-dashoffset: 0; } }
+.aparece { opacity: 0; animation: aparece 0.6s ease-out forwards; animation-delay: var(--retraso, 900ms); }
+@keyframes aparece { to { opacity: 1; } }
+/* el pulso de la plata en riesgo */
+.late { animation: late 2.4s ease-in-out infinite; }
+@keyframes late { 0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.35); } 50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } }
+/* filas y listas que responden al mouse */
+tbody tr { transition: background-color 0.2s; }
+tbody tr:hover { background-color: rgba(234, 242, 255, 0.7); }
+.brilla { transition: transform 0.35s var(--ease-casa), box-shadow 0.35s var(--ease-casa); }
+.brilla:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -22px rgba(11, 29, 58, 0.4); }
+/* el sobre-mensaje: va FIJO sobre todo (z-index alto), nunca debajo de la tarjeta vecina */
+.ayuda { position: fixed; z-index: 90; max-width: 300px; border-radius: 12px; background: var(--color-marino); color: #fff; padding: 9px 11px; font-size: 12px; line-height: 1.4; box-shadow: 0 20px 40px -18px rgba(11, 29, 58, 0.6); pointer-events: none; animation: aparece 0.18s ease-out forwards; }
+.ayuda b { color: var(--color-celeste); font-weight: 600; display: block; }
+/* la tarjeta que se inclina al pasar (galería del radar) */
+.inclina { transition: transform 0.5s var(--ease-casa), box-shadow 0.5s var(--ease-casa); transform-style: preserve-3d; }
+.inclina:hover { transform: perspective(900px) rotateX(3deg) rotateY(-4deg) translateY(-4px); box-shadow: 0 30px 50px -28px rgba(11, 29, 58, 0.45); }
+/* la marquesina de advertencias */
+.marquesina { display: flex; gap: 40px; width: max-content; animation: marquesina 28s linear infinite; }
+.marquesina:hover { animation-play-state: paused; }
+}
+@keyframes marquesina { to { transform: translateX(-50%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .crece, .crece-y { transform: none; }
+  .traza { stroke-dashoffset: 0; }
 }
 
-.num {
-  font-variant-numeric: tabular-nums;
+/* ── el informe en papel: una carta, fondo claro, sin riel ── */
+@media print {
+  @page { size: letter; margin: 14mm; }
+  body { background: #fff !important; }
+  .no-imprimir { display: none !important; }
+  .pieza, .pieza-hielo { border-color: #ccc; break-inside: avoid; }
+  .pieza-marina { background: #fff !important; color: #0F172A !important; border: 1px solid #ccc; }
+  .pieza-marina * { color: #0F172A !important; }
+  main { padding: 0 !important; max-width: none !important; }
+  .entra, .entra-izq, .entra-der, .entra-zoom, .aparece { opacity: 1 !important; transform: none !important; animation: none !important; }
+  .crece, .crece-y { transform: none !important; animation: none !important; }
 }

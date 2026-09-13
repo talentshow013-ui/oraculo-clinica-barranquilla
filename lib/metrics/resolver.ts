@@ -20,7 +20,7 @@ export interface EntradaResolver {
   total: core.Agregado;
   reciente: core.Agregado;
   previa: core.Agregado;
-  serie: core.PuntoSerie[];
+  serie: ReadonlyArray<{ fecha: string; agregado: core.Agregado | null }>;
   embudo: PasoEmbudo[];
   negocio: MetricasNegocio;
   creativos: EvaluacionCreativo[];
@@ -158,12 +158,12 @@ const ESPECIALES: Record<string, Fn> = {
   ltv_cac: (e) => e.negocio.ltvSobreCac,
   tasa_recompra: (e) => e.negocio.tasaRecompra,
   ocupacion_agenda: (e) => {
-    const dias = e.serie.length;
+    const dias = e.contexto.serie.length;
     const cupos = dias * e.cliente.cuposDiarios;
     return core.razon(cantidadPaso(e.lote.embudo, "cita_asistida"), cupos);
   },
   costo_cupo_vacio: (e) => {
-    const dias = e.serie.length;
+    const dias = e.contexto.serie.length;
     const vacios = Math.max(0, dias * e.cliente.cuposDiarios - cantidadPaso(e.lote.embudo, "cita_asistida"));
     return e.negocio.margenUnitarioCOP === null ? null : vacios * e.negocio.margenUnitarioCOP;
   },
@@ -259,12 +259,12 @@ const ESPECIALES: Record<string, Fn> = {
   uso_testimonio_competencia: (e) => e.radar.usoTestimonio,
   variantes_por_concepto: (e) => e.radar.variantesPromedio,
   // Salud
-  cobertura_periodo: (e) => core.razon(e.serie.length, diasEntre(e.lote.meta.desde, e.lote.meta.hasta)),
+  cobertura_periodo: (e) => core.razon(e.contexto.serie.length, diasEntre(e.lote.meta.desde, e.lote.meta.hasta)),
   frescura_datos: (e) => diasEntre(e.lote.meta.hasta, e.hoy) - 1,
   huecos_datos: (e) => e.contexto.huecos.length,
   conjuntos_en_aprendizaje: (e) => e.hallazgos.find((h) => h.reglaId === "R21")?.evidencia.length ?? 0,
   anuncios_rechazados: (e) => e.lote.insights.filter((i) => i.nivel === "anuncio" && (i.estado === "rechazado" || i.estado === "en_revision")).length,
-  volatilidad_cpa: (e) => core.coeficienteVariacion(e.serie.map((p) => core.cpa(p.agregado)).filter((x): x is number => x !== null)),
+  volatilidad_cpa: (e) => core.coeficienteVariacion(e.contexto.serie.map((p) => core.cpa(p.agregado)).filter((x): x is number => x !== null)),
   senal_estadistica: (e) => core.razon(activos(e).filter((c) => c.cuadrante !== "sin_senal").length, activos(e).length),
   puntaje_optimizacion: () => null,
   dias_sin_actualizar: (e) => diasEntre(e.lote.meta.generadoEn.slice(0, 10), e.hoy) - 1,

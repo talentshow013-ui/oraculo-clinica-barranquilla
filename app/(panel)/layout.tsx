@@ -1,18 +1,20 @@
-import type { ReactNode } from "react";
-import { Sidebar } from "@/components/sidebar";
-import { Cabecera } from "@/components/cabecera";
+import { motor } from '@/lib/datos'
+import Sidebar from '@/components/sidebar'
+import Cabecera from '@/components/cabecera'
 
-// El panel lee un archivo local que cambia con cada sincronización: nunca se congela al compilar.
-export const dynamic = "force-dynamic";
+// La cuenta elegida viaja en cookie: cada petición se renderiza con la suya.
+export const dynamic = 'force-dynamic'
 
-export default function PanelLayout({ children }: { children: ReactNode }) {
+/** El marco: riel marino a la izquierda (4 grupos), barra de estado arriba, el contenido en su bruma. */
+export default async function PanelLayout({ children }: { children: React.ReactNode }) {
+  const r = await motor()
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+    <div className="flex min-h-[100svh]">
+      <Sidebar cliente={r.cliente.nombre} sede={r.cliente.ciudad} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Cabecera />
-        <main className="flex-1 overflow-y-auto px-6 py-5">{children}</main>
+        <Cabecera r={r} />
+        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-16 pt-4 sm:px-6">{children}</main>
       </div>
     </div>
-  );
+  )
 }

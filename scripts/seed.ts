@@ -83,6 +83,14 @@ interface AdDef {
   duracionSeg: number | null;
 }
 
+/** Tres cuentas publicitarias (config/cliente.ts): Riomar lleva facial, Norte láser y corporal, Médicos sin pauta. */
+const CUENTA_POR_CAMPANA: Record<string, string> = {
+  camp_facial: "act_1048227",
+  camp_laser: "act_2213904",
+  camp_corporal: "act_2213904",
+};
+const cuentaDe = (campanaId: string) => CUENTA_POR_CAMPANA[campanaId] ?? "act_1048227";
+
 const CAMPANAS = [
   { id: "camp_facial", nombre: "Facial · Toxina y ácido" },
   { id: "camp_laser", nombre: "Láser · Facial y depilación" },
@@ -197,7 +205,7 @@ function filaAnuncio(r: Rng, ad: AdDef, fecha: string, d: number): InsightRow | 
     id: ad.id,
     nombre: ad.nombre,
     padreId: ad.conjuntoId,
-    cuentaId: "act_clinica",
+    cuentaId: cuentaDe(ad.campanaId),
     objetivo: "mensajes",
     estado: "activo",
     gasto,
@@ -241,7 +249,7 @@ function agregarNivel(filas: InsightRow[], nivel: "conjunto" | "campana", id: st
     id,
     nombre,
     padreId,
-    cuentaId: "act_clinica",
+    cuentaId: filas[0]?.cuentaId ?? "act_1048227",
     objetivo: "mensajes",
     estado: "activo",
     gasto: 0,
@@ -321,16 +329,16 @@ const PLATAFORMAS: [string, number, number][] = [
   ["instagram_stories", 0.12, 0.85],
 ];
 
-function desgloseDia(r: Rng, fecha: string, dimension: BreakdownRow["dimension"], valor: string, gasto: number, impresiones: number, clicsEnlace: number, resultados: number, nRegistros: number): BreakdownRow {
+function desgloseDia(r: Rng, fecha: string, dimension: BreakdownRow["dimension"], valor: string, gasto: number, impresiones: number, clicsEnlace: number, resultados: number, nRegistros: number, cuentaId: string): BreakdownRow {
   return {
     ...vacioInsight(),
     fuente: "meta",
     fecha,
     nivel: "cuenta",
-    id: "act_clinica",
+    id: cuentaId,
     nombre: "Cuenta",
     padreId: null,
-    cuentaId: "act_clinica",
+    cuentaId,
     objetivo: null,
     estado: "activo",
     gasto: Math.round(gasto),
@@ -351,12 +359,13 @@ function desgloseDia(r: Rng, fecha: string, dimension: BreakdownRow["dimension"]
 
 function generarDesgloses(r: Rng, insights: InsightRow[], fechas: string[]): BreakdownRow[] {
   const salida: BreakdownRow[] = [];
-  const porFecha = new Map<string, InsightRow[]>();
-  for (const f of insights) if (f.nivel === "anuncio") (porFecha.get(f.fecha) ?? porFecha.set(f.fecha, []).get(f.fecha)!).push(f);
+  const cuentas = [...new Set(insights.filter((f) => f.nivel === "anuncio").map((f) => f.cuentaId))];
+  const porClave = new Map<string, InsightRow[]>();
+  for (const f of insights) if (f.nivel === "anuncio") (porClave.get(`${f.cuentaId}|${f.fecha}`) ?? porClave.set(`${f.cuentaId}|${f.fecha}`, []).get(`${f.cuentaId}|${f.fecha}`)!).push(f);
 
   const ultimos28 = new Set(fechas.slice(-28));
-  for (const fecha of fechas) {
-    const filas = porFecha.get(fecha);
+  for (const cuentaId of cuentas) for (const fecha of fechas) {
+    const filas = porClave.get(`${cuentaId}|${fecha}`);
     if (!filas) continue;
     const gasto = filas.reduce((s, f) => s + f.gasto, 0);
     const impr = filas.reduce((s, f) => s + f.impresiones, 0);
@@ -371,7 +380,7 @@ function generarDesgloses(r: Rng, insights: InsightRow[], fechas: string[]): Bre
         const frac = fraccion * ruido(r, 0.08);
         const resSeg = res * factorTotal * ((fraccion * conv) / sumaConv);
         const imprSeg = impr * frac * factorTotal;
-        salida.push(desgloseDia(r, fecha, dimension, valor, gasto * frac * factorTotal, imprSeg, clics * frac * factorTotal * (conv === 0 ? 0.5 : 1), conv === 0 ? 0 : resSeg, imprSeg / 1.4));
+        salida.push(desgloseDia(r, fecha, dimension, valor, gasto * frac * factorTotal, imprSeg, clics * frac * factorTotal * (conv === 0 ? 0.5 : 1), conv === 0 ? 0 : resSeg, imprSeg / 1.4, cuentaId));
       }
     };
     emitir("ubicacion", ZONAS);
@@ -387,7 +396,7 @@ function generarDesgloses(r: Rng, insights: InsightRow[], fechas: string[]): Bre
         const frac = (p / total) * ruido(r, 0.1);
         const enHorario = h >= 8 && h < 18;
         const resH = res * frac * (enHorario ? 1.25 : 0.75) * 0.95;
-        salida.push(desgloseDia(r, fecha, "hora", String(h), gasto * frac * 0.96, impr * frac * 0.96, clics * frac * 0.96, resH, (impr * frac * 0.96) / 1.4));
+        salida.push(desgloseDia(r, fecha, "hora", String(h), gasto * frac * 0.96, impr * frac * 0.96, clics * frac * 0.96, resH, (impr * frac * 0.96) / 1.4, cuentaId));
       });
     }
   }

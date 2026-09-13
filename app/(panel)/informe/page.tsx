@@ -1,107 +1,64 @@
-import { motor } from "@/lib/datos";
-import { cop, num, pct, ratio } from "@/lib/format";
-import { ETIQUETA_PASO } from "@/lib/format/etiquetas";
-import { semanaISO } from "@/lib/format/fechas";
-import { Aviso, Grid, Kpi, Panel, Titulo } from "@/components/ui";
+import { motor } from '@/lib/datos'
+import { cop, num, pct, ratio } from '@/lib/format'
+import { fechaCorta, fechaLarga } from '@/lib/format/fechas'
+import { PASOS } from '@/lib/format/etiquetas'
+import Imprimir from '@/components/cliente/imprimir'
+import EmbudoBarras from '@/components/graficas/embudo'
 
+/** INFORME: una carta. Seis cifras, tres decisiones, dónde se pierde la plata, qué se prueba. Se imprime sin riel. */
 export default async function Informe() {
-  const r = await motor();
-  const decisiones = r.hallazgos.slice(0, 3);
-  const proximos = r.oportunidades.slice(0, 3);
-  const asistidas = r.embudo.find((p) => p.paso === "cita_asistida")?.cantidad ?? null;
-  const ventas = r.embudo.find((p) => p.paso === "venta")?.cantidad ?? null;
-  const r22 = r.hallazgos.find((h) => h.reglaId === "R22");
-
+  const r = await motor()
+  const n = r.negocio
+  const decisiones = r.hallazgos.slice(0, 3)
+  const pruebas = r.oportunidades.filter((o) => !o.yaProbada).slice(0, 2)
+  const cifras = [
+    { n: 'Plata en riesgo', v: cop(r.plataEnRiesgoTotal), mal: true }, { n: 'Inversión del periodo', v: cop(r.total.gasto) }, { n: 'Citas asistidas', v: num(r.embudo[5]?.cantidad) },
+    { n: 'Costo por cita asistida', v: cop(n.costoCitaAsistida) }, { n: 'Asistencia a citas', v: pct(n.showRate), mal: (n.showRate ?? 1) < r.benchmarks.showRateMinimo.valor }, { n: 'Retorno sobre margen', v: ratio(n.poas) },
+  ]
   return (
-    <>
-      <Titulo sub={`Semana ${semanaISO(r.hoy)} · datos del ${r.lote.meta.desde} al ${r.lote.meta.hasta}. Una página: qué pasó, qué se decide, qué se prueba.`}>
-        Resumen para dirección
-      </Titulo>
-
-      {r22 && (
-        <div className="mb-3">
-          <Aviso tono="mal" titulo="Antes de leer los retornos">
-            {r22.titulo}. {r22.acciones[0]}
-          </Aviso>
+    <div className="mx-auto max-w-[880px]">
+      <div className="entra mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="rotulo">Informe para dirección · {r.cliente.nombre}</p>
+          <h1 className="mt-1 text-[clamp(1.5rem,2.4vw,2rem)]">{fechaCorta(r.lote.meta.desde)} – {fechaLarga(r.lote.meta.hasta)}</h1>
+          <p className="mt-0.5 text-[12.5px] text-texto-2">{r.lote.meta.origen} · atribución {r.lote.insights[0]?.ventanaAtribucion} · {r.lote.meta.huecos.length} {r.lote.meta.huecos.length === 1 ? 'día sin datos' : 'días sin datos'}</p>
         </div>
-      )}
-      {!r.negocio.calibrado && (
-        <div className="mb-3">
-          <Aviso tono="ojo">Los tickets y costos por procedimiento no están calibrados: el retorno sobre margen y el CAC sobre margen aparecen como “—”. Se definen en la reunión con la clínica.</Aviso>
-        </div>
-      )}
+        <Imprimir />
+      </div>
 
-      <Grid cols={6}>
-        <Kpi etiqueta="Inversión" valor={r.total.gasto} unidad="cop" />
-        <Kpi etiqueta="Citas asistidas" valor={asistidas} />
-        <Kpi etiqueta="Procedimientos vendidos" valor={ventas} />
-        <Kpi etiqueta="Ingresos de caja" valor={r.negocio.ingresosCaja} unidad="cop" />
-        <Kpi etiqueta="Retorno real" valor={r.negocio.roasReal} unidad="ratio" />
-        <Kpi etiqueta="Plata en riesgo" valor={r.plataEnRiesgoTotal} unidad="cop" tono="mal" />
-      </Grid>
+      <section className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="Seis cifras">
+        {cifras.map((c, i) => <div key={c.n} className="pieza entra-zoom p-3.5" style={{ ['--retraso' as string]: `${i * 50}ms` }}><p className="text-[11.5px] text-texto-2">{c.n}</p><p className={`cifra num mt-1 text-[24px] ${c.mal ? 'text-mal' : ''}`}>{c.v}</p></div>)}
+      </section>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Panel titulo="Tres decisiones" ayuda="Las que más plata mueven. Cada una con el dato y la acción.">
-          <ol className="space-y-3">
-            {decisiones.map((h, i) => (
-              <li key={h.reglaId}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm font-semibold text-texto">
-                    {i + 1}. {h.titulo}
-                  </span>
-                  <span className="num shrink-0 text-sm font-semibold text-mal">{cop(h.plataEnRiesgo)}</span>
-                </div>
-                <p className="mt-0.5 text-xs text-texto-2">{h.explicacion}</p>
-                <p className="mt-1 text-xs text-texto">→ {h.acciones[0]}</p>
-              </li>
-            ))}
-          </ol>
-        </Panel>
+      <section className="pieza-marina entra mt-3 p-5" aria-label="Tres decisiones" style={{ ['--retraso' as string]: '200ms' }}>
+        <p className="rotulo text-celeste">Tres decisiones para esta semana</p>
+        <ol className="mt-2 flex flex-col gap-2.5">
+          {decisiones.map((h, i) => (
+            <li key={h.reglaId} className="grid grid-cols-[26px_1fr] gap-2.5">
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-[12px] font-bold text-marino">{i + 1}</span>
+              <div><p className="text-[15px] leading-snug text-white">{h.acciones[0]}</p><p className="mt-0.5 text-[12.5px] text-celeste">Porque: {h.titulo.toLowerCase()}. {h.plataEnRiesgo ? `Vale ${cop(h.plataEnRiesgo)}.` : ''}</p></div>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-        <Panel titulo="Dónde se pierde la plata" ayuda="Fuga del embudo en pesos">
-          {r.fugaMasCara ? (
-            <div>
-              <div className="text-sm text-texto">{ETIQUETA_PASO[r.fugaMasCara.paso]}</div>
-              <div className="num text-2xl font-semibold text-ojo">{cop(r.fugaMasCara.fugaCOP)}</div>
-              <p className="mt-1 text-xs text-texto-2">
-                {num(r.fugaMasCara.perdidos)} personas se pierden en este paso; solo pasa {pct(r.fugaMasCara.tasaPaso, 0)}.
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-texto-3">Sin fuga calculable.</p>
-          )}
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <Kpi etiqueta="Asistencia a citas" valor={r.negocio.showRate} unidad="porcentaje" />
-            <Kpi etiqueta="Cierre en consultorio" valor={r.negocio.cierreEnConsultorio} unidad="porcentaje" />
-            <Kpi etiqueta="Costo por cita asistida" valor={r.negocio.costoCitaAsistida} unidad="cop" />
-            <Kpi etiqueta="Retorno sobre margen" valor={r.negocio.poas} unidad="ratio" />
+      <section className="pieza entra mt-3 p-5" aria-label="Dónde se pierde la plata" style={{ ['--retraso' as string]: '280ms' }}>
+        <p className="rotulo">Dónde se pierde la plata</p>
+        <h2 className="mb-3 mt-0.5 text-[18px]">{r.fugaMasCara ? `La fuga más cara es en ${PASOS[r.fugaMasCara.paso].toLowerCase()}: ${cop(r.fugaMasCara.fugaCOP)}` : 'Sin fuga valorizada'}</h2>
+        <EmbudoBarras pasos={r.embudo} peor={r.fugaMasCara} compacto />
+      </section>
+
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-2" aria-label="Qué se prueba">
+        {pruebas.map((o, i) => (
+          <div key={o.titulo} className="pieza-hielo entra mt-3 p-4" style={{ ['--retraso' as string]: `${360 + i * 60}ms` }}>
+            <p className="rotulo text-cobalto">Qué se prueba · prioridad {o.ice}</p>
+            <h3 className="mt-0.5 text-[16px]">{o.titulo}</h3>
+            <p className="mt-1 text-[12.5px] leading-snug text-texto-2">{o.hipotesis}</p>
+            <p className="mt-1.5 text-[12.5px]"><span className="font-semibold">{o.prueba.duracionDias} días · {o.prueba.presupuestoCOP ? cop(o.prueba.presupuestoCOP) : 'sin costo'}.</span> Éxito si {o.prueba.metricaExito.toLowerCase()}. <span className="text-mal">Corte:</span> {o.prueba.criterioCorte}</p>
           </div>
-          <p className="mt-3 text-[11px] text-texto-3">
-            Retorno real {ratio(r.negocio.roasReal)}: por cada peso invertido entraron {num(r.negocio.roasReal, 1)} pesos a caja. Cuánto quedó después de pagar el procedimiento depende del margen.
-          </p>
-        </Panel>
-      </div>
-
-      <div className="mt-4">
-        <Panel titulo="Qué se prueba esta semana" ayuda="Cada prueba tiene criterio de corte: se sabe de antemano qué significa perder">
-          <ol className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            {proximos.map((o, i) => (
-              <li key={o.id} className="rounded border border-borde bg-superficie-2 p-3">
-                <div className="text-sm font-medium text-texto">
-                  {i + 1}. {o.titulo}
-                </div>
-                <p className="mt-1 text-xs text-texto-2">{o.prueba.metricaExito} · {o.prueba.duracionDias} días</p>
-                <p className="mt-1 text-[11px] text-texto-3">{o.prueba.criterioCorte}</p>
-              </li>
-            ))}
-          </ol>
-        </Panel>
-      </div>
-
-      <div className="mt-4 text-[11px] text-texto-3">
-        {r.contexto.huecos.length > 0 && <p>Días sin datos en el periodo: {r.contexto.huecos.join(", ")}.</p>}
-        <p>Los umbrales usados son provisionales hasta calibrarse con la historia de la cuenta. Ningún dato de este informe es estimado sin decirlo.</p>
-      </div>
-    </>
-  );
+        ))}
+      </section>
+      <p className="mt-4 text-[11px] text-texto-3">Todo dato ausente aparece como «—». Los desgloses no suman al total. Segmentos con menos de {r.privacidad.k} registros no se muestran.</p>
+    </div>
+  )
 }

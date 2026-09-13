@@ -98,3 +98,22 @@ export const AVISO_DESGLOSES =
 
 export const AVISO_VENTANA_ATRIBUCION = (ventana: string) =>
   `Ventana de atribución: ${ventana}. Cambiarla cambia los números.`;
+
+// ---------------------------------------------------------------------------
+// Alias usados por la interfaz (nombres cortos). Mismos valores públicos de arriba.
+// ---------------------------------------------------------------------------
+import type { Familia } from "@/lib/metrics/catalog";
+import { NOMBRE_FAMILIA } from "@/lib/metrics/catalog";
+import { ACCION_CUADRANTE } from "@/lib/metrics/creative";
+
+export const PASOS = ETIQUETA_PASO;
+export const PASOS_CORTO = ETIQUETA_PASO_CORTA;
+export const ANGULOS = ETIQUETA_ANGULO;
+export const SEVERIDADES = ETIQUETA_SEVERIDAD;
+export const NIVELES = NIVEL_CONSCIENCIA;
+export const NIVELES_CORTO: Record<1 | 2 | 3 | 4 | 5, string> = { 1: "Sin problema", 2: "Problema", 3: "Soluciones", 4: "Compara", 5: "Decidido" };
+export const CUADRANTES: Record<Cuadrante, { nombre: string; accion: string }> = Object.fromEntries(
+  (Object.keys(ETIQUETA_CUADRANTE) as Cuadrante[]).map((c) => [c, { nombre: ETIQUETA_CUADRANTE[c], accion: ACCION_CUADRANTE[c] }]),
+) as Record<Cuadrante, { nombre: string; accion: string }>;
+/** Áreas de hallazgo y familias del catálogo comparten nombre público. */
+export const AREAS: Record<Area | Familia, string> = { ...NOMBRE_FAMILIA, ...ETIQUETA_AREA };

@@ -6,7 +6,7 @@
  * Nadie sostiene 60 días una pieza que no le deja plata. Todo se ordena por
  * longevidad; nunca por métricas estimadas.
  */
-import type { Angulo, AnuncioCompetidor, Creativo } from "@/lib/adapters/types";
+import type { Angulo, AnuncioCompetidor, Competidor, Creativo } from "@/lib/adapters/types";
 import { ANGULOS } from "@/lib/adapters/types";
 import type { ConfigCliente } from "@/config/cliente";
 import type { Benchmarks } from "@/config/benchmarks";
@@ -89,6 +89,8 @@ export interface EspacioVacio {
   angulo: Angulo;
   nivelConsciencia: 1 | 2 | 3 | 4 | 5;
   competidoresQueLoAtacan: number;
+  /** Explicación en lenguaje de dueño para la interfaz. */
+  porQue: string;
 }
 
 /** Ángulos que nunca se proponen: riesgo de política. */
@@ -129,7 +131,15 @@ export function espaciosVacios(anuncios: ReadonlyArray<AnuncioCompetidor>, clien
       if (ANGULOS_EXCLUIDOS.has(angulo)) continue;
       for (const nivel of NIVELES_POR_ANGULO[angulo]) {
         const n = atacados.get(`${s.id}|${angulo}|${nivel}`)?.size ?? 0;
-        if (n === 0) salida.push({ servicio: s.id, angulo, nivelConsciencia: nivel, competidoresQueLoAtacan: 0 });
+        if (n === 0) {
+          salida.push({
+            servicio: s.id,
+            angulo,
+            nivelConsciencia: nivel,
+            competidoresQueLoAtacan: 0,
+            porQue: `Ningún competidor observado habla de ${s.nombre.toLowerCase()} con este ángulo a este nivel de consciencia: la subasta es más barata y el mensaje, nuevo.`,
+          });
+        }
       }
     }
   }
@@ -147,10 +157,16 @@ export function participacionVoz(propiosActivos: number, anuncios: ReadonlyArray
 
 export interface PerfilCompetidor {
   competidorId: string;
+  /** Alias de competidorId para la interfaz. */
+  id: string;
   nombre: string;
   anunciosActivos: number;
   anunciosTotales: number;
   ganadores: number;
+  /** Alias de ganadores (anuncios de 60+ días) para la interfaz. */
+  anuncios60: number;
+  seguidoresPagina: number | null;
+  urlPagina: string | null;
   angulos: Angulo[];
   servicios: string[];
   usaPrecio: number;
@@ -159,15 +175,20 @@ export interface PerfilCompetidor {
   diasMaximo: number;
 }
 
-export function perfilar(competidorId: string, anuncios: ReadonlyArray<AnuncioCompetidor>, b: Benchmarks): PerfilCompetidor {
+export function perfilar(competidorId: string, anuncios: ReadonlyArray<AnuncioCompetidor>, b: Benchmarks, ficha?: Competidor): PerfilCompetidor {
   const propios = anuncios.filter((a) => a.competidorId === competidorId);
   const activos = propios.filter((a) => a.activo);
+  const ganadores = propios.filter((a) => a.diasCorriendo >= b.diasGanadorProbado.valor).length;
   return {
     competidorId,
-    nombre: propios[0]?.nombreAnunciante ?? competidorId,
+    id: competidorId,
+    nombre: ficha?.nombre ?? propios[0]?.nombreAnunciante ?? competidorId,
     anunciosActivos: activos.length,
     anunciosTotales: propios.length,
-    ganadores: propios.filter((a) => a.diasCorriendo >= b.diasGanadorProbado.valor).length,
+    ganadores,
+    anuncios60: ganadores,
+    seguidoresPagina: ficha?.seguidoresPagina ?? null,
+    urlPagina: ficha?.urlPagina ?? null,
     angulos: [...new Set(propios.map((a) => a.anguloDetectado))],
     servicios: [...new Set(propios.map((a) => a.servicioDetectado).filter((s): s is string => s !== null))],
     usaPrecio: propios.filter((a) => a.usaPrecio).length,
@@ -181,12 +202,35 @@ export function perfilar(competidorId: string, anuncios: ReadonlyArray<AnuncioCo
 // Resultado completo
 // ---------------------------------------------------------------------------
 
+export interface CadenciaCompetidor {
+  competidorId: string;
+  nombre: string;
+  porSemana: number;
+}
+export interface VozCompetidor {
+  competidorId: string;
+  nombre: string;
+  porcentaje: number;
+}
+export interface MovimientoSemanal {
+  /** Lunes de la semana (YYYY-MM-DD). */
+  semana: string;
+  entradas: number;
+  salidas: number;
+}
+
 export interface ResultadoRadar {
   competidoresActivos: number;
   anunciosActivos: number;
   ganadores: AnuncioCompetidor[];
   cadencia: ReturnType<typeof cadenciaSemanal>;
   cadenciaPropia: number;
+  /** Cadencia por competidor (últimas 4 semanas), serializable para la interfaz. */
+  cadenciaPorCompetidor: CadenciaCompetidor[];
+  /** Participación de voz por competidor: anuncios activos / total activos de la competencia. Suma 1. */
+  vozPorCompetidor: VozCompetidor[];
+  /** Entradas y salidas por semana, últimas 8 semanas. */
+  movimientosSemanales: MovimientoSemanal[];
   movimientos: ReturnType<typeof entradasYSalidas>;
   mapaAngulos: DensidadAngulo[];
   espaciosVacios: EspacioVacio[];
@@ -197,27 +241,58 @@ export interface ResultadoRadar {
   variantesPromedio: number | null;
 }
 
+/** Lunes de la semana de una fecha. */
+function lunesDe(fecha: string): string {
+  const d = new Date(`${fecha}T12:00:00Z`).getUTCDay();
+  return sumarDias(fecha, -((d + 6) % 7));
+}
+
+export function movimientosSemanales(anuncios: ReadonlyArray<AnuncioCompetidor>, hoy: string, semanas = 8): MovimientoSemanal[] {
+  const inicio = lunesDe(sumarDias(hoy, -(semanas * 7 - 1)));
+  const salida: MovimientoSemanal[] = [];
+  for (let i = 0; i < semanas; i++) {
+    const semana = sumarDias(inicio, i * 7);
+    const fin = sumarDias(semana, 6);
+    salida.push({
+      semana,
+      entradas: anuncios.filter((a) => a.primeraVez >= semana && a.primeraVez <= fin).length,
+      salidas: anuncios.filter((a) => !a.activo && a.ultimaVez >= semana && a.ultimaVez <= fin).length,
+    });
+  }
+  return salida;
+}
+
 export function analizarRadar(
   anuncios: ReadonlyArray<AnuncioCompetidor>,
   creativosPropios: ReadonlyArray<Creativo>,
   cliente: ConfigCliente,
   b: Benchmarks,
   hoy: string,
+  fichas: ReadonlyArray<Competidor> = [],
 ): ResultadoRadar {
   const competidores = [...new Set(anuncios.map((a) => a.competidorId))];
   const desde = sumarDias(hoy, -(SEMANAS * 7 - 1));
   const activosPropios = creativosPropios.filter((c) => c.diasActivo > 0).length;
+  const fichaDe = (id: string) => fichas.find((f) => f.id === id);
+  const nombreDe = (id: string) => fichaDe(id)?.nombre ?? anuncios.find((a) => a.competidorId === id)?.nombreAnunciante ?? id;
+  const cadencia = cadenciaSemanal(anuncios, hoy);
+  const activosCompetencia = anuncios.filter((a) => a.activo);
   return {
     competidoresActivos: new Set(anuncios.filter((a) => a.activo).map((a) => a.competidorId)).size,
     anunciosActivos: anuncios.filter((a) => a.activo).length,
     ganadores: ganadoresProbados(anuncios, b),
-    cadencia: cadenciaSemanal(anuncios, hoy),
+    cadencia,
     cadenciaPropia: creativosPropios.filter((c) => c.fechaPrimerGasto >= desde).length / SEMANAS,
+    cadenciaPorCompetidor: competidores.map((id) => ({ competidorId: id, nombre: nombreDe(id), porSemana: cadencia.porCompetidor.get(id) ?? 0 })).sort((x, y) => y.porSemana - x.porSemana),
+    vozPorCompetidor: competidores
+      .map((id) => ({ competidorId: id, nombre: nombreDe(id), porcentaje: activosCompetencia.length ? activosCompetencia.filter((a) => a.competidorId === id).length / activosCompetencia.length : 0 }))
+      .sort((x, y) => y.porcentaje - x.porcentaje),
+    movimientosSemanales: movimientosSemanales(anuncios, hoy),
     movimientos: entradasYSalidas(anuncios, hoy),
     mapaAngulos: mapaAngulos(anuncios),
     espaciosVacios: espaciosVacios(anuncios, cliente),
     participacionVoz: participacionVoz(activosPropios, anuncios),
-    perfiles: competidores.map((id) => perfilar(id, anuncios, b)),
+    perfiles: competidores.map((id) => perfilar(id, anuncios, b, fichaDe(id))),
     usoPrecio: razon(anuncios.filter((a) => a.usaPrecio).length, anuncios.length),
     usoTestimonio: razon(anuncios.filter((a) => a.usaTestimonio).length, anuncios.length),
     variantesPromedio: razon(anuncios.reduce((s, a) => s + a.variantesDelConcepto, 0), anuncios.length),
