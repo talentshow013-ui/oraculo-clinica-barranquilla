@@ -9,6 +9,11 @@
  *
  * Un 10 % de fuga en el paso 6 puede valer 40 veces más que un 40 % en el
  * paso 2. Eso solo se ve en pesos. Todo se ordena por plata. (§7.2)
+ *
+ * Refinamiento sobre §7.2: el paso impresión→clic NO se valoriza. Una impresión
+ * que no hace clic no es un contacto perdido, es el costo normal de comprar
+ * atención; se mide con costo por mil y tasa de clics. La fuga en pesos empieza
+ * en el primer contacto pagado (clic→conversación).
  */
 import type { Paso, RegistroEmbudo } from "@/lib/adapters/types";
 import { PASOS } from "@/lib/adapters/types";
@@ -37,6 +42,8 @@ export interface PasoEmbudo {
 }
 
 const INDICE_CITA_ASISTIDA = PASOS.indexOf("cita_asistida");
+/** Desde aquí existe un contacto pagado que se puede perder. Impresión→clic es exposición. */
+const INDICE_PRIMER_CONTACTO = PASOS.indexOf("conversacion");
 
 /** Suma cantidad de un paso. 0 si no hay registros (medido: nadie llegó). */
 export function cantidadPaso(registros: ReadonlyArray<RegistroEmbudo>, paso: Paso): number {
@@ -94,7 +101,7 @@ export function construirEmbudo(
 
     let fugaCOP: number | null = null;
     let metodo: PasoEmbudo["metodoValorizacion"] = "no_aplica";
-    if (perdidos !== null) {
+    if (perdidos !== null && i >= INDICE_PRIMER_CONTACTO) {
       // La fuga que llega HASTA cita_asistida (incluida la inasistencia) se perdió como
       // contacto: vale lo que costó. La fuga posterior se perdió como venta: vale el margen.
       if (i <= INDICE_CITA_ASISTIDA) {

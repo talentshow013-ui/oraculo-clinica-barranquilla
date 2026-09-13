@@ -132,6 +132,21 @@ describe("R11 segmento que consume sin producir", () => {
     esperarHallazgoCompleto(h);
     expect(h!.plataEnRiesgo).toBe(150_000);
   });
+  test("la cuota se calcula por dimensión: las filas de género no diluyen a las de edad", () => {
+    const l = lote({
+      insights: serieAnuncio("ad_1"),
+      desgloses: [
+        desglose({ dimension: "edad", valor: "25-34", gasto: 850_000, resultados: 50 }),
+        desglose({ dimension: "edad", valor: "65+", gasto: 150_000, resultados: 0 }),
+        desglose({ dimension: "genero", valor: "mujer", gasto: 800_000, resultados: 45 }),
+        desglose({ dimension: "genero", valor: "hombre", gasto: 200_000, resultados: 5 }),
+      ],
+    });
+    const h = correr("R11", l);
+    esperarHallazgoCompleto(h);
+    expect(h!.plataEnRiesgo).toBe(150_000);
+  });
+
   test("ignora segmentos ocultos por privacidad (n < 5)", () => {
     const l = lote({
       insights: serieAnuncio("ad_1"),

@@ -69,6 +69,14 @@ describe("construirEmbudo", () => {
     expect(pasos[5]!.costoUnitario).toBeCloseTo(GASTO / 12); // por cita asistida
   });
 
+  test("impresión→clic es exposición, no contacto: no se valoriza como fuga", () => {
+    expect(pasos[1]!.fugaCOP).toBeNull();
+    expect(pasos[1]!.metodoValorizacion).toBe("no_aplica");
+    expect(pasos[1]!.perdidos).toBe(900);
+    // clic→conversación sí: clics pagados que no produjeron contacto
+    expect(pasos[2]!.fugaCOP).toBeCloseTo(50 * (GASTO / 100));
+  });
+
   test("fuga ANTES de cita_asistida se valoriza al costo unitario del paso anterior", () => {
     // De 20 agendadas a 12 asistidas se pierden 8; cada agendada costó 60.000
     const asistida = pasos[5]!;
@@ -98,7 +106,7 @@ describe("construirEmbudo", () => {
   });
 
   test("fugaMasCara elige por pesos, no por porcentaje", () => {
-    // 40 % de fuga en clic (900 perdidos × 1.200 c/u = 1.080.000) vs 50 % en venta (6 × 500.000 = 3.000.000)
+    // conversación: 50 × 12.000 = 600.000 · venta: 6 × 500.000 = 3.000.000 → gana venta
     const peor = fugaMasCara(pasos);
     expect(peor?.paso).toBe("venta");
   });

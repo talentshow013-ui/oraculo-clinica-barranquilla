@@ -33,6 +33,11 @@ describe("validarSinPII — la carga falla ruidosamente", () => {
       expect((e as ErrorDatoSensible).ruta).toBe("embudo[0].correo");
     }
   });
+  test("el nombre de una campaña o anuncio (contrato) está permitido; el de un registro de embudo no", () => {
+    expect(() => validarSinPII({ insights: [{ nombre: "Toxina · Médico explica" }], competidores: [{ nombre: "Clínica X" }] })).not.toThrow();
+    expect(() => validarSinPII({ embudo: [{ nombre: "María" }] })).toThrow(ErrorDatoSensible);
+  });
+
   test("la lista de prohibidos incluye los básicos", () => {
     for (const c of ["nombre", "cedula", "telefono", "email", "direccion", "historia"]) {
       expect(CAMPOS_PROHIBIDOS).toContain(c);

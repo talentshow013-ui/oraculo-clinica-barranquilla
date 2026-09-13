@@ -76,7 +76,7 @@ export const R24: Regla = {
       reglaId: "R24",
       area: "competencia",
       severidad: "media",
-      titulo: `La competencia lanza ${cadenciaCompetencia.toFixed(1)} anuncios nuevos por semana; la cuenta, ${cadenciaPropia.toFixed(1)}`,
+      titulo: `Cada competidor lanza ${cadenciaCompetencia.toFixed(1)} anuncios nuevos por semana; la cuenta, ${cadenciaPropia.toFixed(1)}`,
       explicacion:
         "El que prueba más rápido aprende más rápido y encuentra primero el mensaje que funciona. No es cuestión de gastar más: es cuestión de producir y probar con una cadencia que el mercado ya está sosteniendo.",
       evidencia: [

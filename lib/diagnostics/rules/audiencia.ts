@@ -83,15 +83,20 @@ export const R11: Regla = {
   area: "audiencia",
   evaluar(ctx) {
     const b = ctx.benchmarks;
-    const demog = porDimension(ctx.desglosesVisibles, ["edad", "genero", "edad_genero"]);
-    if (demog.length === 0) return null;
-    const total = demog.reduce((s, d) => s + d.gasto, 0);
-    if (total === 0) return null;
-    const porSeg = sumarPorValor(demog);
-    const culpables = [...porSeg.entries()].filter(
-      ([, a]) => a.resultados === 0 && a.gasto / total >= b.segmentoConsumoSinResultado.valor,
-    );
+    // Cada dimensión tiene su propio total: mezclar edad con género diluye las cuotas.
+    const culpables: [string, { gasto: number; resultados: number; impresiones: number }][] = [];
+    let totalReferencia = 0;
+    for (const dim of ["edad", "genero", "edad_genero"] as const) {
+      const filas = porDimension(ctx.desglosesVisibles, [dim]);
+      const total = filas.reduce((s, d) => s + d.gasto, 0);
+      if (total === 0) continue;
+      totalReferencia = Math.max(totalReferencia, total);
+      for (const [valor, a] of sumarPorValor(filas)) {
+        if (a.resultados === 0 && a.gasto / total >= b.segmentoConsumoSinResultado.valor) culpables.push([valor, a]);
+      }
+    }
     if (culpables.length === 0) return null;
+    const total = totalReferencia;
     const gasto = culpables.reduce((s, [, a]) => s + a.gasto, 0);
     return {
       reglaId: "R11",

@@ -61,6 +61,16 @@ function normalizar(clave: string): string {
 const PROHIBIDOS_NORMALIZADOS = new Set(CAMPOS_PROHIBIDOS.map(normalizar));
 
 /**
+ * Rutas del contrato donde "nombre" es el nombre de una ENTIDAD de la
+ * plataforma (campaña, conjunto, anuncio, competidor), nunca de una persona.
+ * Todo lo demás con esa clave se rechaza; en particular, nada en `embudo`.
+ */
+const RUTAS_PERMITIDAS: ReadonlyArray<RegExp> = [
+  /^(insights|desgloses)\[\d+\]\.nombre$/,
+  /^competidores\[\d+\]\.nombre$/,
+];
+
+/**
  * Guardián de ingesta. Recorre cualquier objeto y lanza ErrorDatoSensible si
  * encuentra una clave prohibida. Devuelve el mismo objeto si está limpio.
  */
@@ -72,7 +82,8 @@ export function validarSinPII<T>(objeto: T, ruta = ""): T {
   if (objeto !== null && typeof objeto === "object") {
     for (const [clave, valor] of Object.entries(objeto as Record<string, unknown>)) {
       const rutaHija = ruta ? `${ruta}.${clave}` : clave;
-      if (PROHIBIDOS_NORMALIZADOS.has(normalizar(clave))) {
+      const permitida = RUTAS_PERMITIDAS.some((re) => re.test(rutaHija));
+      if (!permitida && PROHIBIDOS_NORMALIZADOS.has(normalizar(clave))) {
         throw new ErrorDatoSensible(rutaHija);
       }
       validarSinPII(valor, rutaHija);

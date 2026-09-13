@@ -8,17 +8,37 @@ import { delta, razon } from "@/lib/metrics/core";
 import { diasEntre } from "@/lib/format/fechas";
 import { pct } from "@/lib/format";
 import { ev, evCop, evNum, evPct, notaUmbral, pesos } from "./util";
+import type { ContextoDiagnostico } from "@/lib/diagnostics/engine";
+import type { PasoEmbudo } from "@/lib/metrics/funnel";
+import type { RegistroEmbudo } from "@/lib/adapters/types";
+
+/** Citas agendadas mínimas en la ventana reciente para juzgar con ella; si no, se usa todo el periodo. */
+const MINIMO_CITAS_VENTANA = 20;
+
+/**
+ * Las reglas de agenda miran la quincena reciente (una caída de 25 días se
+ * diluye en 180) y caen al periodo completo cuando la ventana no tiene señal.
+ */
+function baseEmbudo(ctx: ContextoDiagnostico): { registros: RegistroEmbudo[]; pasos: PasoEmbudo[]; etiqueta: string } {
+  const { reciente } = ctx.ventanas;
+  const registros = ctx.lote.embudo.filter((r) => r.fecha >= reciente.desde && r.fecha <= reciente.hasta);
+  if (cantidadPaso(registros, "cita_agendada") >= MINIMO_CITAS_VENTANA) {
+    return { registros, pasos: ctx.embudoReciente, etiqueta: "últimos 14 días" };
+  }
+  return { registros: ctx.lote.embudo, pasos: ctx.embudo, etiqueta: "periodo completo" };
+}
 
 export const R14: Regla = {
   id: "R14",
   area: "embudo",
   evaluar(ctx) {
     const b = ctx.benchmarks;
-    const leads = cantidadPaso(ctx.lote.embudo, "lead_calificado");
-    const agendadas = cantidadPaso(ctx.lote.embudo, "cita_agendada");
+    const base = baseEmbudo(ctx);
+    const leads = cantidadPaso(base.registros, "lead_calificado");
+    const agendadas = cantidadPaso(base.registros, "cita_agendada");
     const tasa = razon(agendadas, leads);
     if (tasa === null || tasa >= b.tasaAgendamientoMinima.valor) return null;
-    const paso = ctx.embudo.find((p) => p.paso === "cita_agendada");
+    const paso = base.pasos.find((p) => p.paso === "cita_agendada");
     return {
       reglaId: "R14",
       area: "embudo",
@@ -27,6 +47,7 @@ export const R14: Regla = {
       explicacion:
         "Hay gente calificada que quiere ir y no termina agendada. Eso es agenda llena, cierre en chat lento o cupos que no se ofrecen a tiempo. Es la fuga más absurda: ya se pagó por traerlos y ya dijeron que sí.",
       evidencia: [
+        ev("Ventana", base.etiqueta),
         evNum("Leads calificados", leads),
         evNum("Citas agendadas", agendadas),
         evPct("Tasa de agendamiento", tasa),
@@ -49,12 +70,13 @@ export const R15: Regla = {
   area: "embudo",
   evaluar(ctx) {
     const b = ctx.benchmarks;
-    const agendadas = cantidadPaso(ctx.lote.embudo, "cita_agendada");
-    const asistidas = cantidadPaso(ctx.lote.embudo, "cita_asistida");
+    const base = baseEmbudo(ctx);
+    const agendadas = cantidadPaso(base.registros, "cita_agendada");
+    const asistidas = cantidadPaso(base.registros, "cita_asistida");
     const show = razon(asistidas, agendadas);
     if (show === null || show >= b.showRateMinimo.valor) return null;
     const inasistencia = 1 - show;
-    const paso = ctx.embudo.find((p) => p.paso === "cita_asistida");
+    const paso = base.pasos.find((p) => p.paso === "cita_asistida");
     return {
       reglaId: "R15",
       area: "embudo",
@@ -63,10 +85,11 @@ export const R15: Regla = {
       explicacion:
         "Cada persona que no llega ya te costó toda la inversión de traerla, y además dejó un cupo vacío que nadie más pudo usar. Se pierde dos veces. Esta es, casi siempre, la fuga más cara de una clínica y la más barata de arreglar: es proceso, no pauta.",
       evidencia: [
+        ev("Ventana", base.etiqueta),
         evNum("Citas agendadas", agendadas),
         evNum("Citas asistidas", asistidas),
         evPct("Asistencia", show),
-        evCop("Costo por cita agendada", ctx.embudo.find((p) => p.paso === "cita_agendada")?.costoUnitario ?? null),
+        evCop("Costo por cita agendada", base.pasos.find((p) => p.paso === "cita_agendada")?.costoUnitario ?? null),
         evCop("Fuga en pesos por inasistencia", paso?.fugaCOP ?? null),
       ],
       acciones: [
@@ -86,11 +109,12 @@ export const R16: Regla = {
   area: "embudo",
   evaluar(ctx) {
     const b = ctx.benchmarks;
-    const asistidas = cantidadPaso(ctx.lote.embudo, "cita_asistida");
-    const ventas = cantidadPaso(ctx.lote.embudo, "venta");
+    const base = baseEmbudo(ctx);
+    const asistidas = cantidadPaso(base.registros, "cita_asistida");
+    const ventas = cantidadPaso(base.registros, "venta");
     const cierre = razon(ventas, asistidas);
     if (cierre === null || cierre >= b.cierreConsultorioMinimo.valor) return null;
-    const paso = ctx.embudo.find((p) => p.paso === "venta");
+    const paso = base.pasos.find((p) => p.paso === "venta");
     return {
       reglaId: "R16",
       area: "embudo",
@@ -99,6 +123,7 @@ export const R16: Regla = {
       explicacion:
         "La gente llegó. La pauta hizo su trabajo. Si no compran, el problema está en la consulta: el precio no se presentó bien, la propuesta no resolvió la duda o no hubo una razón para decidir hoy. Ninguna campaña arregla esto.",
       evidencia: [
+        ev("Ventana", base.etiqueta),
         evNum("Citas asistidas", asistidas),
         evNum("Ventas", ventas),
         evPct("Cierre en consultorio", cierre),
