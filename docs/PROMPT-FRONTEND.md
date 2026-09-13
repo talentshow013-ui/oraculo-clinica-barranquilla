@@ -15,7 +15,9 @@ para el dueño de una clínica estética en Barranquilla. Ya está construido y 
   valorizado en pesos, laboratorio creativo, radar de competencia, oportunidades, 7 lentes,
   privacidad. **No lo toques.** 201 tests lo protegen.
 - `lib/datos.ts` — la única puerta de acceso: `await motor()` devuelve `ResultadoMotor` con todo
-  lo que una pantalla necesita.
+  lo que una pantalla necesita. Para ver el radar con datos reales: `npm run radar:capturar -- --q "clínica estética barranquilla"`
+  y luego `npm run importar-radar -- datos/radar-ui.json --destino datos/seed.json` (regenera el seed con
+  `npm run seed` si quieres volver a los sintéticos).
 - `components/ui.tsx` — primitivas propias: `Kpi`, `Panel`, `Etiqueta`, `Barra`, `Vacio`, `Celda`,
   `Th`, `Tabla`, `Aviso`, `Titulo`, `Grid`, `formatear()`.
 - `components/sidebar.tsx`, `components/cabecera.tsx` — navegación de 4 grupos y barra de estado.
@@ -35,6 +37,16 @@ Corre con `npm install && npm run seed && npm run dev` → `http://localhost:300
 4. **Responsive** razonable (≥ 1024 px prioridad; tablet aceptable).
 5. **Interacciones puntuales** con `"use client"` solo donde haya interacción real (ordenar tablas,
    expandir un hallazgo, tooltips). Las páginas siguen siendo Server Components.
+6. **Galería del radar (nuevo).** Los anuncios de la competencia traen el creativo descargado en
+   `a.urlMedia` como ruta local (`/radar/<id>.jpg`, servida desde `public/radar/`). En `/competencia`
+   y `/biblioteca` muestra la miniatura de cada anuncio (`<img src={a.urlMedia}>` cuando empieza por
+   `/radar/`; si es `null` o una URL externa caducable, muestra un marco vacío con el tipo de medio).
+   Añade en `/competencia` una vista de **galería de ganadores probados**: cuadrícula de creativos con
+   una insignia de días al aire, variantes (`x3`), ángulo y CTA. Es lo que el dueño quiere VER.
+7. **Perfil de competidor (nuevo).** `r.lote.competidores[]` ahora trae `seguidoresPagina` (número o
+   `null`) y `urlPagina`. Muéstralos en la tabla de competidores; `null` → `—`.
+8. **Informe imprimible.** `/informe` debe verse bien en `@media print` (una página carta, fondo claro
+   o tinta ahorrada, sin sidebar). El dueño se lo lleva a la reunión en papel o PDF.
 
 ## 3. Reglas que NO se negocian (la constitución del proyecto)
 
@@ -120,7 +132,7 @@ Clases Tailwind disponibles: `bg-fondo`, `bg-superficie`, `text-texto-2`, `borde
 
 ## 7. Criterios de aceptación (los verifico yo)
 
-- `npm run typecheck` limpio · `npm test` verde (201+) · `npm run build` sin errores.
+- `npm run typecheck` limpio · `npm test` verde (224+) · `npm run build` sin errores.
 - Las 13 rutas responden 200 con el seed (`npm run seed`).
 - Ninguna cifra ausente aparece como `0`; aparece `—`.
 - El test de jerga sigue verde.
