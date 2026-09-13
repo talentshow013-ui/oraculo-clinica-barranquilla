@@ -1,0 +1,93 @@
+import { describe, expect, test } from "vitest";
+import type { LoteDatos } from "@/lib/adapters/types";
+import { cliente } from "@/config/cliente";
+import { benchmarks } from "@/config/benchmarks";
+import { construirContexto, ejecutarReglas, type Hallazgo, type Regla } from "@/lib/diagnostics/engine";
+
+const loteVacio: LoteDatos = {
+  insights: [],
+  desgloses: [],
+  creativos: [],
+  embudo: [],
+  competidores: [],
+  anunciosCompetencia: [],
+  experimentos: [],
+  meta: { generadoEn: "2026-09-13T10:00:00-05:00", desde: "2026-08-01", hasta: "2026-09-12", origen: "seed", huecos: [], advertencias: [] },
+};
+
+function hallazgo(id: string, plata: number | null): Hallazgo {
+  return {
+    reglaId: id,
+    area: "entrega",
+    severidad: "media",
+    titulo: `Hallazgo ${id}`,
+    explicacion: "x",
+    evidencia: [{ etiqueta: "dato", valor: "1" }],
+    acciones: ["hacer algo"],
+    plataEnRiesgo: plata,
+    metricas: [],
+  };
+}
+
+describe("ejecutarReglas", () => {
+  const ctx = construirContexto(loteVacio, cliente, benchmarks, "2026-09-12");
+
+  test("una regla que lanza no tumba las demás y queda registrada", () => {
+    const reglas: Regla[] = [
+      { id: "R_OK", area: "entrega", evaluar: () => hallazgo("R_OK", 100) },
+      {
+        id: "R_BOOM",
+        area: "entrega",
+        evaluar: () => {
+          throw new Error("explotó");
+        },
+      },
+      { id: "R_OK2", area: "entrega", evaluar: () => hallazgo("R_OK2", 200) },
+    ];
+    const r = ejecutarReglas(ctx, reglas);
+    expect(r.hallazgos).toHaveLength(2);
+    expect(r.errores).toHaveLength(1);
+    expect(r.errores[0]?.reglaId).toBe("R_BOOM");
+    expect(r.errores[0]?.mensaje).toContain("explotó");
+  });
+
+  test("los hallazgos se ordenan por plata, no por severidad; null al final", () => {
+    const reglas: Regla[] = [
+      { id: "A", area: "entrega", evaluar: () => ({ ...hallazgo("A", 80_000), severidad: "alta" }) },
+      { id: "B", area: "entrega", evaluar: () => ({ ...hallazgo("B", 4_000_000), severidad: "media" }) },
+      { id: "C", area: "entrega", evaluar: () => hallazgo("C", null) },
+      { id: "D", area: "entrega", evaluar: () => hallazgo("D", 500_000) },
+    ];
+    const r = ejecutarReglas(ctx, reglas);
+    expect(r.hallazgos.map((h) => h.reglaId)).toEqual(["B", "D", "A", "C"]);
+  });
+
+  test("una regla que devuelve null no produce hallazgo", () => {
+    const r = ejecutarReglas(ctx, [{ id: "N", area: "entrega", evaluar: () => null }]);
+    expect(r.hallazgos).toHaveLength(0);
+    expect(r.errores).toHaveLength(0);
+  });
+
+  test("plataEnRiesgo total suma solo los conocidos", () => {
+    const reglas: Regla[] = [
+      { id: "A", area: "entrega", evaluar: () => hallazgo("A", 100) },
+      { id: "C", area: "entrega", evaluar: () => hallazgo("C", null) },
+    ];
+    expect(ejecutarReglas(ctx, reglas).plataEnRiesgoTotal).toBe(100);
+  });
+});
+
+describe("construirContexto", () => {
+  test("las ventanas reciente y previa tienen el mismo tamaño", () => {
+    const ctx = construirContexto(loteVacio, cliente, benchmarks, "2026-09-12");
+    expect(ctx.ventanas.reciente).toEqual({ desde: "2026-08-30", hasta: "2026-09-12" });
+    expect(ctx.ventanas.previa).toEqual({ desde: "2026-08-16", hasta: "2026-08-29" });
+  });
+
+  test("con lote vacío los agregados son 0 y las razones null", () => {
+    const ctx = construirContexto(loteVacio, cliente, benchmarks, "2026-09-12");
+    expect(ctx.total.gasto).toBe(0);
+    expect(ctx.negocio.cac).toBeNull();
+    expect(ctx.embudo).toHaveLength(8);
+  });
+});

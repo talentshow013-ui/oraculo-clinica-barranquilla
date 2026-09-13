@@ -65,6 +65,14 @@ export const benchmarks = {
   volatilidadCpaMaxima: provisional(0.5, "criterio interno"),
   /** Conjuntos que comparten ≥ esta fracción de audiencia (por nombre/segmento) compiten entre sí. */
   solapamientoConjuntos: provisional(0.5, "criterio interno"),
+  /** Citas agendadas / leads calificados por debajo de esto: cuello de botella en agenda o cierre en chat. */
+  tasaAgendamientoMinima: provisional(0.5, "operación de clínicas estéticas"),
+  /** Conversaciones / clics de enlace por debajo de esto: los clics no llevan a ninguna parte. */
+  tasaConversacionMinima: provisional(0.1, "criterio interno"),
+  /** Índice de fatiga a partir del cual se declara fatiga real. */
+  indiceFatigaAlerta: provisional(0.4, "criterio interno"),
+  /** Cobertura mínima de datos de agenda/ventas para hablar de retorno real. */
+  coberturaVentasMinima: provisional(0.5, "criterio interno"),
 } as const satisfies Record<string, Umbral>;
 
 export type Benchmarks = typeof benchmarks;
