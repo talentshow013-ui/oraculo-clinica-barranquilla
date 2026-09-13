@@ -39,6 +39,12 @@ Por ejemplo: `/oraculo-pregunta ¿subimos el presupuesto de la campaña facial?`
 | Informe | Una página para la reunión de dirección |
 | Fuentes | Estado y calidad de los datos |
 
+### Varias cuentas publicitarias
+
+La clínica puede tener varias cuentas de anuncios. Arriba a la izquierda se elige **una**; todo
+el panel se recalcula para esa cuenta (nunca se suman entre sí). Las cuentas se definen en
+`config/cliente.ts` (`cuentasPublicitarias`); la que aparece sin pauta se muestra "sin pauta".
+
 ### Tres cosas que el panel hace a propósito
 
 - Cuando un dato no existe muestra **—**, nunca un cero. "No hubo" y "no sabemos" son cosas distintas.
@@ -54,7 +60,7 @@ Por ejemplo: `/oraculo-pregunta ¿subimos el presupuesto de la campaña facial?`
 npm install
 npm run seed          # datos de demostración (180 días, deterministas)
 npm run typecheck     # TypeScript strict
-npm test              # 224 tests (Vitest)
+npm test              # 233 tests (Vitest)
 npm run verificar     # corre el motor sin interfaz e imprime hallazgos por plata
 npm run radar:capturar -- --q "clínica estética barranquilla"   # radar de competencia (Biblioteca pública, gratis)
 npm run importar-radar -- datos/radar-ui.json                   # fusiona el radar en datos/lote.json
@@ -69,8 +75,8 @@ datos de demostración y los reales pasan por el mismo esquema; conectar la fuen
 Estructura:
 
 ```
-app/(panel)/*        13 pantallas (Server Components)
-components/          primitivas propias (sin librería de componentes)
+app/(panel)/*        13 pantallas (Server Components), diseño del agente de frontend integrado
+components/          primitivas propias, gráficas SVG propias, selector de cuenta (cookie), sin librerías de UI
 lib/adapters/        contrato Zod + fuentes (demostración, archivo) + mapeadores del radar (Biblioteca UI, Apify)
 lib/metrics/         núcleo (razones nulables, solo suma crudos), embudo, creativos, catálogo (145), resolver
 lib/diagnostics/     motor + 26 reglas deterministas

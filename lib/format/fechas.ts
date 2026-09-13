@@ -79,3 +79,17 @@ export function semanaISO(fecha: string): string {
   const semana = Math.ceil(((d.getTime() - inicioAnio) / DIA_MS + 1) / 7);
   return `${d.getUTCFullYear()}-W${String(semana).padStart(2, "0")}`;
 }
+
+// ---------------------------------------------------------------------------
+// Presentación de fechas para la interfaz (es-CO, Bogotá)
+// ---------------------------------------------------------------------------
+const mediodia = (ymd: string) => new Date(`${ymd}T12:00:00-05:00`);
+/** "2026-09-12" → "12 sept" */
+export const fechaCorta = (ymd: string) => mediodia(ymd).toLocaleDateString("es-CO", { day: "numeric", month: "short", timeZone: ZONA }).replace(".", "");
+/** "2026-09-12" → "sábado, 12 de septiembre" */
+export const fechaLarga = (ymd: string) => mediodia(ymd).toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", timeZone: ZONA });
+/** ISO → "12 sept, 6:00 p. m." · null → "—" */
+export const fechaHora = (iso: string | null | undefined) =>
+  iso ? new Date(iso).toLocaleString("es-CO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: ZONA }).replace(".", "") : "—";
+/** "2026-09-12" → "sáb" */
+export const diaSemanaCorto = (ymd: string) => mediodia(ymd).toLocaleDateString("es-CO", { weekday: "short", timeZone: ZONA }).replace(".", "");

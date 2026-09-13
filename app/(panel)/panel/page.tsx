@@ -1,109 +1,96 @@
-import Link from "next/link";
-import { motor } from "@/lib/datos";
-import { cop, pct } from "@/lib/format";
-import { ETIQUETA_PASO, ETIQUETA_AREA, METODO_VALORIZACION } from "@/lib/format/etiquetas";
-import { NOMBRE_REGLA } from "@/lib/diagnostics/rules";
-import { Aviso, Etiqueta, Grid, Kpi, Panel, Titulo, tonoPorDelta, Vacio } from "@/components/ui";
-import { delta } from "@/lib/metrics/core";
+import Link from 'next/link'
+import type { CSSProperties } from 'react'
+import { motor } from '@/lib/datos'
+import { cop, num } from '@/lib/format'
+import { PASOS, SEVERIDADES } from '@/lib/format/etiquetas'
+import { Etiqueta, Grid, Kpi, Panel, Titulo, tonoSeveridad } from '@/components/ui'
+import Contar from '@/components/cliente/contar'
+import EmbudoBarras from '@/components/graficas/embudo'
+import Serie from '@/components/graficas/serie'
 
+/** CENTRO DE MANDO: en cinco segundos, plata en riesgo, 3–5 hallazgos con acción, la fuga más cara y el próximo experimento. */
 export default async function CentroDeMando() {
-  const r = await motor();
-  const top = r.hallazgos.slice(0, 5);
-  const fuga = r.fugaMasCara;
-
+  const r = await motor()
+  const top = r.hallazgos.slice(0, 5)
+  const experimento = r.oportunidades.find((o) => !o.yaProbada) ?? r.oportunidades[0]
   return (
     <>
-      <Titulo sub={`Estado de la cuenta al ${r.hoy}. Todo lo que hay abajo está ordenado por plata.`}>Centro de Mando</Titulo>
+      <Titulo rotulo={`Centro de mando · ${r.cliente.nombre}`} extra={<p className="text-[12.5px] text-texto-2">{r.hallazgos.length} hallazgos abiertos · {r.oportunidades.filter((o) => !o.yaProbada).length} pruebas por hacer</p>}>Cómo va y qué hacer hoy</Titulo>
 
-      {r.lote.meta.advertencias.map((a) => (
-        <div key={a} className="mb-3">
-          <Aviso tono="neutro">{a}</Aviso>
-        </div>
-      ))}
-
-      <Grid cols={6}>
-        {r.maestras.map((m) => {
-          const d = m.valorReciente !== undefined ? delta(m.valorReciente ?? null, m.valorPrevio) : undefined;
-          return <Kpi key={m.id} etiqueta={m.nombre} valor={m.valor} unidad={m.unidad} delta={d} tono={tonoPorDelta(d, m.mejorEs)} ayuda={`${m.formula} — ${m.porQueImporta}`} />;
-        })}
-      </Grid>
-
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <Panel titulo="Plata en riesgo" ayuda="Suma de los hallazgos que se pudieron valorizar" className="xl:col-span-1">
-          <div className="num text-3xl font-semibold text-mal">{cop(r.plataEnRiesgoTotal)}</div>
-          <p className="mt-1 text-xs text-texto-3">
-            {r.hallazgos.length} hallazgos abiertos · {r.hallazgos.filter((h) => h.plataEnRiesgo === null).length} sin valorizar (se muestran, no se inventan)
-          </p>
-          {fuga && (
-            <div className="mt-4 border-t border-borde pt-3">
-              <div className="text-[11px] uppercase tracking-wider text-texto-3">Fuga más cara del embudo</div>
-              <div className="mt-1 text-sm text-texto">{ETIQUETA_PASO[fuga.paso]}</div>
-              <div className="num text-xl font-semibold text-ojo">{cop(fuga.fugaCOP)}</div>
-              <div className="text-xs text-texto-3">
-                {fuga.perdidos} personas perdidas · tasa de paso {pct(fuga.tasaPaso, 0)} · {METODO_VALORIZACION[fuga.metodoValorizacion]}
-              </div>
-              <Link href="/embudo" className="mt-2 inline-block text-xs text-acento hover:underline">
-                Ver el embudo completo →
-              </Link>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+        <section className="pieza-marina rejilla-marina entra relative overflow-hidden p-5 sm:p-6 lg:col-span-7" aria-label="Plata en riesgo">
+          <div aria-hidden="true" className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-mal/30 blur-3xl" />
+          <div className="relative">
+            <p className="rotulo text-celeste">Plata en riesgo · suma de los hallazgos abiertos</p>
+            <p className="cifra num mt-2 text-[clamp(44px,6vw,84px)] text-white"><Contar valor={r.plataEnRiesgoTotal} unidad="cop" duracion={1500} /></p>
+            <p className="mt-2 max-w-[52ch] text-[13.5px] leading-snug text-celeste">Es lo que se está perdiendo en el periodo entre citas que no llegan, pauta fuera del radio y del horario, y un creativo agotado. Cada peso tiene su hallazgo y su acción abajo.</p>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <Dato n={r.fugaMasCara ? cop(r.fugaMasCara.fugaCOP) : '—'} t={r.fugaMasCara ? `fuga más cara · ${PASOS[r.fugaMasCara.paso].toLowerCase()}` : 'fuga más cara'} />
+              <Dato n={String(r.hallazgos.filter((h) => h.severidad === 'alta').length)} t="hallazgos críticos o altos" />
+              <Dato n={r.negocio.poas == null ? '—' : `${r.negocio.poas.toFixed(1).replace('.', ',')}×`} t="retorno sobre margen" />
             </div>
-          )}
-        </Panel>
+          </div>
+        </section>
 
-        <Panel titulo="Qué hacer esta semana" ayuda="Los cinco hallazgos que más plata mueven" className="xl:col-span-2">
-          {top.length === 0 ? (
-            <Vacio mensaje="Sin hallazgos. O la cuenta está impecable, o faltan datos: revisa Fuentes." />
-          ) : (
-            <ol className="space-y-3">
-              {top.map((h, i) => (
-                <li key={h.reglaId} className="flex gap-3">
-                  <div className="num w-6 shrink-0 text-right text-lg font-semibold text-texto-3">{i + 1}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium text-texto">{h.titulo}</span>
-                      <Etiqueta tono={h.severidad === "alta" ? "mal" : h.severidad === "media" ? "ojo" : "neutro"}>{ETIQUETA_AREA[h.area]}</Etiqueta>
-                    </div>
-                    <div className="mt-0.5 text-xs text-texto-2">{h.acciones[0]}</div>
-                    <div className="mt-0.5 text-[11px] text-texto-3">{NOMBRE_REGLA[h.reglaId]}</div>
-                  </div>
-                  <div className="num shrink-0 text-right text-sm font-semibold text-mal">{cop(h.plataEnRiesgo)}</div>
-                </li>
-              ))}
-            </ol>
-          )}
-          <Link href="/diagnostico" className="mt-3 inline-block text-xs text-acento hover:underline">
-            Ver los {r.hallazgos.length} hallazgos con evidencia →
-          </Link>
-        </Panel>
+        <div className="flex flex-col gap-3 lg:col-span-5">
+          <Panel rotulo="Próximo experimento" titulo={experimento?.titulo ?? '—'} tono="hielo" retraso={120} className="flex-1">
+            {experimento && (
+              <>
+                <p className="text-[13px] leading-snug text-texto-2">{experimento.hipotesis}</p>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <span className="rounded-[12px] bg-superficie p-2 ring-1 ring-borde"><span className="cifra num block text-[18px]">{experimento.prueba.presupuestoCOP ? cop(experimento.prueba.presupuestoCOP) : 'Sin costo'}</span><span className="text-[10.5px] uppercase tracking-[0.12em] text-texto-2">presupuesto</span></span>
+                  <span className="rounded-[12px] bg-superficie p-2 ring-1 ring-borde"><span className="cifra num block text-[18px]">{experimento.prueba.duracionDias} d</span><span className="text-[10.5px] uppercase tracking-[0.12em] text-texto-2">duración</span></span>
+                  <span className="rounded-[12px] bg-superficie p-2 ring-1 ring-borde"><span className="cifra num block text-[18px]">{experimento.ice}</span><span className="text-[10.5px] uppercase tracking-[0.12em] text-texto-2">prioridad</span></span>
+                </div>
+                <p className="mt-2.5 text-[12.5px] text-texto-2"><span className="font-semibold text-texto">Corte:</span> {experimento.prueba.criterioCorte}</p>
+                <Link href="/oportunidades" className="group mt-3 inline-flex items-center gap-2 text-[13px] font-medium text-acento">Todas las pruebas <span className="transition-transform group-hover:translate-x-0.5">→</span></Link>
+              </>
+            )}
+          </Panel>
+        </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Panel titulo="Próximo experimento" ayuda="La oportunidad con mejor relación impacto × confianza / esfuerzo">
-          {r.oportunidades[0] ? (
-            <div>
-              <div className="text-sm font-medium text-texto">{r.oportunidades[0].titulo}</div>
-              <p className="mt-1 text-xs text-texto-2">{r.oportunidades[0].hipotesis}</p>
-              <p className="mt-2 text-[11px] text-texto-3">
-                Corte: {r.oportunidades[0].prueba.criterioCorte}
-              </p>
-              <Link href="/oportunidades" className="mt-2 inline-block text-xs text-acento hover:underline">
-                Ver todas las oportunidades →
-              </Link>
-            </div>
-          ) : (
-            <Vacio />
-          )}
+      <section className="mt-5" aria-label="Métricas maestras">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div><p className="rotulo">Instrumentos · últimos 14 días contra los 14 anteriores</p><h2 className="mt-0.5 text-[19px]">Las {r.maestras.length} cifras que mandan</h2></div>
+          <Link href="/metricas" className="text-[13px] font-medium text-acento">Todas las métricas →</Link>
+        </div>
+        <Grid cols={6}>
+          {r.maestras.map((m, i) => <Kpi key={m.id} nombre={m.nombre} valor={typeof m.valor === 'number' ? m.valor : null} unidad={m.unidad} reciente={m.valorReciente} previo={m.valorReciente !== undefined ? m.valorPrevio : undefined} mejorEs={m.mejorEs} formula={m.formula} porQueImporta={m.porQueImporta} retraso={80 + i * 35} />)}
+        </Grid>
+      </section>
+
+      <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-12">
+        <Panel rotulo="Hallazgos · ordenados por plata" titulo="Qué está pasando y qué hacer" className="lg:col-span-7" retraso={200} extra={<Link href="/diagnostico" className="text-[13px] font-medium text-acento">Con toda la evidencia →</Link>}>
+          <ol className="flex flex-col gap-2">
+            {top.map((h, i) => (
+              <li key={h.reglaId} className={`${i % 2 ? 'entra-der' : 'entra-izq'} brilla grid grid-cols-[4px_1fr] gap-3 rounded-[14px] bg-superficie-2/60 p-3`} style={{ '--retraso': `${260 + i * 90}ms` } as CSSProperties}>
+                <span className={`rounded-full ${h.severidad === 'alta' ? 'bg-mal' : h.severidad === 'media' ? 'bg-ojo' : 'bg-borde-fuerte'}`} aria-hidden="true" />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[14.5px] leading-snug">{h.titulo}</p>
+                    <span className={`num shrink-0 text-[15px] font-semibold ${h.plataEnRiesgo ? 'text-mal' : 'text-texto-3'}`}>{h.plataEnRiesgo ? cop(h.plataEnRiesgo) : 'sin plata directa'}</span>
+                  </div>
+                  <p className="mt-1 text-[12.5px] text-texto-2"><span className="font-semibold text-texto">Hacer:</span> {h.acciones[0]}</p>
+                  <div className="mt-1.5 flex flex-wrap gap-1"><Etiqueta tono={tonoSeveridad(h.severidad)}>{SEVERIDADES[h.severidad]}</Etiqueta>{h.evidencia.slice(0, 2).map((e) => <Etiqueta key={e.etiqueta} tono="neutro">{e.etiqueta}: {e.valor}</Etiqueta>)}</div>
+                </div>
+              </li>
+            ))}
+          </ol>
         </Panel>
-        <Panel titulo="Radar de mercado" ayuda="Lo único observable y honesto: cuánto tiempo lleva un anuncio al aire">
-          <div className="grid grid-cols-3 gap-3">
-            <Kpi etiqueta="Competidores activos" valor={r.radar.competidoresActivos} />
-            <Kpi etiqueta="Anuncios de 60+ días" valor={r.radar.ganadores.length} />
-            <Kpi etiqueta="Espacios vacíos" valor={r.radar.espaciosVacios.length} tono="acento" />
-          </div>
-          <Link href="/competencia" className="mt-3 inline-block text-xs text-acento hover:underline">
-            Ver el radar →
-          </Link>
-        </Panel>
+        <div className="flex flex-col gap-3 lg:col-span-5">
+          <Panel rotulo="Dónde se pierde la plata" titulo="El embudo, en pesos" retraso={260} extra={<Link href="/embudo" className="text-[13px] font-medium text-acento">Abrir →</Link>}>
+            <EmbudoBarras pasos={r.embudo} peor={r.fugaMasCara} compacto />
+          </Panel>
+          <Panel rotulo="Inversión diaria · 60 días" titulo={`${cop(r.reciente.gasto)} en los últimos 14`} retraso={320}>
+            <Serie datos={r.serie} campo="gasto" unidad="cop" alto={170} dias={60} />
+            <p className="mt-1 text-[11.5px] text-texto-3">{r.contexto.huecos.length} {r.contexto.huecos.length === 1 ? 'día rayado: sin datos' : 'días rayados: sin datos'} · no se rellenan · {num(r.total.impresiones)} impresiones en el periodo</p>
+          </Panel>
+        </div>
       </div>
     </>
-  );
+  )
+}
+function Dato({ n, t }: { n: string; t: string }) {
+  return <span className="rounded-[14px] bg-white/[0.07] p-3 ring-1 ring-white/10"><span className="cifra num block text-[clamp(16px,1.6vw,22px)] text-white">{n}</span><span className="mt-0.5 block text-[11px] leading-tight text-celeste">{t}</span></span>
 }

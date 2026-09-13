@@ -44,6 +44,13 @@ Operativo: vigilar el encabezado `X-Business-Use-Case-Usage` (error 17 al 100 %)
 grandes de insights usar trabajos asíncronos. Rango recomendado por sincronización: desde
 `meta.hasta − 3 días` (solape para atribución) hasta ayer.
 
+### Cuentas publicitarias
+
+Cada `InsightRow`/`BreakdownRow` lleva `cuentaId` (el `act_…` de Meta). La sincronización trae
+TODAS las cuentas listadas en `config/cliente.ts` → `cuentasPublicitarias` en un solo lote; el
+panel filtra por la cuenta elegida (cookie `cuenta`) y nunca las suma. Los registros de agenda
+se asocian por `campanaId` → campaña → cuenta.
+
 ### Mapeo al contrato (resumen)
 
 `spend→gasto`, `impressions→impresiones`, `reach→alcance`, `frequency→frecuencia`,

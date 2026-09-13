@@ -1,110 +1,58 @@
-import { motor } from "@/lib/datos";
-import { cop, num, pct } from "@/lib/format";
-import { AVISO_DESGLOSES } from "@/lib/format/etiquetas";
-import { AVISO_PANEL } from "@/lib/privacy";
-import type { BreakdownRow } from "@/lib/adapters/types";
-import { razon } from "@/lib/metrics/core";
-import { Aviso, Barra, Celda, Grid, Kpi, Panel, Tabla, Th, Titulo, Vacio } from "@/components/ui";
+import { motor } from '@/lib/datos'
+import { cop, num, pct } from '@/lib/format'
+import { Aviso, Celda, Etiqueta, Grid, Kpi, Panel, Tabla, Th, Titulo } from '@/components/ui'
+import type { DesgloseVista } from '@/lib/tipos'
 
-function agrupar(filas: BreakdownRow[]) {
-  const m = new Map<string, { gasto: number; impresiones: number; clicsEnlace: number; resultados: number; n: number }>();
-  for (const f of filas) {
-    const a = m.get(f.valor) ?? { gasto: 0, impresiones: 0, clicsEnlace: 0, resultados: 0, n: 0 };
-    a.gasto += f.gasto;
-    a.impresiones += f.impresiones;
-    a.clicsEnlace += f.clicsEnlace;
-    a.resultados += f.resultados;
-    a.n += f.nRegistros;
-    m.set(f.valor, a);
-  }
-  const total = [...m.values()].reduce((s, a) => s + a.gasto, 0);
-  return [...m.entries()]
-    .map(([valor, a]) => ({ valor, ...a, cuota: total > 0 ? a.gasto / total : null, cpa: razon(a.gasto, a.resultados) }))
-    .sort((a, b) => b.gasto - a.gasto);
-}
-
-function TablaSegmentos({ titulo, ayuda, filas, ordenar }: { titulo: string; ayuda?: string; filas: ReturnType<typeof agrupar>; ordenar?: boolean }) {
-  const lista = ordenar ? [...filas].sort((a, b) => Number(a.valor) - Number(b.valor)) : filas;
-  const maxCuota = Math.max(0, ...filas.map((f) => f.cuota ?? 0));
-  const cpas = filas.map((f) => f.cpa).filter((x): x is number => x !== null);
-  const mediana = cpas.length ? [...cpas].sort((a, b) => a - b)[Math.floor(cpas.length / 2)]! : null;
-  return (
-    <Panel titulo={titulo} ayuda={ayuda}>
-      {lista.length === 0 ? (
-        <Vacio mensaje="La fuente no entregó este desglose." />
-      ) : (
-        <Tabla>
-          <thead>
-            <tr>
-              <Th>Segmento</Th>
-              <Th alinear="right">Inversión</Th>
-              <Th>Cuota</Th>
-              <Th alinear="right">Resultados</Th>
-              <Th alinear="right">Costo por resultado</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {lista.map((f) => (
-              <tr key={f.valor}>
-                <Celda>{f.valor}</Celda>
-                <Celda alinear="right">{cop(f.gasto)}</Celda>
-                <Celda className="w-40">
-                  <Barra valor={f.cuota === null || maxCuota === 0 ? null : f.cuota / maxCuota} tono="acento" etiqueta={pct(f.cuota)} />
-                </Celda>
-                <Celda alinear="right" tono={f.resultados === 0 && f.gasto > 0 ? "mal" : undefined}>{num(f.resultados)}</Celda>
-                <Celda alinear="right" tono={f.cpa !== null && mediana !== null ? (f.cpa > mediana * 1.5 ? "mal" : f.cpa < mediana * 0.7 ? "bien" : undefined) : f.gasto > 0 && f.resultados === 0 ? "mal" : undefined}>
-                  {f.cpa === null && f.gasto > 0 && f.resultados === 0 ? "sin resultados" : cop(f.cpa)}
-                </Celda>
-              </tr>
-            ))}
-          </tbody>
-        </Tabla>
-      )}
-    </Panel>
-  );
-}
-
+/** AUDIENCIAS: fuera de radio, fuera de horario, segmentos que gastan sin producir, y los ocultos por privacidad. */
 export default async function Audiencias() {
-  const r = await motor();
-  const vis = r.contexto.desglosesVisibles;
-  const por = (dim: BreakdownRow["dimension"]) => agrupar(vis.filter((d) => d.dimension === dim));
-  const zonas = por("ubicacion");
-  const validas = new Set(r.cliente.zonasValidas.map((z) => z.toLowerCase()));
-  const fuera = zonas.filter((z) => !validas.has(z.valor.toLowerCase()));
-  const gastoZonas = zonas.reduce((s, z) => s + z.gasto, 0);
-  const fueraFraccion = gastoZonas > 0 ? fuera.reduce((s, z) => s + z.gasto, 0) / gastoZonas : null;
-  const horas = por("hora");
-  const { inicio, fin } = r.cliente.horarioAtencion;
-  const gastoHoras = horas.reduce((s, h) => s + h.gasto, 0);
-  const fueraHorario = gastoHoras > 0 ? horas.filter((h) => Number(h.valor) < inicio || Number(h.valor) >= fin).reduce((s, h) => s + h.gasto, 0) / gastoHoras : null;
-
+  const r = await motor()
+  const d = r.desgloses
+  const por = (dim: DesgloseVista['dimension']) => d.filter((x) => x.dimension === dim).sort((a, b) => b.gasto - a.gasto)
+  const gastoTotal = r.total.gasto
+  const fueraRadio = d.filter((x) => x.fueraDeRadio).reduce((s, x) => s + x.gasto, 0)
+  const fueraHorario = d.filter((x) => x.fueraDeHorario).reduce((s, x) => s + x.gasto, 0)
+  const sinProducir = d.filter((x) => x.dimension === 'edad' && x.resultados / Math.max(1, x.clicsEnlace) < 0.02)
+  const Bloque = ({ titulo, filas, marca, retraso }: { titulo: string; filas: DesgloseVista[]; marca?: (x: DesgloseVista) => string | null; retraso: number }) => (
+    <Panel rotulo={`Por ${titulo}`} titulo={titulo === 'edad' ? '¿Quién gasta y quién agenda?' : titulo === 'zona' ? '¿Desde dónde pueden venir?' : '¿A qué hora escriben y quién contesta?'} retraso={retraso}>
+      <Tabla minAncho={520}>
+        <thead><tr><Th>{titulo}</Th><Th num>Inversión</Th><Th num>% del total</Th><Th num>Clics</Th><Th num>Citas</Th><Th num>Costo por cita</Th><Th>Señal</Th></tr></thead>
+        <tbody>
+          {filas.map((x) => {
+            const m = marca?.(x)
+            return (
+              <tr key={x.valor} className={m ? 'bg-mal/[0.04]' : ''}>
+                <Celda><span className="font-medium">{x.valor}</span></Celda>
+                <Celda num>{cop(x.gasto)}</Celda>
+                <Celda num>{pct(x.gasto / gastoTotal, 0)}</Celda>
+                <Celda num>{num(x.clicsEnlace)}</Celda>
+                <Celda num tono={x.resultados === 0 ? 'mal' : undefined}>{num(x.resultados)}</Celda>
+                <Celda num tono={x.costoResultado != null && x.costoResultado > 120_000 ? 'mal' : undefined}>{cop(x.costoResultado)}</Celda>
+                <Celda>{m ? <Etiqueta tono="mal">{m}</Etiqueta> : x.nRegistros < r.privacidad.k * 4 ? <Etiqueta tono="neutro">pocos registros</Etiqueta> : ''}</Celda>
+              </tr>
+            )
+          })}
+        </tbody>
+      </Tabla>
+    </Panel>
+  )
   return (
     <>
-      <Titulo sub="Edad, zona, plataforma y franja horaria. Dónde se gasta y qué produce cada segmento.">Audiencias</Titulo>
-
-      <div className="mb-3 space-y-2">
-        <Aviso tono="neutro">{AVISO_DESGLOSES}</Aviso>
-        <Aviso tono="acento">
-          {AVISO_PANEL} {r.privacidad.segmentosOcultos > 0 ? `En este periodo se ocultaron ${r.privacidad.segmentosOcultos} cruces por tener menos de ${r.privacidad.k} personas.` : `En este periodo no hubo que ocultar ningún cruce.`}
-        </Aviso>
-      </div>
-
+      <Titulo rotulo="Audiencias · edad, zona, franja horaria" extra={<p className="text-[12.5px] text-texto-2">{r.privacidad.segmentosOcultos} segmentos ocultos por privacidad (menos de {r.privacidad.k} registros)</p>}>Qué excluir y a qué hora pautar</Titulo>
       <Grid cols={4}>
-        <Kpi etiqueta="Inversión fuera del radio" valor={fueraFraccion} unidad="porcentaje" tono={fueraFraccion !== null && fueraFraccion > r.benchmarks.fueraRadioMaximo.valor ? "mal" : "bien"} ayuda="Gasto en municipios fuera del área metropolitana" />
-        <Kpi etiqueta="Plata fuera del radio" valor={fuera.reduce((s, z) => s + z.gasto, 0)} unidad="cop" tono="mal" />
-        <Kpi etiqueta="Inversión fuera de horario" valor={fueraHorario} unidad="porcentaje" tono={fueraHorario !== null && fueraHorario > r.benchmarks.fueraHorarioMaximo.valor ? "mal" : "bien"} ayuda={`Horario de atención ${inicio}:00–${fin}:00`} />
-        <Kpi etiqueta="Segmentos ocultos" valor={r.privacidad.segmentosOcultos} ayuda={`Cruces con menos de ${r.privacidad.k} personas`} />
+        <Kpi nombre="Inversión fuera del radio" valor={fueraRadio / gastoTotal} unidad="porcentaje" tono="mal" formula={`Gasto a más de ${r.cliente.radioKm} km ÷ total`} porQueImporta="Nadie viene desde Bogotá a una sesión" retraso={40} />
+        <Kpi nombre="Inversión fuera de horario" valor={fueraHorario / gastoTotal} unidad="porcentaje" tono="mal" formula="Gasto de 6 p. m. a 8 a. m. ÷ total" porQueImporta="Escriben y nadie contesta hasta el día siguiente" retraso={80} />
+        <Kpi nombre="Plata en esas dos fugas" valor={fueraRadio + fueraHorario * 0.6} unidad="cop" tono="mal" formula="Fuera de radio + 60 % de fuera de horario" retraso={120} />
+        <Kpi nombre="Segmentos que gastan sin producir" valor={sinProducir.length} unidad="numero" tono={sinProducir.length ? 'ojo' : 'bien'} formula="Rangos de edad con menos de 2 % de cita por clic" retraso={160} />
       </Grid>
-
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <TablaSegmentos titulo="Por zona" ayuda={`Radio útil: ${r.cliente.zonasValidas.join(", ")}`} filas={zonas} />
-        <TablaSegmentos titulo="Por edad" filas={por("edad")} />
-        <TablaSegmentos titulo="Por género" filas={por("genero")} />
-        <TablaSegmentos titulo="Por plataforma y ubicación" filas={por("plataforma")} />
+      <div className="mt-3 flex flex-col gap-2">
+        <Aviso tono="neutro">{r.lote.meta.advertencias[0]}. Cada tabla se lee sola.</Aviso>
+        <Aviso tono="acento">{r.privacidad.AVISO_PANEL}</Aviso>
       </div>
-      <div className="mt-4">
-        <TablaSegmentos titulo="Por franja horaria (últimos 28 días)" ayuda="Pauta que corre cuando nadie contesta produce conversaciones frías" filas={horas} ordenar />
+      <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-12">
+        <div className="xl:col-span-7"><Bloque titulo="zona" filas={por('ubicacion')} marca={(x) => (x.fueraDeRadio ? 'fuera del radio' : null)} retraso={200} /></div>
+        <div className="xl:col-span-5"><Bloque titulo="hora" filas={por('hora')} marca={(x) => (x.fueraDeHorario ? 'fuera de horario' : null)} retraso={260} /></div>
+        <div className="xl:col-span-12"><Bloque titulo="edad" filas={por('edad')} marca={(x) => (x.resultados / Math.max(1, x.clicsEnlace) < 0.02 ? 'gasta y no agenda' : null)} retraso={320} /></div>
       </div>
     </>
-  );
+  )
 }

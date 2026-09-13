@@ -1,56 +1,41 @@
-import { motor } from "@/lib/datos";
-import { FAMILIAS, NOMBRE_FAMILIA, metricasPorFamilia } from "@/lib/metrics/catalog";
-import { resolverMetrica } from "@/lib/metrics/resolver";
-import { Celda, Etiqueta, formatear, Panel, Tabla, Th, Titulo } from "@/components/ui";
+import { motor, resolverMetrica } from '@/lib/datos'
+import { formatear } from '@/lib/format'
+import { AREAS } from '@/lib/format/etiquetas'
+import type { Area } from '@/lib/tipos'
+import { Etiqueta, Panel, Titulo } from '@/components/ui'
 
+/** CATÁLOGO: cada métrica con su fórmula y qué decisión cambia. Si no cambia ninguna, no debería existir. */
 export default async function Metricas() {
-  const r = await motor();
-
+  const r = await motor()
+  const familias = [...new Set(r.catalogo.map((m) => m.familia))] as Area[]
   return (
     <>
-      <Titulo sub={`${r.catalogo.length} métricas en ${FAMILIAS.length} familias. Cada una dice cómo se calcula y qué decisión cambia. Si no cambia ninguna, no existe.`}>
-        Catálogo de métricas
-      </Titulo>
-
-      <div className="space-y-4">
-        {FAMILIAS.map((f) => {
-          const lista = metricasPorFamilia(f).map((m) => ({ m, v: resolverMetrica(m, r) }));
-          return (
-            <Panel key={f} titulo={NOMBRE_FAMILIA[f]} ayuda={`${lista.length} métricas`}>
-              <Tabla>
-                <thead>
-                  <tr>
-                    <Th>Métrica</Th>
-                    <Th alinear="right">Valor (periodo)</Th>
-                    <Th>Cómo se calcula</Th>
-                    <Th>Qué decisión cambia</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lista.map(({ m, v }) => (
-                    <tr key={m.id}>
-                      <Celda>
-                        <div className="text-texto">
-                          {m.nombre} {m.maestra && <Etiqueta tono="acento">maestra</Etiqueta>}
-                        </div>
-                        <div className="text-[11px] text-texto-3">
-                          {m.mejorEs === "mayor" ? "mejor si sube" : m.mejorEs === "menor" ? "mejor si baja" : m.mejorEs === "rango" ? "mejor en rango" : "informativa"} · fuente: {m.fuentes.join(", ")}
-                        </div>
-                      </Celda>
-                      <Celda alinear="right" className={v.calculada ? "" : "text-texto-3"}>
-                        {v.calculada ? formatear(v.valor, m.unidad) : "—"}
-                        {!v.calculada && <div className="text-[10px] text-texto-3">pendiente</div>}
-                      </Celda>
-                      <Celda className="max-w-xs text-xs text-texto-2">{m.formula}</Celda>
-                      <Celda className="max-w-md text-xs text-texto-2">{m.porQueImporta}</Celda>
-                    </tr>
-                  ))}
-                </tbody>
-              </Tabla>
-            </Panel>
-          );
-        })}
+      <Titulo rotulo={`Catálogo · ${r.catalogo.length} métricas en ${familias.length} familias`} extra={<p className="text-[12.5px] text-texto-2">Las marcadas como maestras van al centro de mando</p>}>Entender una cifra</Titulo>
+      <nav aria-label="Familias" className="sin-barra mb-3 flex gap-1.5 overflow-x-auto pb-1">
+        {familias.map((f) => <a key={f} href={`#f-${f}`} className="shrink-0 rounded-full bg-superficie px-3 py-1 text-[12.5px] ring-1 ring-borde hover:ring-acento/50">{AREAS[f]} <span className="num text-texto-2">{r.catalogo.filter((m) => m.familia === f).length}</span></a>)}
+      </nav>
+      <div className="flex flex-col gap-3">
+        {familias.map((f, i) => (
+          <Panel key={f} id={`f-${f}`} rotulo={`Familia · ${r.catalogo.filter((m) => m.familia === f).length}`} titulo={AREAS[f]} retraso={40 + i * 40}>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {r.catalogo.filter((m) => m.familia === f).map((m) => {
+                const v = resolverMetrica(m, r)
+                return (
+                  <article key={m.id} className="brilla rounded-[14px] bg-superficie-2/70 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[13.5px] font-medium leading-tight">{m.nombre}</p>
+                      <span className="num shrink-0 text-[15px] font-semibold">{formatear(v.valor, m.unidad)}</span>
+                    </div>
+                    <p className="mt-1 text-[12px] text-texto-2"><span className="text-texto-3">Fórmula:</span> {m.formula}</p>
+                    <p className="mt-0.5 text-[12px] leading-snug"><span className="text-texto-3">Cambia:</span> {m.porQueImporta}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1"><Etiqueta tono="neutro">mejor {m.mejorEs === 'mayor' ? 'alta' : m.mejorEs === 'menor' ? 'baja' : 'en rango'}</Etiqueta>{m.maestra && <Etiqueta tono="acento">maestra</Etiqueta>}</div>
+                  </article>
+                )
+              })}
+            </div>
+          </Panel>
+        ))}
       </div>
     </>
-  );
+  )
 }

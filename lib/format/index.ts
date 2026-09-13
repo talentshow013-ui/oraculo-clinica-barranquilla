@@ -54,3 +54,38 @@ export function deltaPct(v: number | null | undefined): string {
 }
 
 export { hoyBogota, aFechaBogota, sumarDias, diasEntre, rangoDias, listarHuecos, semanaISO } from "./fechas";
+
+// Alias y variantes usadas por la interfaz.
+export const dias = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v) ? VACIO : `${num(v)} d`);
+export const minutos = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v) ? VACIO : v < 60 ? `${num(v)} min` : `${num(v / 60, 1)} h`);
+/** Cambio relativo con signo: 0.123 → "+12,3 %". */
+export const conSigno = (v: number | null | undefined, decimales: 0 | 1 | 2 = 1) =>
+  v === null || v === undefined || !Number.isFinite(v) ? VACIO : `${v > 0 ? "+" : v < 0 ? "−" : ""}${num(Math.abs(v) * 100, decimales)} %`;
+/** Pesos abreviados para ejes y chips: 1.234.567 → "$ 1,2 M". */
+export const copCorto = (v: number | null | undefined) =>
+  v === null || v === undefined || !Number.isFinite(v) ? VACIO : Math.abs(v) >= 1e6 ? `$ ${num(v / 1e6, 1)} M` : Math.abs(v) >= 1e3 ? `$ ${num(v / 1e3)} k` : `$ ${num(v)}`;
+
+import type { Unidad } from "@/lib/metrics/catalog";
+/** Formatea según la unidad del catálogo. null → "—". */
+export function formatear(valor: number | string | null | undefined, unidad: Unidad): string {
+  if (valor === null || valor === undefined) return VACIO;
+  if (typeof valor === "string") return valor;
+  switch (unidad) {
+    case "cop":
+      return cop(valor);
+    case "porcentaje":
+      return pct(valor);
+    case "ratio":
+      return ratio(valor);
+    case "segundos":
+      return seg(valor);
+    case "dias":
+      return dias(valor);
+    case "indice":
+      return indice(valor);
+    case "numero":
+      return num(valor, Number.isInteger(valor) ? 0 : 1);
+    default:
+      return String(valor);
+  }
+}

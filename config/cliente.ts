@@ -15,8 +15,20 @@ export interface Servicio {
   recurrenciaMeses: number | null;
 }
 
+/** Una cuenta publicitaria de Meta/TikTok. El panel analiza UNA a la vez; nunca se suman por defecto. */
+export interface CuentaPublicitaria {
+  /** Id de la cuenta en la plataforma, p. ej. "act_1048227". */
+  id: string;
+  /** Lo que ve el dueño. */
+  nombre: string;
+  plataforma: "meta" | "tiktok";
+  moneda: "COP";
+}
+
 export interface ConfigCliente {
   nombre: string;
+  /** Cuentas publicitarias, la principal primero. */
+  cuentasPublicitarias: ReadonlyArray<CuentaPublicitaria>;
   ciudad: string;
   /** Municipios del radio real de captación. Todo lo demás es inversión fuera de radio. */
   zonasValidas: ReadonlyArray<string>;
@@ -40,6 +52,11 @@ export interface ConfigCliente {
 
 export const cliente: ConfigCliente = {
   nombre: "Clínica estética",
+  cuentasPublicitarias: [
+    { id: "act_1048227", nombre: "Vivante Riomar", plataforma: "meta", moneda: "COP" },
+    { id: "act_2213904", nombre: "Vivante Norte", plataforma: "meta", moneda: "COP" },
+    { id: "act_3390118", nombre: "Vivante Médicos", plataforma: "meta", moneda: "COP" },
+  ],
   ciudad: "Barranquilla",
   zonasValidas: ["Barranquilla", "Soledad", "Malambo", "Puerto Colombia", "Galapa", "Sabanagrande", "Baranoa"],
   radioKm: 40,

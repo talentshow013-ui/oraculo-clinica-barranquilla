@@ -28,7 +28,10 @@ Lee `datos/lote.json` si existe para conocer `meta.hasta`: traerás desde el dí
 (con 3 días de solape para que la atribución se estabilice) hasta ayer (hora Bogotá).
 Si no existe, trae 90 días.
 
-## Paso 1 — Traer insights por día y nivel
+## Paso 1 — Traer insights por día y nivel (por cada cuenta)
+
+Repite este paso para **cada cuenta** de `config/cliente.ts → cuentasPublicitarias`, poniendo
+su `act_…` en `cuentaId`. Todas van al mismo `datos/lote.json`; el panel las separa.
 
 Para los niveles `campana`, `conjunto` y `anuncio`, pide desglose diario (`time_increment=1`)
 con al menos: gasto, impresiones, alcance, frecuencia, clics, clics de enlace, clics únicos,

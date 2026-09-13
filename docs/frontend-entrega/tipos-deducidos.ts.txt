@@ -1,0 +1,279 @@
+/**
+ * ★ FORMA DE `ResultadoMotor`, deducida del PROMPT-FRONTEND.md y del prompt maestro de Oráculo.
+ * Este archivo es un SUSTITUTO del `lib/` real (motor + Zod): cuando llegue el repositorio,
+ * se borra `lib/tipos.ts` y `lib/datos.ts` y las pantallas siguen leyendo `await motor()`.
+ * Todo lo que aquí es «deducido» se coteja contra `lib/adapters/types.ts`.
+ */
+export type Fuente = 'meta' | 'tiktok' | 'radar' | 'clinica'
+export type Severidad = 'critica' | 'alta' | 'media' | 'baja'
+export type Area = 'entrega' | 'costo' | 'interaccion' | 'video' | 'mensajeria' | 'conversion' | 'negocio' | 'creativo' | 'audiencia' | 'competencia' | 'salud_cuenta' | 'operacion'
+export type Unidad = 'cop' | 'pct' | 'num' | 'ratio' | 'indice' | 'dias' | 'seg' | 'min'
+export type MejorEs = 'alto' | 'bajo' | 'rango'
+export type Paso = 'impresion' | 'clic' | 'conversacion' | 'lead_calificado' | 'cita_agendada' | 'cita_asistida' | 'venta' | 'recompra'
+export type Cuadrante = 'escalar' | 'arreglar_gancho' | 'arreglar_oferta' | 'matar' | 'sin_senal'
+export type Angulo = 'autoridad_medica' | 'prueba_social' | 'aspiracional' | 'objecion_seguridad' | 'objecion_dolor' | 'objecion_tiempo' | 'objecion_precio' | 'educativo' | 'promocion' | 'urgencia' | 'antes_despues' | 'testimonio' | 'detras_de_camara' | 'sin_clasificar'
+export type Formato = 'imagen' | 'video' | 'carrusel' | 'coleccion'
+export type Dimension = 'edad' | 'genero' | 'edad_genero' | 'ubicacion' | 'pais' | 'plataforma' | 'ubicacion_anuncio' | 'dispositivo' | 'hora' | 'dia_semana'
+
+export interface ValorMetrica {
+  id: string
+  nombre: string
+  unidad: Unidad
+  valor: number | null
+  valorReciente?: number | null
+  valorPrevio: number | null
+  mejorEs: MejorEs
+  formula: string
+  porQueImporta: string
+}
+
+export interface MetricaCatalogo {
+  id: string
+  nombre: string
+  familia: Area
+  unidad: Unidad
+  formula: string
+  porQueImporta: string
+  mejorEs: MejorEs
+  derivada: boolean
+  fuentes: Fuente[]
+  maestra?: boolean
+}
+
+export interface Hallazgo {
+  reglaId: string
+  area: Area
+  severidad: Severidad
+  titulo: string
+  explicacion: string
+  evidencia: { etiqueta: string; valor: string }[]
+  acciones: string[]
+  plataEnRiesgo: number | null
+  metricas: string[]
+  nota?: string
+}
+
+export interface PasoEmbudo {
+  paso: Paso
+  orden: number
+  cantidad: number | null
+  tasaPaso: number | null
+  tasaAcumulada: number | null
+  costoUnitario: number | null
+  perdidos: number | null
+  fugaCOP: number | null
+  valorCOP: number | null
+  metodoValorizacion: 'costo_adquisicion' | 'margen_unitario' | 'sin_dato'
+}
+
+export interface MetricasNegocio {
+  showRate: number | null
+  cierreEnConsultorio: number | null
+  costoCitaAsistida: number | null
+  cac: number | null
+  roasReal: number | null
+  roasDeclarado: number | null
+  poas: number | null
+  ratioCacMargen: number | null
+  ltv: number | null
+  ltvSobreCac: number | null
+  tasaRecompra: number | null
+  ingresosCaja: number | null
+  calibrado: boolean
+}
+
+export interface Agregado {
+  gasto: number
+  impresiones: number
+  alcance: number | null
+  frecuencia: number | null
+  clics: number
+  clicsEnlace: number
+  resultados: number
+  conversacionesIniciadas: number | null
+  conversacionesRespondidas: number | null
+  reproducciones3s: number | null
+  reproduccionesThru: number | null
+  valorConversion: number | null
+  ctrEnlace: number | null
+  cpm: number | null
+  cpcEnlace: number | null
+  costoResultado: number | null
+  hookRate: number | null
+  holdRate: number | null
+}
+
+export interface Creativo {
+  id: string
+  anuncioId: string
+  formato: Formato
+  urlMiniatura: string | null
+  copyPrincipal: string
+  titular: string
+  descripcion: string | null
+  cta: string
+  urlDestino: string
+  fechaPrimerGasto: string
+  diasActivo: number
+  servicio: string
+  anguloDetectado: Angulo
+  nivelConsciencia: 1 | 2 | 3 | 4 | 5
+  confianzaClasificacion: number
+  senalesDeteccion: string[]
+}
+
+export interface EvaluacionCreativo {
+  creativo: Creativo
+  agregado: Agregado
+  hookRate: number | null
+  holdRate: number | null
+  ctrEnlace: number | null
+  costoResultado: number | null
+  cuadrante: Cuadrante
+  accion: string
+  fatiga: { indice: number | null; formulaVisible: string; caidaCtr: number | null; alzaFrecuencia: number | null }
+  vidaUtilDias: number | null
+  diasActivo: number
+}
+
+export interface BreakdownRow {
+  dimension: Dimension
+  valor: string
+  gasto: number
+  impresiones: number
+  clicsEnlace: number
+  resultados: number
+  nRegistros: number
+  costoResultado: number | null
+  fueraDeRadio?: boolean
+  fueraDeHorario?: boolean
+}
+
+export interface AnuncioCompetidor {
+  competidorId: string
+  nombreAnunciante: string
+  anuncioId: string
+  primeraVez: string
+  ultimaVez: string
+  diasCorriendo: number
+  activo: boolean
+  plataformas: string[]
+  copy: string
+  titular: string | null
+  cta: string | null
+  urlMedia: string | null
+  tipoMedia: 'imagen' | 'video' | 'carrusel'
+  urlDestino: string | null
+  dominioDestino: string | null
+  alcanceRango: string | null
+  variantesDelConcepto: number
+  servicioDetectado: string
+  anguloDetectado: Angulo
+  nivelConsciencia: 1 | 2 | 3 | 4 | 5
+  usaPrecio: boolean
+  usaUrgencia: boolean
+  usaProfesional: boolean
+  usaTestimonio: boolean
+  usaGarantia: boolean
+  puntuacionLongevidad: number
+}
+
+export interface Competidor {
+  id: string
+  nombre: string
+  seguidoresPagina: number | null
+  urlPagina: string | null
+  anunciosActivos: number
+  anuncios60: number
+}
+
+export interface ResultadoRadar {
+  ganadores: AnuncioCompetidor[]
+  cadencia: { competidorId: string; nombre: string; porSemana: number }[]
+  cadenciaPropia: number | null
+  movimientos: { semana: string; entradas: number; salidas: number }[]
+  mapaAngulos: { angulo: Angulo; anuncios: number; saturado: boolean }[]
+  espaciosVacios: { servicio: string; angulo: Angulo; nivelConsciencia: 1 | 2 | 3 | 4 | 5; porQue: string }[]
+  participacionVoz: { competidorId: string; nombre: string; porcentaje: number }[]
+  perfiles: Competidor[]
+  usoPrecio: number
+  usoTestimonio: number
+}
+
+export interface Oportunidad {
+  titulo: string
+  hipotesis: string
+  basadaEn: string[]
+  prueba: { presupuestoCOP: number; duracionDias: number; metricaExito: string; criterioCorte: string }
+  impacto: number
+  confianza: number
+  esfuerzo: number
+  ice: number
+  yaProbada: boolean
+  aprendizajePrevio: string | null
+  origen: 'hallazgos' | 'espacios_vacios' | 'ganadores_mercado'
+  tipoPrueba: string
+  angulo: Angulo | null
+}
+
+export interface ResultadoLente {
+  nombre: string
+  fuente: string
+  paraQue: string
+  criterios: { criterio: string; datoPanel: string; accionSiFalla: string; cumple: boolean | null }[]
+  cumplidos: number
+  fallidos: number
+  sinDato: number
+}
+
+export interface EstadoFuente {
+  etiquetaPublica: string
+  conectado: boolean
+  ultimaActualizacion: string | null
+  detalle: string
+}
+
+/** Una cuenta publicitaria de Meta (la clínica tiene varias). El panel analiza UNA a la vez. */
+export interface CuentaPublicitaria {
+  id: string
+  nombre: string
+  plataforma: 'meta' | 'tiktok'
+  moneda: 'COP'
+  activa: boolean
+  /** Última sincronización; null si nunca */
+  ultimaSincronizacion: string | null
+}
+
+export interface ResultadoMotor {
+  /** la cuenta analizada y las disponibles para el selector */
+  cuenta: CuentaPublicitaria
+  cuentas: CuentaPublicitaria[]
+  hoy: string
+  lote: {
+    meta: { generadoEn: string; desde: string; hasta: string; origen: string; huecos: string[]; advertencias: string[] }
+    insights: { ventanaAtribucion: string }[]
+    competidores: Competidor[]
+    anunciosCompetencia: AnuncioCompetidor[]
+  }
+  maestras: ValorMetrica[]
+  plataEnRiesgoTotal: number | null
+  hallazgos: Hallazgo[]
+  erroresReglas: { reglaId: string; mensaje: string }[]
+  embudo: PasoEmbudo[]
+  fugaMasCara: PasoEmbudo | null
+  negocio: MetricasNegocio
+  total: Agregado
+  reciente: Agregado
+  previa: Agregado
+  serie: { fecha: string; agregado: Agregado | null }[]
+  creativos: EvaluacionCreativo[]
+  contexto: { desglosesVisibles: BreakdownRow[]; huecos: string[] }
+  privacidad: { segmentosOcultos: number; k: number; AVISO_PANEL: string }
+  radar: ResultadoRadar
+  oportunidades: Oportunidad[]
+  lentes: ResultadoLente[]
+  catalogo: MetricaCatalogo[]
+  fuentes: EstadoFuente[]
+  cliente: { nombre: string; sede: string; radioKm: number; horario: string; servicios: { nombre: string; ticket: number; margen: number }[] }
+  benchmarks: { ctrEnlaceMin: number; showRateMin: number; frecuenciaMax: number; cpmAlerta: number; origen: string }
+}
