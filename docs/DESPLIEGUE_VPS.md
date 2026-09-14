@@ -40,8 +40,8 @@ Sin dominio propio también funciona (ver «Alternativa sin dominio»).
    (solo lectura) y presionar Enter. Al final muestra el usuario y la clave del panel.
 4. Pasos manuales, como usuario `oraculo` (`sudo -iu oraculo`):
    1. `claude` → iniciar sesión con la suscripción (imprime un enlace; abrirlo en el navegador).
-   2. `claude mcp add --transport http meta-ads https://mcp.facebook.com/ads`
-      y luego dentro de `claude`: `/mcp` → autorizar `meta-ads` y `apify`.
+   2. `claude mcp add --transport http meta_ads https://mcp.facebook.com/ads`
+      y luego dentro de `claude`: `/mcp` → autorizar `meta_ads` y `apify`.
    3. `cd ~/oraculo && claude -p "/oraculo-sincronizar"` → primera sincronización real.
       Revisar `datos/lote.json` con `npm run validar-lote`.
    4. Túnel: `cloudflared tunnel login` → `cloudflared tunnel create oraculo` →

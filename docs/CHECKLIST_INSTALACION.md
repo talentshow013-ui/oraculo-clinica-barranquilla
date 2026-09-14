@@ -29,7 +29,7 @@ Todo lo que hay que tener y hacer, en orden. Marca cada línea.
    en GitHub solo, instala todo y deja el panel, el reloj y el candado. Ellos no tocan nada.
 2. **Iniciar sesión en Claude** (ellos): `claude` muestra un enlace → lo abren en su navegador con
    su cuenta → listo.
-3. **Conectar Meta** (ellos): `claude mcp add --transport http meta-ads https://mcp.facebook.com/ads`
+3. **Conectar Meta** (ellos): `claude mcp add --transport http meta_ads https://mcp.facebook.com/ads`
    → dentro de `claude`, `/mcp` → autorizar con el Facebook del administrador → aceptar permisos.
 4. **Conectar Apify** (opcional, gratis): en `/mcp` autorizar `apify` con una cuenta de Apify.
 5. **Cuentas reales**: edito `config/cliente.ts` con los `act_…` y nombres reales. Subo el cambio.

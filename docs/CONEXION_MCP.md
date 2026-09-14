@@ -18,7 +18,7 @@ no contiene ningún cliente HTTP.
 - Alta en Claude Code (una sola vez, en el equipo de la coordinadora):
 
 ```
-claude mcp add --transport http meta-ads https://mcp.facebook.com/ads
+claude mcp add --transport http meta_ads https://mcp.facebook.com/ads
 ```
 
   **No necesita App ID ni app de desarrollador**: el conector es de Meta y se autoriza con «iniciar
