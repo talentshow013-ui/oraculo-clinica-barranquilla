@@ -4,11 +4,12 @@ import { fechaCorta, fechaLarga, fechaHora } from '@/lib/format/fechas'
 import { cop } from '@/lib/format'
 import MenuMovil from './cliente/menu-movil'
 import SelectorCuenta from './cliente/selector-cuenta'
+import SelectorCampana from './cliente/selector-campana'
 import Ayuda from './cliente/ayuda'
 
 /**
- * La barra de estado, en UNA fila y cuatro cosas: la cuenta publicitaria que se analiza (se cambia
- * aquí), el periodo, dos chips de estado (huecos · avisos) que se explican al pasar el mouse, y la
+ * La barra de estado, en UNA fila: la cuenta publicitaria que se analiza (se cambia aquí), la
+ * campaña (todas o una: todo el panel se recalcula), el periodo, dos chips de estado (huecos · avisos) que se explican al pasar el mouse, y la
  * plata en riesgo. Huecos, advertencias y ventana de atribución siguen SIEMPRE a la vista, pero
  * plegados en su chip, no en frases recortadas.
  */
@@ -21,6 +22,7 @@ export default function Cabecera({ r }: { r: ResultadoMotor }) {
       <div className="mx-auto flex h-[60px] max-w-[1400px] items-center gap-3 px-4 sm:px-6">
         <MenuMovil />
         <SelectorCuenta cuentas={r.cuentas} actual={r.cuenta} />
+        <SelectorCampana campanas={r.campanasCuenta} actual={r.campanaActiva} />
 
         <Ayuda titulo={`Atribución: ${ventana}`} texto={`${m.origen}. Sincronizado ${fechaHora(r.cuenta.ultimaSincronizacion)}. Cambiar la ventana de atribución cambia los números.`} className="hidden md:block">
           <p className="flex items-center gap-2 rounded-full px-2 py-1 text-[12.5px] text-texto-2 transition-colors hover:bg-superficie-2">

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { campanasEnPeriodo, comoNosFue, compararSeleccion, correrMotor, fuenteActiva } from "@/lib/datos";
+import { campanasEnPeriodo, comoNosFue, compararSeleccion, correrMotor, filtrarPorCampana, filtrarPorCuenta, fuenteActiva } from "@/lib/datos";
 import { diasEntre, sumarDias } from "@/lib/format/fechas";
 import { generarSeed } from "@/scripts/seed";
 
@@ -275,5 +275,43 @@ describe("comoNosFue y compararSeleccion — lo que se lee en la reunión", () =
     expect(c.campanas.map((x) => x.id)).toEqual(["camp_facial", "camp_madre"]);
     expect(c.metricas.length).toBeGreaterThan(5);
     expect(compararSeleccion(r, ["camp_facial", "camp_madre"], "14").campanas.map((x) => x.id)).toEqual(["camp_facial"]);
+  });
+});
+
+describe("filtro de campaña — todo el panel se recalcula para UNA pauta", () => {
+  test("filtrarPorCampana deja solo la campaña, sus conjuntos, sus anuncios, sus creativos y su embudo; el radar sigue", () => {
+    const lote = generarSeed();
+    const riomar = filtrarPorCuenta(lote, "act_1048227");
+    const f = filtrarPorCampana(riomar, "camp_madre");
+    expect(f.insights.every((i) => (i.nivel === "campana" && i.id === "camp_madre") || (i.nivel === "conjunto" && i.padreId === "camp_madre") || (i.nivel === "anuncio" && i.padreId === "adset_madre_mujeres"))).toBe(true);
+    expect(f.insights.some((i) => i.nivel === "anuncio")).toBe(true);
+    expect(f.creativos.every((c) => c.anuncioId.startsWith("ad_madre"))).toBe(true);
+    expect(f.creativos.length).toBe(2);
+    expect(f.embudo.every((r) => r.campanaId === "camp_madre")).toBe(true);
+    expect(f.anunciosCompetencia.length).toBe(lote.anunciosCompetencia.length);
+    // Los desgloses del seed son de nivel cuenta: por campaña no hay, y se dice.
+    expect(f.desgloses).toEqual([]);
+  });
+
+  test("correrMotor con campanaId: cifras de esa campaña, campana activa, lista completa para el selector, cuenta intacta", async () => {
+    const lote = generarSeed();
+    const todas = await correrMotor(lote, { cuentaId: "act_1048227" });
+    const madre = await correrMotor(lote, { cuentaId: "act_1048227", campanaId: "camp_madre" });
+    expect(madre.campanaActiva?.id).toBe("camp_madre");
+    expect(madre.cuenta.id).toBe("act_1048227");
+    expect(madre.total.gasto).toBeLessThan(todas.total.gasto);
+    expect(madre.total.gasto).toBe(todas.campanas.find((c) => c.id === "camp_madre")!.total.gasto);
+    expect(madre.creativos.length).toBe(2);
+    expect(madre.campanasCuenta.map((c) => c.id).sort()).toEqual(["camp_facial", "camp_madre"]);
+    expect(madre.desglosesPorCampana).toBe(false);
+    expect(madre.erroresReglas).toEqual([]);
+    expect(todas.campanaActiva).toBeNull();
+    expect(todas.desglosesPorCampana).toBe(true);
+  });
+
+  test("campaña que no es de la cuenta → se ignora (todas)", async () => {
+    const r = await correrMotor(generarSeed(), { cuentaId: "act_1048227", campanaId: "camp_laser" });
+    expect(r.campanaActiva).toBeNull();
+    expect(r.total.gasto).toBeGreaterThan(0);
   });
 });

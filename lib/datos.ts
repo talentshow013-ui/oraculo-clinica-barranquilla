@@ -7,6 +7,8 @@
  *
  * Cuentas publicitarias: el panel analiza UNA cuenta a la vez (cookie `cuenta`).
  * Nunca se suman cuentas por defecto; el radar de mercado es compartido.
+ * Campaña: dentro de la cuenta se puede mirar UNA campaña (cookie `campana`): todo el panel se
+ * recalcula solo con sus conjuntos, anuncios, creativos y embudo. Vacía = todas.
  */
 import type { BreakdownRow, EstadoFuente, FuenteDatos, LoteDatos } from "@/lib/adapters/types";
 import { FuenteArchivo } from "@/lib/adapters/archivo.adapter";
@@ -16,7 +18,7 @@ import { cliente as clientePorDefecto, type ConfigCliente, type CuentaPublicitar
 import { construirContexto, ejecutarReglas, type ContextoDiagnostico, type ErrorRegla, type Hallazgo } from "@/lib/diagnostics/engine";
 import { REGLAS } from "@/lib/diagnostics/rules";
 import { fugaMasCara, type MetricasNegocio, type PasoEmbudo } from "@/lib/metrics/funnel";
-import type { EvaluacionCreativo } from "@/lib/metrics/creative";
+import { evaluarCreativos, type EvaluacionCreativo } from "@/lib/metrics/creative";
 import { analizarRadar, puntuacionLongevidad, type ResultadoRadar } from "@/lib/competitive";
 import { generarOportunidades, type Oportunidad } from "@/lib/opportunities";
 import { aplicarLentes, type ResultadoLente } from "@/lib/frameworks";
@@ -107,7 +109,10 @@ export interface ResultadoMotor {
   /** La cuenta analizada en esta petición y todas las disponibles (principal primero). */
   cuenta: CuentaPublicitaria;
   cuentas: CuentaPublicitaria[];
+  /** El lote con el que se calculó todo (la cuenta, o la campaña elegida). */
   lote: LoteDatos;
+  /** El lote de la cuenta completa (sin filtro de campaña): lo usa la pantalla Campañas. */
+  loteCuenta: LoteDatos;
   hoy: string;
   contexto: ContextoDiagnostico;
   total: AgregadoVista;
@@ -131,6 +136,12 @@ export interface ResultadoMotor {
   campanas: ResumenCampana[];
   /** Resultados que la clínica registró a mano por campaña (los de esta cuenta). */
   resultadosPauta: RegistroPauta[];
+  /** Campaña elegida en la cabecera (null = todas las de la cuenta). */
+  campanaActiva: ResumenCampana | null;
+  /** Todas las campañas de la cuenta (sin filtrar), para el selector. */
+  campanasCuenta: ResumenCampana[];
+  /** false cuando hay campaña elegida y la fuente no trae desgloses por campaña (Audiencias avisa). */
+  desglosesPorCampana: boolean;
   privacidad: { segmentosOcultos: number; k: number; AVISO_PANEL: string };
   fuentes: EstadoFuente[];
   cliente: ConfigCliente;
@@ -161,6 +172,23 @@ export function filtrarPorCuenta(lote: LoteDatos, cuentaId: string): LoteDatos {
   };
 }
 
+/** Filtra un lote (ya de una cuenta) a UNA campaña: sus conjuntos, anuncios, creativos, desgloses y embudo. Radar compartido. */
+export function filtrarPorCampana(lote: LoteDatos, campanaId: string): LoteDatos {
+  const conjuntos = new Set(lote.insights.filter((i) => i.nivel === "conjunto" && i.padreId === campanaId).map((i) => i.id));
+  const insights = lote.insights.filter(
+    (i) => (i.nivel === "campana" && i.id === campanaId) || (i.nivel === "conjunto" && i.padreId === campanaId) || (i.nivel === "anuncio" && i.padreId !== null && conjuntos.has(i.padreId)),
+  );
+  const anuncios = new Set(insights.filter((i) => i.nivel === "anuncio").map((i) => i.id));
+  return {
+    ...lote,
+    insights,
+    // Solo desgloses pedidos a nivel campaña; los de cuenta no se pueden repartir.
+    desgloses: lote.desgloses.filter((d) => d.nivel === "campana" && d.id === campanaId),
+    creativos: lote.creativos.filter((c) => anuncios.has(c.anuncioId)),
+    embudo: lote.embudo.filter((r) => r.campanaId === campanaId),
+  };
+}
+
 function resolverCuentas(lote: LoteDatos, cfg: ConfigCliente, fuentes: EstadoFuente[]): CuentaPublicitaria[] {
   const conPauta = new Set(lote.insights.filter((i) => i.gasto > 0).map((i) => i.cuentaId));
   const ultima = fuentes.find((f) => f.conectado)?.ultimaActualizacion ?? lote.meta.generadoEn ?? null;
@@ -170,12 +198,13 @@ function resolverCuentas(lote: LoteDatos, cfg: ConfigCliente, fuentes: EstadoFue
   return [...configuradas, ...extra];
 }
 
-async function cuentaDesdeCookie(): Promise<string | undefined> {
+async function desdeCookies(): Promise<{ cuenta?: string; campana?: string }> {
   try {
     const { cookies } = await import("next/headers");
-    return (await cookies()).get("cuenta")?.value;
+    const c = await cookies();
+    return { cuenta: c.get("cuenta")?.value, campana: c.get("campana")?.value };
   } catch {
-    return undefined; // fuera de una petición (scripts, tests, compilación)
+    return {}; // fuera de una petición (scripts, tests, compilación)
   }
 }
 
@@ -220,6 +249,8 @@ export interface OpcionesMotor {
   cuentaId?: string;
   /** Resultados por pauta; si no se pasan y no hay lote explícito, se leen de datos/resultados.json. */
   resultados?: RegistroPauta[];
+  /** Campaña a mirar dentro de la cuenta; desconocida o ausente → todas. */
+  campanaId?: string;
 }
 
 /** Corre el motor completo sobre UNA cuenta. Puro salvo por la fecha de hoy (para datos reales). */
@@ -236,7 +267,12 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
   const cuenta = cuentas.find((c) => c.id === opciones.cuentaId) ?? principal;
   // Los resultados son por cuenta y campaña: se mezclan DESPUÉS de filtrar la cuenta.
   const resultadosPauta = resultadosTodos.filter((s) => s.cuentaId === cuenta.id);
-  const datos = fusionarResultados(filtrarPorCuenta(datosCompletos, cuenta.id), resultadosPauta);
+  const datosCuenta = fusionarResultados(filtrarPorCuenta(datosCompletos, cuenta.id), resultadosPauta);
+  // Campaña elegida: todo lo que sigue se calcula solo con ella. La lista completa se conserva para el selector.
+  const campanasCuenta = resumirCampanas(datosCuenta.insights, { desde: datosCuenta.meta.desde, hasta: datosCuenta.meta.hasta }, datosCuenta.embudo);
+  const campanaActiva = campanasCuenta.find((c) => c.id === opciones.campanaId) ?? null;
+  const datos = campanaActiva ? filtrarPorCampana(datosCuenta, campanaActiva.id) : datosCuenta;
+  const desglosesPorCampana = campanaActiva ? datos.desgloses.length > 0 : true;
 
   // Con demostración, "hoy" es el último día del seed: no se analiza más allá de los datos.
   const hoy = datos.meta.origen === "seed" ? datos.meta.hasta : hoyBogota();
@@ -329,8 +365,12 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     serie,
     negocio: { ...ctx.negocio, roasDeclarado: core.roas(ctx.total) },
     desgloses,
-    campanas: resumirCampanas(loteMotor.insights, { desde: loteMotor.meta.desde, hasta: loteMotor.meta.hasta }, loteMotor.embudo),
+    campanas: campanasCuenta,
+    loteCuenta: datosCuenta,
     resultadosPauta,
+    campanaActiva,
+    campanasCuenta,
+    desglosesPorCampana,
     maestras,
     fuentes,
   };
@@ -341,12 +381,13 @@ export const PERIODOS_CAMPANAS = ["14", "30", "90", "todo"] as const;
 export type PeriodoCampanas = (typeof PERIODOS_CAMPANAS)[number];
 
 /** Las campañas de la cuenta analizada recortadas a un periodo (contado hacia atrás desde `hoy`). */
-export function campanasEnPeriodo(r: Pick<ResultadoMotor, "lote" | "hoy" | "campanas">, periodo: string | undefined): { periodo: PeriodoCampanas; desde: string; hasta: string; campanas: ResumenCampana[] } {
+export function campanasEnPeriodo(r: Pick<ResultadoMotor, "loteCuenta" | "hoy" | "campanas">, periodo: string | undefined): { periodo: PeriodoCampanas; desde: string; hasta: string; campanas: ResumenCampana[] } {
   const p: PeriodoCampanas = (PERIODOS_CAMPANAS as ReadonlyArray<string>).includes(periodo ?? "") ? (periodo as PeriodoCampanas) : "todo";
-  const hasta = r.lote.meta.hasta < r.hoy ? r.lote.meta.hasta : r.hoy;
-  if (p === "todo") return { periodo: p, desde: r.lote.meta.desde, hasta, campanas: r.campanas };
+  const lote = r.loteCuenta;
+  const hasta = lote.meta.hasta < r.hoy ? lote.meta.hasta : r.hoy;
+  if (p === "todo") return { periodo: p, desde: lote.meta.desde, hasta, campanas: r.campanas };
   const desde = sumarDias(hasta, -(Number(p) - 1));
-  return { periodo: p, desde, hasta, campanas: resumirCampanas(r.lote.insights, { desde, hasta }, r.lote.embudo) };
+  return { periodo: p, desde, hasta, campanas: resumirCampanas(lote.insights, { desde, hasta }, lote.embudo) };
 }
 
 /**
@@ -361,27 +402,31 @@ export function invalidarCache(): void {
   cache.clear();
 }
 
-export async function motor(cuentaId?: string): Promise<ResultadoMotor> {
+export async function motor(cuentaId?: string, campanaId?: string): Promise<ResultadoMotor> {
   const fuente = fuenteActiva();
-  const id = cuentaId ?? (await cuentaDesdeCookie()) ?? "";
-  const clave = `${fuente.nombre}|${id}`;
+  const galletas = await desdeCookies();
+  const id = cuentaId ?? galletas.cuenta ?? "";
+  const camp = campanaId ?? galletas.campana ?? "";
+  const clave = `${fuente.nombre}|${id}|${camp}`;
   const enCache = cache.get(clave);
   const vigente = enCache && Date.now() - enCache.creadoEn < CACHE_SEG * 1000;
   if (vigente && process.env.NODE_ENV === "production") return enCache.promesa;
-  const promesa = correrMotor(undefined, { fuente, cuentaId: id || undefined });
+  const promesa = correrMotor(undefined, { fuente, cuentaId: id || undefined, campanaId: camp || undefined });
   cache.set(clave, { promesa, creadoEn: Date.now() });
   return promesa;
 }
 
 /** «¿Cómo nos fue con esta pauta?»: veredicto con razones y sus creativos con lectura. null si la campaña no es de la cuenta. */
-export function comoNosFue(r: Pick<ResultadoMotor, "campanas" | "benchmarks" | "lote" | "creativos">, campanaId: string): { veredicto: VeredictoCampana; creativos: CreativoDeCampana[] } | null {
+export function comoNosFue(r: Pick<ResultadoMotor, "campanas" | "benchmarks" | "loteCuenta" | "creativos" | "campanaActiva">, campanaId: string): { veredicto: VeredictoCampana; creativos: CreativoDeCampana[] } | null {
   const c = r.campanas.find((x) => x.id === campanaId);
   if (!c) return null;
-  return { veredicto: veredictoCampana(c, r.campanas, r.benchmarks), creativos: creativosDeCampana(campanaId, r.lote.insights, r.creativos) };
+  // Con una campaña elegida en la cabecera, r.creativos son solo los suyos; para otra campaña se evalúan los de la cuenta.
+  const evaluaciones = r.campanaActiva && r.campanaActiva.id !== campanaId ? evaluarCreativos(r.loteCuenta.creativos, r.loteCuenta.insights, r.benchmarks) : r.creativos;
+  return { veredicto: veredictoCampana(c, r.campanas, r.benchmarks), creativos: creativosDeCampana(campanaId, r.loteCuenta.insights, evaluaciones) };
 }
 
 /** Las campañas que uno escoja (ids), lado a lado, en el periodo elegido. */
-export function compararSeleccion(r: Pick<ResultadoMotor, "lote" | "hoy" | "campanas">, ids: ReadonlyArray<string>, periodo: string | undefined): ComparacionVarias {
+export function compararSeleccion(r: Pick<ResultadoMotor, "loteCuenta" | "hoy" | "campanas">, ids: ReadonlyArray<string>, periodo: string | undefined): ComparacionVarias {
   const { campanas } = campanasEnPeriodo(r, periodo);
   const elegidas = ids.map((id) => campanas.find((c) => c.id === id)).filter((c): c is ResumenCampana => c !== undefined);
   return compararVarias(elegidas);

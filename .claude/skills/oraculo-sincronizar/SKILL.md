@@ -48,11 +48,16 @@ nullable: si no viene, `null`.** El nombre es el de la campaña/anuncio, nunca d
 Para consultas grandes usa el modo asíncrono del conector. Vigila el encabezado de uso del
 negocio (error 17 = límite): si aparece, espera y reintenta; no partas el rango a mano.
 
-## Paso 2 — Traer desgloses (nivel cuenta)
+## Paso 2 — Traer desgloses (nivel cuenta Y nivel campaña)
 
 Dimensiones: `edad`, `genero`, `ubicacion` (región/ciudad), `plataforma` (plataforma ×
 ubicación de anuncio), `hora` (hora del día, últimos 28 días bastan), `dispositivo` si está.
 Cada fila → `BreakdownRow` = `InsightRow` + `dimension`, `valor`, `nRegistros`.
+
+Pídelos **dos veces**: a nivel cuenta (`nivel: "cuenta"`, `id` = act_…) y **por campaña**
+(`nivel: "campana"`, `id` = id de la campaña). El panel tiene un filtro de campaña en la cabecera:
+Audiencias solo puede mostrar una campaña si vienen sus desgloses. Los de nivel campaña con
+`nRegistros < 5` se ocultarán solos (k-anonimato), es normal que sean menos.
 
 `nRegistros` = personas del segmento (usa alcance si viene; si no, impresiones / frecuencia;
 si tampoco, `Math.round(impresiones / 1.4)`). Es lo que protege el k-anonimato.

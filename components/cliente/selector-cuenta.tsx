@@ -30,6 +30,7 @@ export default function SelectorCuenta({ cuentas, actual }: { cuentas: CuentaPub
     if (c.id === actual.id) return
     setCambiando(true)
     document.cookie = `cuenta=${encodeURIComponent(c.id)}; path=/; max-age=31536000; samesite=lax`
+    document.cookie = 'campana=; path=/; max-age=0; samesite=lax' // otra cuenta, otras campañas
     router.refresh()
     setTimeout(() => setCambiando(false), 1200)
   }

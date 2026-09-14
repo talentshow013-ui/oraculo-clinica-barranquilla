@@ -37,6 +37,9 @@ export default async function Audiencias() {
   )
   return (
     <>
+      {r.campanaActiva && !r.desglosesPorCampana && (
+        <Aviso tono="ojo" className="mb-3">Estás mirando la campaña «{r.campanaActiva.nombre}», pero los datos de audiencias vienen por cuenta completa, no por campaña. Elige «Todas las campañas» arriba para verlos, o pide en la próxima sincronización los desgloses por campaña.</Aviso>
+      )}
       <Titulo rotulo="Audiencias · edad, zona, franja horaria" extra={<p className="text-[12.5px] text-texto-2">{r.privacidad.segmentosOcultos} segmentos ocultos por privacidad (menos de {r.privacidad.k} registros)</p>}>Qué excluir y a qué hora pautar</Titulo>
       <Grid cols={4}>
         <Kpi nombre="Inversión fuera del radio" valor={fueraRadio / gastoTotal} unidad="porcentaje" tono="mal" formula={`Gasto a más de ${r.cliente.radioKm} km ÷ total`} porQueImporta="Nadie viene desde Bogotá a una sesión" retraso={40} />

@@ -5,6 +5,8 @@ El menú va en cuatro grupos, en el orden en que se toman decisiones: **Decidir 
 
 Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se inventa un cero.
 
+**Arriba, en la cabecera, hay dos selectores que mandan sobre todo el panel:** la **cuenta publicitaria** y la **campaña**. Con «Todas las campañas» se ve la cuenta completa; eligiendo una campaña, TODAS las pantallas (cifras, alertas, embudo, creativos) se recalculan solo con esa pauta. *Decir:* «Si quieren ver cómo va la de Láser sola, la eligen aquí y todo el panel habla solo de ella.»
+
 ---
 
 ## Grupo 1 · DECIDIR (lo que se mira cada semana)
