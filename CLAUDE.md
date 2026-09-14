@@ -27,7 +27,7 @@ son la interfaz (tema claro, sin librerías de UI). `config/cliente.ts` tiene ti
 calibrar y las cuentas publicitarias. Docs en `docs/` (`CONEXION_MCP.md` es interno).
 
 ## Cómo trabajar aquí
-- TDD en `lib/`: test primero, rojo, verde. 271 tests deben seguir verdes.
+- TDD en `lib/`: test primero, rojo, verde. 283 tests deben seguir verdes.
 - Ventanas iguales al comparar periodos; fechas siempre `America/Bogota` (`lib/format/fechas.ts`).
 - Privacidad por esquema: jamás un campo de paciente; k-anonimato k = 5.
 - Producción: VPS Ubuntu siempre encendida con Claude Code + reloj diario (`deploy/oraculo-diario.sh`) + panel con candado (`middleware.ts`, `ORACULO_USUARIO/CLAVE`). Constitución 1.1.0.

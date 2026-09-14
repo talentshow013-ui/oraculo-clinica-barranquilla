@@ -166,7 +166,7 @@ export interface ComparacionCampanas {
   metricas: MetricaComparada[];
 }
 
-const METRICAS_COMPARACION: { id: string; nombre: string; unidad: MetricaComparada["unidad"]; mejorEs: MejorEs; suma: boolean; f: (c: ResumenCampana) => number | null }[] = [
+export const METRICAS_COMPARACION: { id: string; nombre: string; unidad: MetricaComparada["unidad"]; mejorEs: MejorEs; suma: boolean; f: (c: ResumenCampana) => number | null }[] = [
   { id: "gasto", nombre: "Inversión", unidad: "cop", mejorEs: "rango", suma: true, f: (c) => c.total.gasto },
   { id: "resultados", nombre: "Resultados", unidad: "numero", mejorEs: "mayor", suma: true, f: (c) => c.total.resultados },
   { id: "conversaciones", nombre: "Conversaciones", unidad: "numero", mejorEs: "mayor", suma: true, f: (c) => c.total.conversacionesIniciadas },

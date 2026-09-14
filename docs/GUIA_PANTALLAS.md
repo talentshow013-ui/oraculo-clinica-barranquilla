@@ -49,7 +49,7 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 - **Cuándo:** cada dos semanas o cuando el costo sube sin explicación.
 
 ### 7b. Campañas
-- **Para qué:** cada pauta con cara propia — la que está al aire y las que ya terminaron — con sus propios días, su costo y su participación del gasto. Se eligen dos y se comparan lado a lado; se escoge el periodo (14 / 30 / 90 días / todo).
+- **Para qué:** cada pauta con cara propia — la que está al aire y las que ya terminaron — con sus propios días, su costo y su participación del gasto. Se escogen las que uno quiera en una lista y se comparan lado a lado (la mejor de cada métrica resaltada); se escoge el periodo (14 / 30 / 90 días / todo). A cada campaña se le anotan sus resultados (5 números) y sale el veredicto: sirvió, no sirvió o a medias, con razones, y qué creativos funcionaron.
 - **Decir:** «Las demás pantallas suman toda la cuenta. Aquí se ve pauta por pauta, incluidas las que se pausaron hace meses: nada se pierde. Y se responde "¿cómo le fue a la de junio contra la de ahora?" en dos clics. Como Meta solo ve hasta la conversación, aquí mismo se le anotan a cada campaña sus cinco números (contactos cerrados, citas, asistidas, ventas, valor), y con eso la comparación llega hasta la venta.»
 - **Cuándo:** al cerrar una campaña, antes de lanzar una parecida, y en la reunión de los 15 para anotar resultados.
 

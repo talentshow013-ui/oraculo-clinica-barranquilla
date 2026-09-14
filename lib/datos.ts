@@ -27,9 +27,10 @@ import { resolverMetrica, type ValorMetrica } from "@/lib/metrics/resolver";
 import * as core from "@/lib/metrics/core";
 import { compararCampanas, resumirCampanas, type ComparacionCampanas, type ResumenCampana } from "@/lib/metrics/campanas";
 import { fusionarResultados, leerResultados, type RegistroPauta } from "@/lib/resultados";
+import { compararVarias, creativosDeCampana, veredictoCampana, type ComparacionVarias, type CreativoDeCampana, type VeredictoCampana } from "@/lib/metrics/veredicto";
 
-export { resolverMetrica, compararCampanas };
-export type { ResumenCampana, ComparacionCampanas, RegistroPauta };
+export { resolverMetrica, compararCampanas, compararVarias };
+export type { ResumenCampana, ComparacionCampanas, ComparacionVarias, RegistroPauta, VeredictoCampana, CreativoDeCampana };
 
 export type NombreFuente = "seed" | "archivo";
 
@@ -370,4 +371,18 @@ export async function motor(cuentaId?: string): Promise<ResultadoMotor> {
   const promesa = correrMotor(undefined, { fuente, cuentaId: id || undefined });
   cache.set(clave, { promesa, creadoEn: Date.now() });
   return promesa;
+}
+
+/** «¿Cómo nos fue con esta pauta?»: veredicto con razones y sus creativos con lectura. null si la campaña no es de la cuenta. */
+export function comoNosFue(r: Pick<ResultadoMotor, "campanas" | "benchmarks" | "lote" | "creativos">, campanaId: string): { veredicto: VeredictoCampana; creativos: CreativoDeCampana[] } | null {
+  const c = r.campanas.find((x) => x.id === campanaId);
+  if (!c) return null;
+  return { veredicto: veredictoCampana(c, r.campanas, r.benchmarks), creativos: creativosDeCampana(campanaId, r.lote.insights, r.creativos) };
+}
+
+/** Las campañas que uno escoja (ids), lado a lado, en el periodo elegido. */
+export function compararSeleccion(r: Pick<ResultadoMotor, "lote" | "hoy" | "campanas">, ids: ReadonlyArray<string>, periodo: string | undefined): ComparacionVarias {
+  const { campanas } = campanasEnPeriodo(r, periodo);
+  const elegidas = ids.map((id) => campanas.find((c) => c.id === id)).filter((c): c is ResumenCampana => c !== undefined);
+  return compararVarias(elegidas);
 }

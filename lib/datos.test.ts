@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { campanasEnPeriodo, correrMotor, fuenteActiva } from "@/lib/datos";
+import { campanasEnPeriodo, comoNosFue, compararSeleccion, correrMotor, fuenteActiva } from "@/lib/datos";
 import { diasEntre, sumarDias } from "@/lib/format/fechas";
 import { generarSeed } from "@/scripts/seed";
 
@@ -250,5 +250,30 @@ describe("resultados por pauta — por cuenta y campaña; no contaminan otras cu
     const norte = await correrMotor(lote, { resultados: [registro], cuentaId: "act_2213904" });
     expect(norte.resultadosPauta).toHaveLength(0);
     expect(norte.lote.embudo.some((r) => r.campanaId === "camp_facial")).toBe(false);
+  });
+});
+
+describe("comoNosFue y compararSeleccion — lo que se lee en la reunión", () => {
+  test("con resultados registrados la campaña recibe veredicto con razones y sus creativos con lectura", async () => {
+    const lote = generarSeed();
+    const registro = { cuentaId: "act_1048227", campanaId: "camp_madre", contactosCerrados: 90, citasAgendadas: 48, citasAsistidas: 33, ventas: 15, valorVentasCOP: 9_750_000, registradoEn: "2026-09-08T09:00:00-05:00" };
+    const r = await correrMotor(lote, { resultados: [registro] });
+    const x = comoNosFue(r, "camp_madre")!;
+    expect(["sirvio", "a_medias", "no_sirvio"]).toContain(x.veredicto.veredicto);
+    expect(x.veredicto.razones.length).toBeGreaterThanOrEqual(3);
+    expect(x.creativos.length).toBe(2);
+    expect(x.creativos.every((c) => c.lectura.length > 5)).toBe(true);
+    expect(comoNosFue(r, "camp_laser")).toBeNull(); // otra cuenta
+    // Sin ningún dato de clínica (ni registrado ni sincronizado) el veredicto lo dice y pide los Resultados.
+    const sinDatos = await correrMotor({ ...lote, embudo: [] }, { resultados: [] });
+    expect(comoNosFue(sinDatos, "camp_facial")!.veredicto.veredicto).toBe("sin_resultados");
+  });
+
+  test("compararSeleccion respeta el periodo e ignora ids que no existen", async () => {
+    const r = await correrMotor(generarSeed());
+    const c = compararSeleccion(r, ["camp_facial", "camp_madre", "no_existe"], "todo");
+    expect(c.campanas.map((x) => x.id)).toEqual(["camp_facial", "camp_madre"]);
+    expect(c.metricas.length).toBeGreaterThan(5);
+    expect(compararSeleccion(r, ["camp_facial", "camp_madre"], "14").campanas.map((x) => x.id)).toEqual(["camp_facial"]);
   });
 });

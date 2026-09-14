@@ -5,6 +5,7 @@
 export type { ResultadoMotor, CuentaPublicitaria, AgregadoVista as Agregado, PuntoSerieVista, DesgloseVista, NegocioVista, PeriodoCampanas } from "@/lib/datos";
 export type { ResumenCampana, ComparacionCampanas, MetricaComparada } from "@/lib/metrics/campanas";
 export type { RegistroPauta } from "@/lib/resultados";
+export type { ComparacionVarias, MetricaVarias, VeredictoCampana, Veredicto, CreativoDeCampana } from "@/lib/metrics/veredicto";
 export type { Estado as EstadoCampana } from "@/lib/adapters/types";
 export type { AnuncioCompetidor, BreakdownRow, Competidor, Creativo, Angulo, Paso, Dimension, Formato, EstadoFuente, LoteDatos } from "@/lib/adapters/types";
 export type { PuntoSerie } from "@/lib/metrics/core";
