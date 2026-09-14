@@ -6,10 +6,7 @@
     },
     "meta-ads": {
       "type": "http",
-      "url": "https://mcp.facebook.com/ads",
-      "oauth": {
-        "clientId": "4572635166299856"
-      }
+      "url": "https://mcp.facebook.com/ads"
     }
   }
 }

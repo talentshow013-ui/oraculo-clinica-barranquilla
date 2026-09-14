@@ -18,12 +18,14 @@ no contiene ningún cliente HTTP.
 - Alta en Claude Code (una sola vez, en el equipo de la coordinadora):
 
 ```
-claude mcp add --transport http --client-id 4572635166299856 meta-ads https://mcp.facebook.com/ads
+claude mcp add --transport http meta-ads https://mcp.facebook.com/ads
 ```
 
-  El `META_APP_ID` es el de una app creada en developers.facebook.com **por la propia clínica**
-  (tipo Empresa, asociada a su Business Manager); no requiere revisión para uso propio. Así todo
-  corre a nombre del cliente y la agencia no queda en la cadena de acceso. Al primer uso, Claude Code abre el navegador para autorizar con la cuenta que
+  **No necesita App ID ni app de desarrollador**: el conector es de Meta y se autoriza con «iniciar
+  sesión con Facebook» (la cuenta que administra el Business Manager de la clínica). Ponerle un
+  `--client-id` rompe la autorización (error PKCE `code_verifier … without a code_challenge`).
+  Si Claude Code dice «Dynamic registration is not available», la alternativa es agregarlo desde
+  claude.ai → Configuración → Conectores → Añadir conector personalizado con la misma URL. Al primer uso, Claude Code abre el navegador para autorizar con la cuenta que
   administra el Business Manager de la clínica. El token vive en la sesión; no se copia a ningún
   archivo del proyecto.
 - Permisos que pedirá: `ads_mcp_management`, `ads_read`, `ads_management`, `catalog_management`,

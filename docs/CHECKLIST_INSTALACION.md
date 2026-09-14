@@ -14,10 +14,8 @@ Todo lo que hay que tener y hacer, en orden. Marca cada línea.
       publicitarias en el Business Manager de la clínica. Debe estar en la llamada.
 - [ ] **Las cuentas publicitarias reales**: nombre e id (`act_…`) de cada una. Hoy en el sistema hay
       tres de ejemplo ("Vivante Riomar / Norte / Médicos"): se reemplazan por las reales.
-- [ ] **App ID de Meta, creado por ELLA** (todo corre a nombre de la clínica): con el Facebook que
-      administra su Business Manager → developers.facebook.com → Mis apps → Crear app → tipo
-      **Empresa**, nombre «Oráculo Clínica», asociada a su Business Manager → copiar el **ID de la
-      app**. No requiere revisión ni publicarla (uso propio). Se puede hacer en la llamada (5 min).
+- [ ] ~~App ID de Meta~~ **No hace falta.** El conector oficial se autoriza con «iniciar sesión con
+      Facebook» de la persona administradora del Business Manager. Sin app, sin revisión.
 - [ ] **Nada de planillas.** Los resultados se anotan en el panel, en **Campañas**, por campaña:
       cinco números (contactos cerrados, citas, asistidas, ventas, valor). Solo hay que decidir
       **quién** lo hace (normalmente la coordinadora, en la reunión de los 15).
@@ -31,7 +29,7 @@ Todo lo que hay que tener y hacer, en orden. Marca cada línea.
    en GitHub solo, instala todo y deja el panel, el reloj y el candado. Ellos no tocan nada.
 2. **Iniciar sesión en Claude** (ellos): `claude` muestra un enlace → lo abren en su navegador con
    su cuenta → listo.
-3. **Conectar Meta** (ellos): `claude mcp add --transport http --client-id 4572635166299856 meta-ads https://mcp.facebook.com/ads`
+3. **Conectar Meta** (ellos): `claude mcp add --transport http meta-ads https://mcp.facebook.com/ads`
    → dentro de `claude`, `/mcp` → autorizar con el Facebook del administrador → aceptar permisos.
 4. **Conectar Apify** (opcional, gratis): en `/mcp` autorizar `apify` con una cuenta de Apify.
 5. **Cuentas reales**: edito `config/cliente.ts` con los `act_…` y nombres reales. Subo el cambio.

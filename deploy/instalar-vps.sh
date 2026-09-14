@@ -76,7 +76,7 @@ echo "  (cambiala en /home/oraculo/oraculo/.env y reinicia: systemctl restart or
 echo
 echo "  PASOS MANUALES (una sola vez, como usuario oraculo:  sudo -iu oraculo):"
 echo "  1) claude            -> inicia sesion con la suscripcion (abre un enlace; pegalo en tu navegador)"
-echo "  2) claude mcp add --transport http --client-id 4572635166299856 meta-ads https://mcp.facebook.com/ads"
+echo "  2) claude mcp add --transport http meta-ads https://mcp.facebook.com/ads"
 echo "     claude -> /mcp   -> autorizar meta-ads (Facebook) y apify (ya declarado en .mcp.json)"
 echo "  3) cd ~/oraculo && claude -p \"/oraculo-sincronizar\"   -> primera sincronizacion real"
 echo "  4) cloudflared tunnel login && cloudflared tunnel create oraculo"
