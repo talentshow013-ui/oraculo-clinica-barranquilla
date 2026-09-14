@@ -4,7 +4,10 @@ Todo lo que hay que tener y hacer, en orden. Marca cada línea.
 
 ## A. Pedir HOY (antes de la llamada), para no perder tiempo mañana
 
-- [ ] **VPS comprada** en Hostinger: plan KVM 2, Ubuntu 24.04. Necesito la **IP** y la **clave de root**.
+- [ ] **VPS comprada** en Hostinger: plan KVM 2, Ubuntu 24.04. Al crearla, en «Llave SSH» pegar la
+      llave del instalador (está en `deploy/LLAVE-INSTALADOR.md`); si ya está creada, agregarla en
+      hPanel → VPS → SSH keys. Necesito solo la **IP**. Con eso la instalo desde aquí:
+      `bash deploy/instalar-desde-aqui.sh <IP>` (un comando, 10 minutos, sin tocar su PC).
       Si mañana no está: se instala en el PC de la coordinadora (`instalar.ps1`) y se pasa a la VPS después; es el mismo repo.
 - [ ] **Cuenta Claude con suscripción** (Pro mínimo): correo y clave a la mano para iniciar sesión.
 - [ ] **Quién autoriza Meta**: un usuario de Facebook que sea **administrador** de las cuentas
@@ -24,9 +27,8 @@ Todo lo que hay que tener y hacer, en orden. Marca cada línea.
 
 ## B. Durante la llamada (con VPS) — 30 a 40 minutos
 
-1. **Yo entro a la VPS** (`ssh root@IP`) y corro el instalador:
-   `bash instalar-vps.sh git@github.com:talentshow013-ui/oraculo-clinica-barranquilla.git`
-   → imprime una llave; la agrego en GitHub (Deploy keys) y sigue. Deja el panel, el reloj y el candado.
+1. **Desde mi PC**: `bash deploy/instalar-desde-aqui.sh <IP>` → crea el usuario, registra la llave
+   en GitHub solo, instala todo y deja el panel, el reloj y el candado. Ellos no tocan nada.
 2. **Iniciar sesión en Claude** (ellos): `claude` muestra un enlace → lo abren en su navegador con
    su cuenta → listo.
 3. **Conectar Meta** (ellos): `claude mcp add --transport http --client-id <APP_ID> meta-ads https://mcp.facebook.com/ads`

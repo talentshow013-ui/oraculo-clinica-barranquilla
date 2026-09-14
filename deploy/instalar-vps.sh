@@ -31,12 +31,16 @@ chmod 440 /etc/sudoers.d/oraculo
 
 paso 4 "Llave de despliegue (solo lectura) para GitHub"
 sudo -u oraculo bash -c 'mkdir -p ~/.ssh && chmod 700 ~/.ssh; [ -f ~/.ssh/id_ed25519 ] || ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519 -C oraculo-vps -q; ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null'
-echo
-echo "  >>> Copia esta llave PUBLICA en GitHub -> repo -> Settings -> Deploy keys (solo lectura):"
-echo
-cat /home/oraculo/.ssh/id_ed25519.pub
-echo
-read -r -p "  Cuando la hayas agregado, presiona Enter para continuar... " _
+if [ "${ORACULO_SIN_PAUSA:-}" = "1" ]; then
+  echo "  llave ya registrada en GitHub por instalar-desde-aqui.sh"
+else
+  echo
+  echo "  >>> Copia esta llave PUBLICA en GitHub -> repo -> Settings -> Deploy keys (solo lectura):"
+  echo
+  cat /home/oraculo/.ssh/id_ed25519.pub
+  echo
+  read -r -p "  Cuando la hayas agregado, presiona Enter para continuar... " _
+fi
 
 paso 5 "Código"
 sudo -u oraculo bash -c "cd ~ && if [ -d oraculo/.git ]; then cd oraculo && git pull --ff-only; else git clone '$REPO_URL' oraculo; fi"
