@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { campanasEnPeriodo, comoNosFue, compararSeleccion, correrMotor, filtrarPorCampana, filtrarPorCuenta, fuenteActiva } from "@/lib/datos";
 import { diasEntre, sumarDias } from "@/lib/format/fechas";
-import { generarSeed } from "@/scripts/seed";
+import { CUENTAS_SEED, generarSeed } from "@/scripts/seed";
 
 describe("correrMotor sobre el seed — encuentra los patrones plantados", () => {
   const lote = generarSeed();
@@ -76,19 +76,19 @@ describe("fuenteActiva", () => {
 describe("cuentas publicitarias — una cuenta a la vez", () => {
   const lote = generarSeed();
 
-  test("el seed trae 3 cuentas y correrMotor sin cuenta usa la principal", async () => {
+  test("las cuentas configuradas aparecen todas; el seed pauta en las dos primeras; sin cuenta se usa la principal", async () => {
     const r = await correrMotor(lote);
-    expect(r.cuentas.length).toBe(3);
+    expect(r.cuentas.length).toBe(CUENTAS_SEED.length);
     expect(r.cuenta.id).toBe(r.cuentas[0]!.id);
-    expect(r.cuentas.map((c) => c.nombre)).toContain("Vivante Riomar");
-    expect(r.cuentas.filter((c) => c.activa).length).toBe(2);
+    expect(r.cuentas.map((c) => c.id)).toEqual(CUENTAS_SEED);
+    expect(r.cuentas.filter((c) => c.activa).map((c) => c.id)).toEqual(CUENTAS_SEED.slice(0, 2));
   });
 
   test("con otra cuenta, las cifras cambian y el radar es el mismo (compartido)", async () => {
-    const a = await correrMotor(lote, { cuentaId: "act_1048227" });
-    const b = await correrMotor(lote, { cuentaId: "act_2213904" });
-    expect(a.cuenta.id).toBe("act_1048227");
-    expect(b.cuenta.id).toBe("act_2213904");
+    const a = await correrMotor(lote, { cuentaId: CUENTAS_SEED[0]! });
+    const b = await correrMotor(lote, { cuentaId: CUENTAS_SEED[1]! });
+    expect(a.cuenta.id).toBe(CUENTAS_SEED[0]!);
+    expect(b.cuenta.id).toBe(CUENTAS_SEED[1]!);
     expect(a.total.gasto).not.toBe(b.total.gasto);
     expect(a.total.gasto + b.total.gasto).toBeCloseTo(lote.insights.filter((i) => i.nivel === "anuncio").reduce((s, i) => s + i.gasto, 0), 0);
     expect(a.radar.ganadores.length).toBe(b.radar.ganadores.length);
@@ -97,7 +97,7 @@ describe("cuentas publicitarias — una cuenta a la vez", () => {
   test("cuenta desconocida → principal sin error; cuenta sin pauta → gasto 0 y sin hallazgos valorizados", async () => {
     const r = await correrMotor(lote, { cuentaId: "act_no_existe" });
     expect(r.cuenta.id).toBe(r.cuentas[0]!.id);
-    const vacia = await correrMotor(lote, { cuentaId: "act_3390118" });
+    const vacia = await correrMotor(lote, { cuentaId: CUENTAS_SEED[2]! });
     expect(vacia.cuenta.activa).toBe(false);
     expect(vacia.total.gasto).toBe(0);
     expect(vacia.negocio.roasReal).toBeNull();
@@ -193,7 +193,7 @@ describe("campañas con cara propia — vivas y terminadas en la misma lista", (
   });
 
   test("las campañas de una cuenta no se mezclan con las de otra", async () => {
-    const norte = await correrMotor(lote, { cuentaId: "act_2213904" });
+    const norte = await correrMotor(lote, { cuentaId: CUENTAS_SEED[1]! });
     expect(norte.campanas.map((c) => c.id).sort()).toEqual(["camp_corporal", "camp_laser"]);
   });
 });
@@ -228,7 +228,7 @@ describe("R04 con la pauta apagada", () => {
 });
 
 describe("resultados por pauta — por cuenta y campaña; no contaminan otras cuentas ni tocan lo de Meta", () => {
-  const registro = { cuentaId: "act_1048227", campanaId: "camp_facial", contactosCerrados: 600, citasAgendadas: 300, citasAsistidas: 150, ventas: 60, valorVentasCOP: 42_000_000, registradoEn: "2026-09-08T09:00:00-05:00" };
+  const registro = { cuentaId: CUENTAS_SEED[0]!, campanaId: "camp_facial", contactosCerrados: 600, citasAgendadas: 300, citasAsistidas: 150, ventas: 60, valorVentasCOP: 42_000_000, registradoEn: "2026-09-08T09:00:00-05:00" };
 
   test("lo de Meta no cambia; la campaña recibe sus citas y ventas; el total del periodo es exacto", async () => {
     const lote = generarSeed();
@@ -247,7 +247,7 @@ describe("resultados por pauta — por cuenta y campaña; no contaminan otras cu
 
   test("lo registrado para Riomar no aparece en la cuenta Norte", async () => {
     const lote = generarSeed();
-    const norte = await correrMotor(lote, { resultados: [registro], cuentaId: "act_2213904" });
+    const norte = await correrMotor(lote, { resultados: [registro], cuentaId: CUENTAS_SEED[1]! });
     expect(norte.resultadosPauta).toHaveLength(0);
     expect(norte.lote.embudo.some((r) => r.campanaId === "camp_facial")).toBe(false);
   });
@@ -256,7 +256,7 @@ describe("resultados por pauta — por cuenta y campaña; no contaminan otras cu
 describe("comoNosFue y compararSeleccion — lo que se lee en la reunión", () => {
   test("con resultados registrados la campaña recibe veredicto con razones y sus creativos con lectura", async () => {
     const lote = generarSeed();
-    const registro = { cuentaId: "act_1048227", campanaId: "camp_madre", contactosCerrados: 90, citasAgendadas: 48, citasAsistidas: 33, ventas: 15, valorVentasCOP: 9_750_000, registradoEn: "2026-09-08T09:00:00-05:00" };
+    const registro = { cuentaId: CUENTAS_SEED[0]!, campanaId: "camp_madre", contactosCerrados: 90, citasAgendadas: 48, citasAsistidas: 33, ventas: 15, valorVentasCOP: 9_750_000, registradoEn: "2026-09-08T09:00:00-05:00" };
     const r = await correrMotor(lote, { resultados: [registro] });
     const x = comoNosFue(r, "camp_madre")!;
     expect(["sirvio", "a_medias", "no_sirvio"]).toContain(x.veredicto.veredicto);
@@ -281,7 +281,7 @@ describe("comoNosFue y compararSeleccion — lo que se lee en la reunión", () =
 describe("filtro de campaña — todo el panel se recalcula para UNA pauta", () => {
   test("filtrarPorCampana deja solo la campaña, sus conjuntos, sus anuncios, sus creativos y su embudo; el radar sigue", () => {
     const lote = generarSeed();
-    const riomar = filtrarPorCuenta(lote, "act_1048227");
+    const riomar = filtrarPorCuenta(lote, CUENTAS_SEED[0]!);
     const f = filtrarPorCampana(riomar, "camp_madre");
     expect(f.insights.every((i) => (i.nivel === "campana" && i.id === "camp_madre") || (i.nivel === "conjunto" && i.padreId === "camp_madre") || (i.nivel === "anuncio" && i.padreId === "adset_madre_mujeres"))).toBe(true);
     expect(f.insights.some((i) => i.nivel === "anuncio")).toBe(true);
@@ -295,10 +295,10 @@ describe("filtro de campaña — todo el panel se recalcula para UNA pauta", () 
 
   test("correrMotor con campanaId: cifras de esa campaña, campana activa, lista completa para el selector, cuenta intacta", async () => {
     const lote = generarSeed();
-    const todas = await correrMotor(lote, { cuentaId: "act_1048227" });
-    const madre = await correrMotor(lote, { cuentaId: "act_1048227", campanaId: "camp_madre" });
+    const todas = await correrMotor(lote, { cuentaId: CUENTAS_SEED[0]! });
+    const madre = await correrMotor(lote, { cuentaId: CUENTAS_SEED[0]!, campanaId: "camp_madre" });
     expect(madre.campanaActiva?.id).toBe("camp_madre");
-    expect(madre.cuenta.id).toBe("act_1048227");
+    expect(madre.cuenta.id).toBe(CUENTAS_SEED[0]!);
     expect(madre.total.gasto).toBeLessThan(todas.total.gasto);
     expect(madre.total.gasto).toBe(todas.campanas.find((c) => c.id === "camp_madre")!.total.gasto);
     expect(madre.creativos.length).toBe(2);
@@ -310,7 +310,7 @@ describe("filtro de campaña — todo el panel se recalcula para UNA pauta", () 
   });
 
   test("campaña que no es de la cuenta → se ignora (todas)", async () => {
-    const r = await correrMotor(generarSeed(), { cuentaId: "act_1048227", campanaId: "camp_laser" });
+    const r = await correrMotor(generarSeed(), { cuentaId: CUENTAS_SEED[0]!, campanaId: "camp_laser" });
     expect(r.campanaActiva).toBeNull();
     expect(r.total.gasto).toBeGreaterThan(0);
   });

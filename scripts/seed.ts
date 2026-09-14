@@ -30,6 +30,7 @@ import type {
 import { LoteDatosSchema } from "@/lib/adapters/types";
 import { diaSemana, rangoDias, sumarDias } from "@/lib/format/fechas";
 import { validarSinPII } from "@/lib/privacy";
+import { cliente } from "@/config/cliente";
 import { clasificarAngulo, nivelConscienciaTexto } from "@/lib/competitive/angles";
 
 export const SEMILLA = 20260913;
@@ -85,14 +86,19 @@ interface AdDef {
   duracionSeg: number | null;
 }
 
-/** Tres cuentas publicitarias (config/cliente.ts): Riomar lleva facial, Norte láser y corporal, Médicos sin pauta. */
+/**
+ * El seed reparte las campañas entre las DOS primeras cuentas de config/cliente.ts (la primera
+ * lleva facial y la promoción; la segunda láser y corporal); la tercera queda sin pauta a propósito.
+ * Así la demostración sigue funcionando con las cuentas reales del cliente.
+ */
+export const CUENTAS_SEED = cliente.cuentasPublicitarias.map((c) => c.id);
 const CUENTA_POR_CAMPANA: Record<string, string> = {
-  camp_facial: "act_1048227",
-  camp_madre: "act_1048227",
-  camp_laser: "act_2213904",
-  camp_corporal: "act_2213904",
+  camp_facial: CUENTAS_SEED[0] ?? "act_demo_1",
+  camp_madre: CUENTAS_SEED[0] ?? "act_demo_1",
+  camp_laser: CUENTAS_SEED[1] ?? "act_demo_2",
+  camp_corporal: CUENTAS_SEED[1] ?? "act_demo_2",
 };
-const cuentaDe = (campanaId: string) => CUENTA_POR_CAMPANA[campanaId] ?? "act_1048227";
+const cuentaDe = (campanaId: string) => CUENTA_POR_CAMPANA[campanaId] ?? CUENTAS_SEED[0] ?? "act_demo_1";
 
 /** Estado ACTUAL que reporta la plataforma: todas las filas de una campaña lo llevan (como en Meta). */
 const ESTADO_POR_CAMPANA: Record<string, InsightRow["estado"]> = { camp_madre: "pausado" };
@@ -261,7 +267,7 @@ function agregarNivel(filas: InsightRow[], nivel: "conjunto" | "campana", id: st
     id,
     nombre,
     padreId,
-    cuentaId: filas[0]?.cuentaId ?? "act_1048227",
+    cuentaId: filas[0]?.cuentaId ?? cuentaDe("camp_facial"),
     objetivo: "mensajes",
     estado: filas[0]?.estado ?? "activo",
     gasto: 0,

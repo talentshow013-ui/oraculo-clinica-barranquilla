@@ -13,6 +13,7 @@
     "seed": "tsx scripts/seed.ts",
     "verificar": "tsx scripts/verificar.ts",
     "validar-lote": "tsx scripts/validar-lote.ts",
+    "importar-meta": "tsx scripts/importar-meta.ts",
     "importar-radar": "tsx scripts/importar-radar.ts",
     "radar:capturar": "tsx scripts/radar-capturar.ts",
     "doctor": "tsx scripts/doctor.ts"

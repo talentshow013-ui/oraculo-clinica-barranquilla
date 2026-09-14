@@ -53,9 +53,10 @@ export interface ConfigCliente {
 export const cliente: ConfigCliente = {
   nombre: "Clínica estética",
   cuentasPublicitarias: [
-    { id: "act_1048227", nombre: "Vivante Riomar", plataforma: "meta", moneda: "COP" },
-    { id: "act_2213904", nombre: "Vivante Norte", plataforma: "meta", moneda: "COP" },
-    { id: "act_3390118", nombre: "Vivante Médicos", plataforma: "meta", moneda: "COP" },
+    { id: "act_536430824306104", nombre: "F3 · Vivante Corporal 2026", plataforma: "meta", moneda: "COP" },
+    { id: "act_1083324715683244", nombre: "F2 · Vivante Facial 2026", plataforma: "meta", moneda: "COP" },
+    { id: "act_28503083", nombre: "Vivante 6 · Varios tratamientos", plataforma: "meta", moneda: "COP" },
+    { id: "act_677891593042927", nombre: "No invasiva · Otros tratamientos", plataforma: "meta", moneda: "COP" },
   ],
   ciudad: "Barranquilla",
   zonasValidas: ["Barranquilla", "Soledad", "Malambo", "Puerto Colombia", "Galapa", "Sabanagrande", "Baranoa"],
