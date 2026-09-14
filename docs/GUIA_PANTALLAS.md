@@ -24,6 +24,11 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 - **Decir:** «Aquí no hay corazonadas. Cada idea dice qué probar, por qué, cuánto tiempo y con qué número sabremos si ganó. Y recuerda lo que ya probamos antes para no repetir errores.»
 - **Cuándo:** cuando se va a lanzar algo nuevo o hay presupuesto libre.
 
+### 3b. Reunión quincenal (la pinta el agente de diseño)
+- **Para qué:** la bitácora. Cada 15 días se abre la reunión (el sistema guarda la foto de las cifras), se anotan las decisiones y, en la siguiente, se evalúa cada una con antes → ahora: ganó, perdió o sin señal, y qué se aprendió.
+- **Decir:** «Aquí queda lo que decidimos y cómo nos fue. La próxima reunión no empieza de cero: se abre esta pantalla y se ve qué funcionó y qué no, con los números del sistema, no de memoria.»
+- **Cuándo:** en cada reunión de los 15 días. Es la que ordena la reunión.
+
 ### 4. Informe
 - **Para qué:** el resumen semanal en una hoja, listo para imprimir o enviar por WhatsApp.
 - **Decir:** «Esto es lo que le llega a dirección: la fuga más cara, las cifras clave y las tres acciones de la semana. Una página.»
@@ -106,4 +111,4 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 4. Abre **Radar de mercado**: «Y esto es lo que hace la competencia, con sus anuncios reales.»
 5. Cierra con **Informe**: «Esto es lo que le llega cada semana, en una hoja.»
 
-Las otras diez pantallas se mencionan en una frase: «hay más profundidad cuando se necesite».
+Las otras once pantallas se mencionan en una frase: «hay más profundidad cuando se necesite».

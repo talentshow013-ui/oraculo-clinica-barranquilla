@@ -22,12 +22,12 @@ no está, se dice que no está (`null` → «—»). Cero jerga técnica en text
 
 ## Estructura
 `lib/adapters/types.ts` es el contrato (Zod) y manda: las fuentes se mapean AL contrato, nunca al
-revés. `lib/datos.ts` es la única puerta de la interfaz (`await motor()`). La agenda de la clínica se registra en el panel (`/agenda` → `datos/agenda.json`, `lib/agenda`) y el motor la mezcla solo. `app/` y `components/`
+revés. `lib/datos.ts` es la única puerta de la interfaz (`await motor()`). La agenda de la clínica se registra en el panel (`/agenda` → `datos/agenda.json`, `lib/agenda`) y la bitácora de reuniones en `/reunion` (`datos/reuniones.json`, `lib/reuniones`); el motor mezcla ambas solo. Las pantallas de esas dos rutas las pinta el agente de diseño (`docs/PROMPT-FRONTEND-*.md`); aquí solo viven `acciones.ts`. `app/` y `components/`
 son la interfaz (tema claro, sin librerías de UI). `config/cliente.ts` tiene tickets en cero hasta
 calibrar y las cuentas publicitarias. Docs en `docs/` (`CONEXION_MCP.md` es interno).
 
 ## Cómo trabajar aquí
-- TDD en `lib/`: test primero, rojo, verde. 278 tests deben seguir verdes.
+- TDD en `lib/`: test primero, rojo, verde. 286 tests deben seguir verdes.
 - Ventanas iguales al comparar periodos; fechas siempre `America/Bogota` (`lib/format/fechas.ts`).
 - Privacidad por esquema: jamás un campo de paciente; k-anonimato k = 5.
 - Producción: VPS Ubuntu siempre encendida con Claude Code + reloj diario (`deploy/oraculo-diario.sh`) + panel con candado (`middleware.ts`, `ORACULO_USUARIO/CLAVE`). Constitución 1.1.0.
