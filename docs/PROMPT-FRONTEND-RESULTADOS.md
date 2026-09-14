@@ -1,5 +1,7 @@
 # PROMPT — Agente de diseño (frontend): resultados por pauta dentro de **Campañas**
 
+> **Estado: INTEGRADO** (bloque de resultados y tres columnas ya viven en `app/(panel)/campanas/`; `ordenable.tsx` compactado por el agente para que quepan 13 columnas).
+
 > Pégalo completo como primer mensaje al agente que hace la parte visual. Es **un bloque dentro de
 > una pantalla que ya existe** (`/campanas`). No se crea ninguna pestaña. El motor y el guardado
 > ya existen y están probados. Repositorio: `CLIENTE PILAR BARRANQUILA/ANALITICA DE DATOS

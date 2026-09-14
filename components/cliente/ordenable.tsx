@@ -26,10 +26,11 @@ export default function Ordenable({ columnas, filas, inicial, minAncho = 640 }: 
         <thead>
           <tr>
             {columnas.map((c) => (
-              <th key={c.id} scope="col" aria-sort={orden.id === c.id ? (orden.desc ? 'descending' : 'ascending') : 'none'} className={`border-b border-borde pb-2 pr-3 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-texto-2 ${c.num ? 'text-right' : 'text-left'}`} style={{ width: c.ancho }}>
-                <button type="button" onClick={() => setOrden((o) => ({ id: c.id, desc: o.id === c.id ? !o.desc : true }))} className={`inline-flex items-center gap-1 hover:text-texto ${orden.id === c.id ? 'text-texto' : ''}`}>
+              <th key={c.id} scope="col" aria-sort={orden.id === c.id ? (orden.desc ? 'descending' : 'ascending') : 'none'} className={`group border-b border-borde pb-2 pr-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-texto-2 ${c.num ? 'text-right' : 'text-left'}`} style={{ width: c.ancho }}>
+                <button type="button" onClick={() => setOrden((o) => ({ id: c.id, desc: o.id === c.id ? !o.desc : true }))} className={`relative inline-flex items-center gap-1 hover:text-texto ${orden.id === c.id ? 'text-texto' : ''}`}>
                   {c.nombre}
-                  <span aria-hidden="true" className={`text-[9px] transition-opacity ${orden.id === c.id ? 'opacity-100' : 'opacity-30'}`}>{orden.id === c.id && !orden.desc ? '▲' : '▼'}</span>
+                  {/* la flecha solo ocupa sitio en la columna activa; en las demás aparece al pasar, sin ensanchar */}
+                  <span aria-hidden="true" className={`text-[9px] transition-opacity ${orden.id === c.id ? 'opacity-100' : 'absolute opacity-0 group-hover:opacity-40'}`}>{orden.id === c.id && !orden.desc ? '▲' : '▼'}</span>
                 </button>
               </th>
             ))}
@@ -38,7 +39,7 @@ export default function Ordenable({ columnas, filas, inicial, minAncho = 640 }: 
         <tbody>
           {lista.map((f) => (
             <tr key={f.clave} className="transition-colors hover:bg-superficie-2/60">
-              {columnas.map((c) => <td key={c.id} className={`border-b border-borde/70 py-2 pr-3 align-middle ${c.num ? 'num text-right' : ''}`}>{f.celdas[c.id] ?? '—'}</td>)}
+              {columnas.map((c) => <td key={c.id} className={`border-b border-borde/70 py-2 pr-2 align-middle ${c.num ? 'num text-right' : ''}`}>{f.celdas[c.id] ?? '—'}</td>)}
             </tr>
           ))}
         </tbody>

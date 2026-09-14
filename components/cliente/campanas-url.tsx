@@ -14,7 +14,7 @@ function useIrCon() {
     const q = new URLSearchParams(actual.toString())
     for (const [k, v] of Object.entries(cambios)) v == null ? q.delete(k) : q.set(k, v)
     const s = q.toString()
-    router.push(s ? `/campanas?${s}` : '/campanas', { scroll: false })
+    router.push(s ? `/campanas?${s}${cambios.registrar ? '#resultados' : ''}` : '/campanas', { scroll: false })
   }
 }
 
@@ -44,5 +44,15 @@ export function ElegirAB({ id, esA, esB }: { id: string; esA: boolean; esB: bool
       <button type="button" aria-pressed={esA} aria-label={esA ? 'Es la A de la comparación' : 'Ponerla como A'} onClick={() => ir({ a: esA ? null : id })} className={`${base} ${esA ? 'bg-marino text-white ring-marino' : 'bg-superficie text-texto-2 ring-borde hover:text-marino'}`}>A</button>
       <button type="button" aria-pressed={esB} aria-label={esB ? 'Es la B de la comparación' : 'Ponerla como B'} onClick={() => ir({ b: esB ? null : id })} className={`${base} ${esB ? 'bg-acento text-white ring-acento' : 'bg-superficie text-texto-2 ring-borde hover:text-acento'}`}>B</button>
     </span>
+  )
+}
+
+/** Lleva al bloque de resultados de esa campaña, conservando periodo y A/B. */
+export function IrAResultados({ id, activo }: { id: string; activo: boolean }) {
+  const ir = useIrCon()
+  return (
+    <button type="button" aria-pressed={activo} onClick={() => ir({ registrar: activo ? null : id, guardada: null, error: null })} className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 transition-[background-color,color] duration-300 ${activo ? 'bg-marino text-white ring-marino' : 'bg-superficie text-texto-2 ring-borde hover:text-marino'}`}>
+      Resultados
+    </button>
   )
 }
