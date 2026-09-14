@@ -59,12 +59,14 @@ si tampoco, `Math.round(impresiones / 1.4)`). Es lo que protege el k-anonimato.
 
 ## Paso 3 — Agenda y ventas (datos de la clínica)
 
-Pregunta a la coordinadora por la planilla semanal (o lee `datos/agenda.csv` si existe) con
-columnas **agregadas por día, campaña y servicio**: `fecha, campanaId, servicio, conversaciones,
-leads_calificados, citas_agendadas, citas_asistidas, ventas, valor_ventas_cop, recompras,
-valor_recompras_cop`. Conviértelas en `RegistroEmbudo` (un registro por paso, `nRegistros` =
-cantidad). **Ni nombres, ni teléfonos, ni historias: si la planilla trae una columna así, no la
-leas y avisa.** `impresion` y `clic` del embudo salen de los insights (nivel campaña).
+**La agenda NO se sincroniza aquí.** La coordinadora la registra cada lunes en la pantalla
+«Agenda semanal» del panel (`datos/agenda.json`, cinco números por semana) y el motor la mezcla
+solo (`lib/agenda`). En `embudo` deja únicamente los pasos de pauta: `impresion` (impresiones),
+`clic` (clics de enlace) y `conversacion` (conversaciones iniciadas) por día y campaña, desde los
+insights de nivel campaña. Si no los escribes, el motor los deriva de los insights igual.
+Solo si te entregan una planilla agregada (sin nombres ni teléfonos; si los trae, no la leas y
+avisa), puedes convertirla en registros `lead_calificado`…`recompra`, pero una semana registrada
+en el panel siempre manda sobre eso.
 
 ## Paso 4 — Creativos
 

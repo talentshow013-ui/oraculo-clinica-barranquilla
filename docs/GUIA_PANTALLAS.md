@@ -81,6 +81,11 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 
 ## Grupo 4 · CONFIAR (de dónde salen los números)
 
+### 11b. Agenda semanal
+- **Para qué:** lo que Meta no ve. Cada lunes la coordinadora escribe cinco números de la semana anterior (contactos calificados, citas agendadas, asistidas, ventas, valor). Dos minutos. Sin nombres ni planillas.
+- **Decir:** «Meta sabe hasta que alguien escribe. Lo que pasa después solo lo sabe la clínica. Con estos cinco números el embudo llega hasta la venta y vemos cuánta plata se pierde en cada paso. Si una semana no se registra, no pasa nada: el panel sigue y muestra "—" en esa parte.»
+- **Cuándo:** cada lunes, antes de mirar el Centro de mando.
+
 ### 12. Catálogo de métricas
 - **Para qué:** el diccionario. Las 145 métricas que existen, con su definición, y las 18 que de verdad mandan marcadas.
 - **Decir:** «No hay que leerlo. Es para cuando alguien pregunta "¿y esto qué significa?". Las 18 marcadas son las que importan; las demás explican el porqué cuando algo falla.»
@@ -101,4 +106,4 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 4. Abre **Radar de mercado**: «Y esto es lo que hace la competencia, con sus anuncios reales.»
 5. Cierra con **Informe**: «Esto es lo que le llega cada semana, en una hoja.»
 
-Las otras nueve pantallas se mencionan en una frase: «hay más profundidad cuando se necesite».
+Las otras diez pantallas se mencionan en una frase: «hay más profundidad cuando se necesite».

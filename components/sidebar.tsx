@@ -27,6 +27,7 @@ const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: React
     { a: '/consejo', nombre: 'Mesa de consultores', icono: I(<><path d="M4 20h16M6 20V9l6-5 6 5v11" /><path d="M10 20v-5h4v5" /></>) },
   ] },
   { titulo: 'Confiar', rutas: [
+    { a: '/agenda', nombre: 'Agenda semanal', icono: I(<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4" /></>) },
     { a: '/metricas', nombre: 'Catálogo de métricas', icono: I(<><path d="M4 6h16M4 12h10M4 18h13" /></>) },
     { a: '/fuentes', nombre: 'Fuentes', icono: I(<><ellipse cx="12" cy="6" rx="8" ry="3" /><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6" /><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></>) },
   ] },

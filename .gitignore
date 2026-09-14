@@ -13,3 +13,4 @@ reportes/*
 Thumbs.db
 public/radar/
 datos/radar-*.json
+datos/agenda.json

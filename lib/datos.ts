@@ -26,9 +26,10 @@ import { hoyBogota, rangoDias, sumarDias } from "@/lib/format/fechas";
 import { resolverMetrica, type ValorMetrica } from "@/lib/metrics/resolver";
 import * as core from "@/lib/metrics/core";
 import { compararCampanas, resumirCampanas, type ComparacionCampanas, type ResumenCampana } from "@/lib/metrics/campanas";
+import { fusionarAgenda, leerAgenda, type RegistroSemanal } from "@/lib/agenda";
 
 export { resolverMetrica, compararCampanas };
-export type { ResumenCampana, ComparacionCampanas };
+export type { ResumenCampana, ComparacionCampanas, RegistroSemanal };
 
 export type NombreFuente = "seed" | "archivo";
 
@@ -127,6 +128,8 @@ export interface ResultadoMotor {
   desgloses: DesgloseVista[];
   /** Cada pauta con cara propia (viva, pausada o archivada) en todo el periodo del lote. */
   campanas: ResumenCampana[];
+  /** Semanas que la clínica registró a mano en el panel (reciente primero). */
+  agenda: RegistroSemanal[];
   privacidad: { segmentosOcultos: number; k: number; AVISO_PANEL: string };
   fuentes: EstadoFuente[];
   cliente: ConfigCliente;
@@ -176,6 +179,30 @@ async function cuentaDesdeCookie(): Promise<string | undefined> {
 }
 
 // ---------------------------------------------------------------------------
+// Agenda manual (datos/agenda.json)
+// ---------------------------------------------------------------------------
+
+/** Un archivo dañado no tumba el panel: se ignora y la fuente lo dice. */
+function leerAgendaSegura(): RegistroSemanal[] {
+  try {
+    return leerAgenda();
+  } catch {
+    return [];
+  }
+}
+
+function estadoAgenda(agenda: ReadonlyArray<RegistroSemanal>): EstadoFuente {
+  const ultima = agenda[0];
+  return {
+    id: "agenda",
+    etiquetaPublica: "Agenda de la clínica (registro semanal en el panel)",
+    conectado: agenda.length > 0,
+    ultimaActualizacion: ultima?.registradoEn ?? null,
+    detalle: ultima ? `${agenda.length} ${agenda.length === 1 ? "semana registrada" : "semanas registradas"}; la última va del ${ultima.desde} al ${ultima.hasta}.` : "Todavía no se ha registrado ninguna semana. Se hace en la pantalla Agenda semanal.",
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Motor
 // ---------------------------------------------------------------------------
 
@@ -190,6 +217,8 @@ export interface OpcionesMotor {
   fuente?: FuenteDatos;
   /** Id de la cuenta a analizar; desconocida o ausente → principal. */
   cuentaId?: string;
+  /** Agenda manual; si no se pasa y no hay lote explícito, se lee datos/agenda.json. */
+  agenda?: RegistroSemanal[];
 }
 
 /** Corre el motor completo sobre UNA cuenta. Puro salvo por la fecha de hoy (para datos reales). */
@@ -197,8 +226,9 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
   const fuente = opciones.fuente ?? fuenteActiva();
   const cfg = opciones.cliente ?? clientePorDefecto;
   const b = opciones.benchmarks ?? benchmarks;
-  const datosCompletos = lote ?? (await obtenerLote(fuente));
-  const fuentes = lote ? [] : await fuente.estado();
+  const agenda = opciones.agenda ?? (lote ? [] : leerAgendaSegura());
+  const datosCompletos = fusionarAgenda(lote ?? (await obtenerLote(fuente)), agenda);
+  const fuentes = lote ? [] : [...(await fuente.estado()), estadoAgenda(agenda)];
 
   const cuentas = resolverCuentas(datosCompletos, cfg, fuentes);
   const principal = cuentas[0] ?? { id: "sin_cuenta", nombre: "Sin cuenta", plataforma: "meta" as const, moneda: "COP" as const, activa: false, ultimaSincronizacion: null };
@@ -297,6 +327,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     negocio: { ...ctx.negocio, roasDeclarado: core.roas(ctx.total) },
     desgloses,
     campanas: resumirCampanas(loteMotor.insights, { desde: loteMotor.meta.desde, hasta: loteMotor.meta.hasta }),
+    agenda,
     maestras,
     fuentes,
   };
@@ -321,6 +352,11 @@ export function campanasEnPeriodo(r: Pick<ResultadoMotor, "lote" | "hoy" | "camp
  */
 const cache = new Map<string, { promesa: Promise<ResultadoMotor>; creadoEn: number }>();
 const CACHE_SEG = Number(process.env.ORACULO_CACHE_SEG ?? 600);
+
+/** Tras guardar una semana de agenda, el siguiente motor() vuelve a calcular. */
+export function invalidarCache(): void {
+  cache.clear();
+}
 
 export async function motor(cuentaId?: string): Promise<ResultadoMotor> {
   const fuente = fuenteActiva();
