@@ -54,18 +54,40 @@ TODAS las cuentas listadas en `config/cliente.ts` → `cuentasPublicitarias` en 
 panel filtra por la cuenta elegida (cookie `cuenta`) y nunca las suma. Los registros de agenda
 se asocian por `campanaId` → campaña → cuenta.
 
-### Mapeo al contrato (resumen)
+### Mapeo al contrato (verificado con datos reales el 2026-09-14)
 
-`spend→gasto`, `impressions→impresiones`, `reach→alcance`, `frequency→frecuencia`,
-`clicks→clics`, `inline_link_clicks→clicsEnlace`, `unique_clicks→clicsUnicos`,
-`post_engagement→interacciones`, `post_reactions→reacciones`, `comment→comentarios`,
-`post→compartidos`, `post_save→guardados`, `landing_page_view→vistasLandingPage`,
-`video_play→reproducciones`, `video_3_sec_watched→reproducciones3s`,
-`video_thruplay_watched→reproduccionesThru`, `video_p25/50/75/95/100_watched→p25…p100`,
-`video_play_time→tiempoReproduccionTotal`, `messaging_conversation_started_7d→conversacionesIniciadas`,
-`messaging_conversation_replied_7d→conversacionesRespondidas`, `results→resultados`,
-`result_type→tipoResultado`, `action_values→valorConversion`, `attribution_setting→ventanaAtribucion`.
-**Lo que no venga es `null`.** `nombre` es el nombre de la entidad.
+El mapeo vive en código, con tests: `lib/adapters/meta.mcp.ts` (filas y desgloses),
+`lib/adapters/meta.creativos.ts` (creativos) y `lib/adapters/meta.importar.ts` (archivos crudos →
+lote). La receta completa de llamadas está en `.claude/skills/oraculo-sincronizar/SKILL.md`.
+
+Lo que el conector entrega y cómo se lee:
+
+- Números como texto («$ 29.733.426 COP», «98765», «1.82»); ausentes como `null` o «Not available».
+  Otra moneda distinta de COP detiene la importación (no se mezclan monedas).
+- `results` = `{indicator, value}` o `{indicator, values:[{attribution_windows, value}]}`. El
+  indicador dice el tipo: `messaging_conversation_started_7d` → conversación (también llena
+  `conversacionesIniciadas`), `leadgen`/`lead_grouped` → lead, `link_click`, `profile_visit_view`…
+- Campos por nivel: `amount_spent, impressions, reach, frequency, clicks, link_click,
+  unique_link_click, results, result_values, omni_landing_page_view, post_engagement, post_reaction,
+  comment, post_save, video_play_actions, video_thruplay_watched_actions, video_p25…p100,
+  video_avg_time_watched_actions, onsite_conversion_lead_grouped, instagram_profile_follow_v2,
+  status, effective_status, objective, campaign_id, adset_id, creative_id`. **No existen por
+  anuncio**: `post_shares`, `3_second_video_plays`; y `video_continuous_2_sec_watched_actions`
+  llega vacío → el gancho cae al 25 % visto (`hookRate`).
+- `tiempoReproduccionTotal` = reproducciones × promedio de segundos (lo único derivado; declarado).
+- **Límite 1000 filas por llamada, corta sin avisar y el cursor de paginación falla**: se pide por
+  lotes (`object_ids`) o por semanas para que entidades × días ≤ 1000.
+- **Desgloses**: a nivel cuenta Meta no entrega `results` (mezcla tipos) → se piden a **nivel
+  campaña** sin `time_increment` (una fila por campaña × segmento, 28 días). `region` no trae
+  resultados (solo gasto). Combinar dos desgloses (`region`+`age`) devuelve vacío.
+- **Creativos**: `ads_get_creatives` con `creative_ids` (≤ 50 por llamada). Los `SHARE`
+  («impulsar publicación») no traen `body`/`title`: se usa el nombre limpio del creativo. Formato:
+  `video_id` → video; `child_attachments` ≥ 2 → carrusel; miniatura `/t15.` → video; si no, imagen.
+- Estados: `PENDING_REVIEW/PREAPPROVED` → en revisión; `DISAPPROVED` → rechazado; `PAUSED` →
+  pausado; `ARCHIVED/DELETED` → archivado; el resto activo.
+- Resultado de la primera carga real (4 cuentas): 97 campañas con gasto en 90 días, 15.540 filas
+  diarias, 2.768 desgloses por campaña, 320 creativos, 0 huecos; anuncios ≈ conjuntos ≈ campañas
+  en gasto (diferencias < 1 % por anuncios borrados).
 
 ## TikTok — MCP oficial (opcional)
 

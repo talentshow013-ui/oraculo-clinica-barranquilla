@@ -1,90 +1,136 @@
 ---
 name: oraculo-sincronizar
-description: Trae los datos reales de campañas de Meta (y opcionalmente TikTok y el radar de competencia) al archivo datos/lote.json con la forma exacta del contrato de Oráculo, usando los conectores oficiales configurados en Claude Code. Úsalo cada semana antes de /oraculo-semana, o cuando digan "actualiza los datos", "sincroniza", "trae lo de Meta".
+description: Trae los datos reales de campañas de Meta (y opcionalmente el radar de competencia) al archivo datos/lote.json con la forma exacta del contrato de Oráculo, usando el conector oficial de Meta configurado en Claude Code. Úsalo cada mañana (lo hace el reloj de la VPS), cada semana antes de /oraculo-semana, o cuando digan "actualiza los datos", "sincroniza", "trae lo de Meta".
 ---
 
 # /oraculo-sincronizar — Fuente real → `datos/lote.json`
 
-Este skill es la **Fase 2** del proyecto. Solo funciona cuando el conector oficial de Meta está
-añadido en Claude Code (ver `docs/CONEXION_MCP.md`, documento interno). Si no está, dilo y
-termina: no hay forma honesta de traer datos sin él.
+Solo funciona cuando el conector oficial de Meta (`meta_ads`, https://mcp.facebook.com/ads) está
+autorizado en Claude Code (ver `docs/CONEXION_MCP.md`). Si no está, dilo y termina: no hay forma
+honesta de traer datos sin él.
 
 ## Principio
 
-**Mapeas respuestas al contrato. No calculas nada.** El motor hace las razones, los
-agregados y los diagnósticos. Tú produces filas crudas: gasto, impresiones, clics, resultados…
-Lo que la herramienta no entrega es `null`. Nunca 0, nunca estimado.
+**Guardas las respuestas crudas del conector en `datos/crudo/` y el importador las mapea al
+contrato.** Tú no calculas nada ni reescribes filas: `npm run importar-meta` hace el mapeo
+(`lib/adapters/meta.mcp.ts`, `meta.importar.ts`, `meta.creativos.ts`), quita duplicados, valida el
+esquema y escribe `datos/lote.json`. Lo que el conector no entrega queda `null`. Nunca 0, nunca
+estimado. **El contrato (`lib/adapters/types.ts`) no se toca para acomodar la fuente.**
 
-**El contrato no se modifica para acomodar la fuente.** Si algo no encaja, se ajusta el mapeo.
-Si el esquema rechaza el archivo, se corrige el archivo.
+## Paso 0 — Conector, cuentas y rango
 
-## Paso 0 — Confirmar el conector
+1. Verifica que existan las herramientas `ads_get_ad_accounts`, `ads_get_ad_entities` y
+   `ads_get_creatives`. Si no aparecen: "El conector de Campañas no está autorizado en este
+   equipo" y remite a `docs/CONEXION_MCP.md`.
+2. Las cuentas son las de `config/cliente.ts → cuentasPublicitarias` (el `ad_account_id` del
+   conector es el número sin `act_`). Si `ads_get_ad_accounts` muestra una cuenta con gasto que
+   no está en la configuración, avisa: no la inventes en el lote.
+3. Fechas en hora Bogotá. `HOY` = hoy; `AYER` = hoy − 1. Ventanas:
+   - campañas: **90 días** diarios (AYER − 89 → AYER);
+   - conjuntos y anuncios: **28 días** diarios (AYER − 27 → AYER);
+   - desgloses por campaña: los mismos 28 días, agregados (sin `time_increment`);
+   - creativos: los de todos los anuncios con gasto en esos 28 días.
+   Usa siempre el mismo `client_conversation_id` de 20 caracteres en toda la sincronización y
+   `include_additional_context: false`.
+4. Vacía `datos/crudo/` de la corrida anterior (déjala en `datos/crudo/_aux/` si quieres
+   conservarla; el importador ignora esa carpeta y todo archivo que empiece por `_`).
 
-Verifica que existan las herramientas de reporting del conector de Meta (`ads_get_ad_entities`,
-`ads_insights_performance_trend`, etc.). Si no aparecen, informa: "El conector de Campañas y
-audiencias no está configurado en este equipo" y remite a `docs/CONEXION_MCP.md`.
+## Paso 1 — Campañas, conjuntos y anuncios por día (por cada cuenta)
 
-Lee `datos/lote.json` si existe para conocer `meta.hasta`: traerás desde el día siguiente
-(con 3 días de solape para que la atribución se estabilice) hasta ayer (hora Bogotá).
-Si no existe, trae 90 días.
+Campos para `ads_get_ad_entities` (nivel campaña/conjunto/anuncio), siempre `time_increment: "1"`,
+`limit: 1000`, `filtering: [{"field":"amount_spent","operator":"GREATER_THAN","value":["0"]}]`:
 
-## Paso 1 — Traer insights por día y nivel (por cada cuenta)
+```
+id, name, status, effective_status, objective, campaign_id (conjunto), adset_id + creative_id (anuncio),
+amount_spent, impressions, reach, frequency, clicks, link_click, unique_link_click, results,
+result_values, omni_landing_page_view, post_engagement, post_reaction, comment, post_save,
+video_play_actions, video_continuous_2_sec_watched_actions, video_thruplay_watched_actions,
+video_p25_watched_actions, video_p50_watched_actions, video_p75_watched_actions,
+video_p95_watched_actions, video_p100_watched_actions, video_avg_time_watched_actions,
+onsite_conversion_lead_grouped, instagram_profile_follow_v2
+```
 
-Repite este paso para **cada cuenta** de `config/cliente.ts → cuentasPublicitarias`, poniendo
-su `act_…` en `cuentaId`. Todas van al mismo `datos/lote.json`; el panel las separa.
+(`post_shares` y `3_second_video_plays` no existen a nivel anuncio: no los pidas ahí.)
 
-Para los niveles `campana`, `conjunto` y `anuncio`, pide desglose diario (`time_increment=1`)
-con al menos: gasto, impresiones, alcance, frecuencia, clics, clics de enlace, clics únicos,
-interacciones, reacciones, comentarios, compartidos, guardados, vistas de página de destino,
-reproducciones (2 s / 3 s / ThruPlay / 25 / 50 / 75 / 95 / 100 %), tiempo de reproducción,
-conversaciones iniciadas, resultados y su tipo, valor de conversión, ventana de atribución,
-estado, objetivo, id del padre.
+**El límite de 1000 filas corta sin avisar y el cursor no es fiable**: nunca pidas más de 1000
+filas por llamada. Regla: filas = entidades × días.
 
-Mapea cada fila a `InsightRow` (`lib/adapters/types.ts`). Campos obligatorios: `fuente: "meta"`,
-`fecha` (YYYY-MM-DD Bogotá), `nivel`, `id`, `nombre`, `cuentaId`, `estado`, `gasto`,
-`impresiones`, `clics`, `clicsEnlace`, `resultados`, `ventanaAtribucion`. **Todo lo demás es
-nullable: si no viene, `null`.** El nombre es el de la campaña/anuncio, nunca de una persona.
+- Campañas (90 días): primero la lista de campañas con gasto en el rango (`fields: ["id","amount_spent"]`,
+  sin `time_increment`); luego, con `object_ids`, lotes de **≤ 10 campañas × 91 días**.
+- Conjuntos (28 días): lotes de **≤ 35 ids** con `object_ids`, o la lista completa si son ≤ 35.
+- Anuncios (28 días): pide **por semanas** (`time_range` de 7 días, 4 llamadas por cuenta) con el
+  filtro de gasto; cada semana cabe si hay ≤ 140 anuncios con gasto. Si una cuenta tiene más, parte
+  la semana en dos.
 
-Para consultas grandes usa el modo asíncrono del conector. Vigila el encabezado de uso del
-negocio (error 17 = límite): si aparece, espera y reintenta; no partas el rango a mano.
+Guarda cada respuesta **tal cual** (el JSON `{ad_entities: "..."}`) en:
 
-## Paso 2 — Traer desgloses (nivel cuenta Y nivel campaña)
+```
+datos/crudo/act_<cuenta>__campana__<n>.json
+datos/crudo/act_<cuenta>__conjunto__<n>.json
+datos/crudo/act_<cuenta>__anuncio__<n>.json
+```
 
-Dimensiones: `edad`, `genero`, `ubicacion` (región/ciudad), `plataforma` (plataforma ×
-ubicación de anuncio), `hora` (hora del día, últimos 28 días bastan), `dispositivo` si está.
-Cada fila → `BreakdownRow` = `InsightRow` + `dimension`, `valor`, `nRegistros`.
+Las respuestas grandes las guarda Claude Code solas en su carpeta `tool-results`: cópialas de ahí
+con su nombre nuevo. Las que lleguen en línea, escríbelas con un script corto (no las retipees).
 
-Pídelos **dos veces**: a nivel cuenta (`nivel: "cuenta"`, `id` = act_…) y **por campaña**
-(`nivel: "campana"`, `id` = id de la campaña). El panel tiene un filtro de campaña en la cabecera:
-Audiencias solo puede mostrar una campaña si vienen sus desgloses. Los de nivel campaña con
-`nRegistros < 5` se ocultarán solos (k-anonimato), es normal que sean menos.
+Comprueba que cuadran: la suma de `amount_spent` de anuncios ≈ conjuntos ≈ campañas en los mismos
+28 días (diferencias < 1 % son anuncios borrados). Si no cuadra, falta un lote.
 
-`nRegistros` = personas del segmento (usa alcance si viene; si no, impresiones / frecuencia;
-si tampoco, `Math.round(impresiones / 1.4)`). Es lo que protege el k-anonimato.
+## Paso 2 — Desgloses POR CAMPAÑA (no a nivel cuenta)
 
-## Paso 3 — Agenda y ventas (datos de la clínica)
+A nivel cuenta Meta **no entrega resultados** por segmento (mezcla tipos), así que Audiencias
+quedaría en ceros. Pide los desgloses a **nivel campaña**, 28 días, **sin `time_increment`**
+(una fila por campaña × segmento), con el filtro de gasto y `limit: 1000`:
 
-**Los resultados de la clínica NO se sincronizan aquí.** Se anotan por campaña en la pantalla
-Campañas del panel (`datos/resultados.json`, cinco números por campaña) y el motor los mezcla
-solo (`lib/resultados`). En `embudo` deja únicamente los pasos de pauta: `impresion` (impresiones),
-`clic` (clics de enlace) y `conversacion` (conversaciones iniciadas) por día y campaña, desde los
-insights de nivel campaña. Si no los escribes, el motor los deriva de los insights igual.
-Solo si te entregan una planilla agregada (sin nombres ni teléfonos; si los trae, no la leas y
-avisa), puedes convertirla en registros `lead_calificado`…`recompra`, pero lo registrado en el
-panel para una campaña siempre manda sobre eso.
+| archivo | `breakdowns` |
+|---|---|
+| `act_<cuenta>__desglose-edad__campana__1.json` | `["age"]` |
+| `act_<cuenta>__desglose-genero__campana__1.json` | `["gender"]` |
+| `act_<cuenta>__desglose-ubicacion__campana__1.json` | `["region"]` |
+| `act_<cuenta>__desglose-hora__campana__1.json` | `["hourly_stats_aggregated_by_advertiser_time_zone"]` (sin `reach`/`frequency`) |
+| `act_<cuenta>__desglose-plataforma__campana__1.json` | `["publisher_platform","platform_position"]` |
 
-## Paso 4 — Creativos
+Campos: los del paso 1 sin los de video de p25…p100 (no vienen con desgloses) y sin los ids de
+padre. `region` + resultados viene «Not available»: es normal, la zona se lee solo por gasto.
+El importador pone `nivel: "campana"`, `id` = campaña y la fecha final del lote; con eso el filtro
+de campaña de la cabecera funciona en Audiencias. **No mezcles** desgloses de nivel cuenta con los
+de campaña en la misma corrida (se contarían dos veces).
 
-Por cada anuncio con gasto: `Creativo` con `copyPrincipal`, `titular`, `descripcion`, `cta`,
-`urlDestino`, `formato`, `fechaPrimerGasto`, `diasActivo`, `servicio` (dedúcelo del nombre de
-campaña/anuncio). `anguloDetectado`, `nivelConsciencia`, `confianzaClasificacion`,
-`senalesDeteccion`: usa `clasificarAngulo` y `nivelConscienciaTexto` de
-`lib/competitive/angles.ts` (puedes correr un script con `npx tsx`), no tu criterio.
+## Paso 3 — Creativos
 
-## Paso 5 — Radar de mercado (Biblioteca de anuncios)
+1. Reúne los `creative_id` distintos de los archivos `__anuncio__` (un script corto).
+2. `ads_get_creatives` con `creative_ids` en lotes de **≤ 50**, `fields: ["id","name","status",
+   "object_type","body","title","link_url","image_url","thumbnail_url","video_id",
+   "call_to_action_type","child_attachments","effective_object_story_id"]`.
+3. Guarda cada respuesta tal cual en `datos/crudo/act_<cuenta>__creativo__<n>.json`.
+
+El importador cruza creativo × anuncio (un `Creativo` por anuncio que lo usa), toma el primer día
+con gasto y los días activos del anuncio, y clasifica ángulo, servicio y nivel de consciencia con
+los diccionarios del radar (`lib/competitive/angles.ts`, `detectarServicio`). Las publicaciones
+compartidas («impulsar publicación») no traen texto: se usa el nombre limpio del creativo.
+
+## Paso 4 — Resultados de la clínica
+
+**No se sincronizan aquí.** Se anotan por campaña en la pantalla Campañas del panel
+(`datos/resultados.json`) y el motor los mezcla solo. Los pasos de pauta del embudo (vieron, clic,
+escribieron) salen de los insights automáticamente.
+
+## Paso 5 — Importar, validar, verificar
+
+```
+npm run importar-meta            # datos/crudo/*.json → datos/lote.json (conserva radar/experimentos del lote anterior con --base)
+npm run validar-lote
+ORACULO_FUENTE=archivo npm run verificar
+```
+
+Si el importador ignora un archivo, el nombre no sigue la convención. Si el validador falla, el
+mensaje trae la ruta exacta del campo: corrige el crudo o el mapeo, nunca el contrato. Si detecta un
+dato sensible, elimina la columna de origen y avisa a la coordinadora.
+
+## Paso 6 — Radar de mercado (Biblioteca de anuncios)
 
 La Biblioteca de anuncios de Meta **no expone anuncios comerciales de Colombia por su API**
-(solo UE/UK), pero la interfaz pública sí los muestra. Hay dos caminos al mismo contrato:
+(solo UE/UK), pero la interfaz pública sí los muestra. Dos caminos al mismo contrato:
 
 **A) Captura propia (gratis, principal).** Requiere Chromium instalado una vez
 (`npx playwright install chromium`; si la descarga falla, ver docs/CONEXION_MCP.md).
@@ -93,47 +139,21 @@ La Biblioteca de anuncios de Meta **no expone anuncios comerciales de Colombia p
    y pregunta a la coordinadora por 6-10 páginas de competidores del radio).
 2. Por cada competidor con `pageId`: `npm run radar:capturar -- --pagina <pageId> --estado all --max 80`
    (acumula en `datos/radar-ui.json`). Para descubrir quién más pauta:
-   `npm run radar:capturar -- --q "clínica estética barranquilla"` (y variantes: "botox barranquilla",
-   "depilación láser barranquilla", "medicina estética barranquilla").
+   `npm run radar:capturar -- --q "clínica estética barranquilla"` (y variantes).
 3. `npm run importar-radar -- datos/radar-ui.json --ciudades config/competidores.json` → fusiona en
-   `datos/lote.json`, valida y guarda los creativos en `public/radar/<id>.jpg` (el panel los muestra).
+   `datos/lote.json`, valida y guarda los creativos en `public/radar/<id>.jpg`.
 4. Si la captura devuelve 0 tarjetas con identificador, Meta cambió la página: usa el camino B y avisa.
 
-**B) Apify (respaldo, de pago por resultado).** Actor `apify/facebook-ads-scraper` vía MCP
-(`https://mcp.apify.com?tools=apify/facebook-ads-scraper`): `call-actor` con
-`startUrls` = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=CO&view_all_page_id=<pageId>`,
+**B) Apify (respaldo, de pago por resultado).** Actor `apify/facebook-ads-scraper` vía MCP:
+`call-actor` con `startUrls` = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=CO&view_all_page_id=<pageId>`,
 `scrapeAdsNewerThan: "6 months"` la primera vez y "5 weeks" después; `get-actor-output` → guarda el
 dataset en `datos/radar-apify.json` → `npm run importar-radar -- datos/radar-apify.json --ciudades config/competidores.json`.
-Costo ~$3,40–5,80 USD por 1.000 anuncios contra el crédito prepagado (gratis $5/mes).
 
-En ambos casos: `collationCount`/"N anuncios usan este contenido" → variantes; alcance, gasto e
-impresiones vienen vacíos para comerciales fuera de la UE → `—`. **Jamás se estima.**
-
-## Paso 6 — Escribir y validar
-
-Fusiona con el lote anterior (reemplaza las fechas del rango nuevo, conserva el resto).
-Escribe `datos/lote.json` con:
-
-```json
-{ "insights": [...], "desgloses": [...], "creativos": [...], "embudo": [...],
-  "competidores": [...], "anunciosCompetencia": [...], "experimentos": [...],
-  "meta": { "generadoEn": "<ISO con -05:00>", "desde": "...", "hasta": "...", "origen": "archivo",
-            "huecos": ["fechas del rango sin filas"], "advertencias": ["texto para el cliente, sin jerga"] } }
-```
-
-`experimentos`: conserva los de `datos/experimentos.json`.
-
-Luego:
-
-```
-npm run validar-lote
-```
-
-Si falla, el mensaje dice la ruta exacta del campo (`insights[12].gasto`). Corrige el mapeo y
-repite. **No toques `lib/adapters/types.ts`.** Si detecta un dato sensible, elimina la
-columna de origen y avisa a la coordinadora.
+En ambos casos: alcance, gasto e impresiones vienen vacíos para comerciales fuera de la UE → `—`.
+**Jamás se estima.**
 
 ## Paso 7 — Activar y reportar
 
-Asegúrate de que `.env` tenga `ORACULO_FUENTE=archivo`. Di cuántas filas, el rango, los
-huecos y las advertencias. Sugiere correr `/oraculo-semana`.
+Asegúrate de que `.env` tenga `ORACULO_FUENTE=archivo` y reinicia el panel si corre como servicio
+(`sudo systemctl restart oraculo-panel`). Di cuántas filas por nivel, cuántos desgloses y creativos,
+el rango, los huecos y las advertencias. Sugiere correr `/oraculo-semana`.

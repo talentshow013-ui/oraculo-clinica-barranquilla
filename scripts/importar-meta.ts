@@ -16,7 +16,8 @@ const destino = resolve(process.cwd(), arg("--destino") ?? "datos/lote.json");
 const rutaBase = resolve(process.cwd(), arg("--base") ?? destino);
 
 if (!existsSync(carpeta)) { console.error(`No existe ${carpeta}`); process.exit(1); }
-const archivos = readdirSync(carpeta).filter((n) => n.endsWith(".json")).map((n) => ({ nombre: n, contenido: readFileSync(resolve(carpeta, n), "utf8") }));
+// Los que empiezan por «_» son auxiliares (listas, respaldos): no son crudos del conector.
+const archivos = readdirSync(carpeta).filter((n) => n.endsWith(".json") && !n.startsWith("_")).map((n) => ({ nombre: n, contenido: readFileSync(resolve(carpeta, n), "utf8") }));
 if (!archivos.length) { console.error(`No hay archivos .json en ${carpeta}`); process.exit(1); }
 const base = existsSync(rutaBase) ? LoteDatosSchema.parse(JSON.parse(readFileSync(rutaBase, "utf8"))) : undefined;
 
