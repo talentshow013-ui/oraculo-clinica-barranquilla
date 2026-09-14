@@ -78,6 +78,8 @@ interface AdDef {
   /** Calidad relativa del creativo (1 = promedio). */
   calidad: number;
   primerDia: number;
+  /** Último día con pauta (null = sigue al aire). */
+  ultimoDia?: number;
   /** Día a partir del cual fatiga (null = no fatiga). */
   fatigaDesde: number | null;
   duracionSeg: number | null;
@@ -86,13 +88,19 @@ interface AdDef {
 /** Tres cuentas publicitarias (config/cliente.ts): Riomar lleva facial, Norte láser y corporal, Médicos sin pauta. */
 const CUENTA_POR_CAMPANA: Record<string, string> = {
   camp_facial: "act_1048227",
+  camp_madre: "act_1048227",
   camp_laser: "act_2213904",
   camp_corporal: "act_2213904",
 };
 const cuentaDe = (campanaId: string) => CUENTA_POR_CAMPANA[campanaId] ?? "act_1048227";
 
+/** Estado ACTUAL que reporta la plataforma: todas las filas de una campaña lo llevan (como en Meta). */
+const ESTADO_POR_CAMPANA: Record<string, InsightRow["estado"]> = { camp_madre: "pausado" };
+const estadoDe = (campanaId: string) => ESTADO_POR_CAMPANA[campanaId] ?? "activo";
+
 const CAMPANAS = [
   { id: "camp_facial", nombre: "Facial · Toxina y ácido" },
+  { id: "camp_madre", nombre: "Promoción · Mes de la madre (terminada)" },
   { id: "camp_laser", nombre: "Láser · Facial y depilación" },
   { id: "camp_corporal", nombre: "Corporal · Criolipólisis y radiofrecuencia" },
 ] as const;
@@ -100,6 +108,7 @@ const CAMPANAS = [
 const CONJUNTOS = [
   { id: "adset_facial_mujeres_25_45", nombre: "Facial · Mujeres 25-45 · Área metropolitana", campanaId: "camp_facial" },
   { id: "adset_facial_amplio", nombre: "Facial · Amplio · Atlántico y Bolívar", campanaId: "camp_facial" },
+  { id: "adset_madre_mujeres", nombre: "Madre · Mujeres 30-55 · Barranquilla", campanaId: "camp_madre" },
   { id: "adset_laser_mujeres", nombre: "Láser · Mujeres 20-40 · Barranquilla", campanaId: "camp_laser" },
   { id: "adset_laser_retargeting", nombre: "Láser · Retargeting 30 días", campanaId: "camp_laser" },
   { id: "adset_corporal_amplio", nombre: "Corporal · Amplio · Costa", campanaId: "camp_corporal" },
@@ -109,6 +118,8 @@ const CONJUNTOS = [
 const ANUNCIOS: AdDef[] = [
   { id: "ad_toxina_medico", nombre: "Toxina · Médico explica", conjuntoId: "adset_facial_mujeres_25_45", campanaId: "camp_facial", servicio: "toxina", formato: "video", copy: "La Dra. explica en 40 segundos cómo funciona la toxina botulínica y qué esperar de la valoración. Médico estético certificado, 12 años de experiencia.", titular: "Toxina botulínica con médico", cta: "Escríbenos", angulo: "autoridad_medica", peso: 0.28, calidad: 1.35, primerDia: 0, fatigaDesde: 90, duracionSeg: 40 },
   { id: "ad_toxina_promo", nombre: "Toxina · Promoción septiembre", conjuntoId: "adset_facial_mujeres_25_45", campanaId: "camp_facial", servicio: "toxina", formato: "imagen", copy: "Toxina botulínica desde $350.000. Promoción de septiembre: valoración sin costo. Cupos limitados esta semana.", titular: "Promo toxina", cta: "Agenda", angulo: "promocion", peso: 0.12, calidad: 0.95, primerDia: 150, fatigaDesde: null, duracionSeg: null },
+  { id: "ad_madre_regalo", nombre: "Madre · Regálale un momento", conjuntoId: "adset_madre_mujeres", campanaId: "camp_madre", servicio: "limpieza", formato: "video", copy: "Este mes de la madre regálale un momento para ella: limpieza facial profunda + valoración con médico. Bono de regalo listo para imprimir.", titular: "Regálale un momento", cta: "Escríbenos", angulo: "promocion", peso: 0.14, calidad: 1.2, primerDia: 35, ultimoDia: 70, fatigaDesde: null, duracionSeg: 22 },
+  { id: "ad_madre_bono", nombre: "Madre · Bono 2x1 toxina", conjuntoId: "adset_madre_mujeres", campanaId: "camp_madre", servicio: "toxina", formato: "imagen", copy: "Mes de la madre: bono 2x1 en valoración de toxina para ti y para ella. Solo hasta el 24 de mayo.", titular: "Bono 2x1", cta: "Agenda", angulo: "urgencia", peso: 0.08, calidad: 0.85, primerDia: 40, ultimoDia: 70, fatigaDesde: null, duracionSeg: null },
   { id: "ad_acido_labios", nombre: "Ácido · Labios naturales", conjuntoId: "adset_facial_amplio", campanaId: "camp_facial", servicio: "acido", formato: "video", copy: "¿Te da miedo quedar exagerada? Así logramos labios naturales con ácido hialurónico. Sin dolor, resultado inmediato.", titular: "Labios naturales", cta: "Escríbenos", angulo: "objecion_dolor", peso: 0.1, calidad: 1.05, primerDia: 20, fatigaDesde: null, duracionSeg: 25 },
   { id: "ad_limpieza_educativo", nombre: "Limpieza · ¿Sabías que?", conjuntoId: "adset_facial_amplio", campanaId: "camp_facial", servicio: "limpieza", formato: "carrusel", copy: "¿Sabías que una limpieza facial profunda cada mes previene manchas y poros abiertos? Te explicamos qué incluye.", titular: null, cta: "Más información", angulo: "educativo", peso: 0.05, calidad: 0.8, primerDia: 0, fatigaDesde: null, duracionSeg: null },
   { id: "ad_laser_testimonio", nombre: "Láser · Testimonio Laura", conjuntoId: "adset_laser_mujeres", campanaId: "camp_laser", servicio: "laser_facial", formato: "video", copy: "Laura nos cuenta su experiencia con láser facial: 'volvería mil veces'. Sin incapacidad, vuelve a tu rutina el mismo día.", titular: "Lo que dicen nuestras pacientes", cta: "Escríbenos", angulo: "testimonio", peso: 0.12, calidad: 1.15, primerDia: 10, fatigaDesde: null, duracionSeg: 30 },
@@ -162,12 +173,13 @@ function vacioInsight(): Omit<InsightRow, "fuente" | "fecha" | "nivel" | "id" | 
 
 function filaAnuncio(r: Rng, ad: AdDef, fecha: string, d: number): InsightRow | null {
   if (d < ad.primerDia) return null;
+  if (ad.ultimoDia !== undefined && d > ad.ultimoDia) return null;
   const estacional = 1 + 0.08 * Math.sin((d / 30) * Math.PI); // ciclo mensual suave
   const finDeSemana = diaSemana(fecha) === 0 ? 0.6 : 1;
   const gasto = Math.round(GASTO_DIARIO_BASE * ad.peso * estacional * finDeSemana * ruido(r, 0.12));
 
-  // CPM crece a lo largo del periodo y da un salto en las últimas 3 semanas (presión de subasta).
-  const salto = d >= DIAS - 21 ? 1.28 : 1;
+  // CPM crece a lo largo del periodo y da un salto en la última quincena (presión de subasta: R02 compara 14 vs 14).
+  const salto = d >= DIAS - 14 ? 1.28 : 1;
   const cpm = 9_500 * (1 + 0.2 * (d / DIAS)) * salto * ruido(r, 0.06);
   const impresiones = Math.round((gasto / cpm) * 1000);
 
@@ -207,7 +219,7 @@ function filaAnuncio(r: Rng, ad: AdDef, fecha: string, d: number): InsightRow | 
     padreId: ad.conjuntoId,
     cuentaId: cuentaDe(ad.campanaId),
     objetivo: "mensajes",
-    estado: "activo",
+    estado: estadoDe(ad.campanaId),
     gasto,
     impresiones,
     alcance,
@@ -251,7 +263,7 @@ function agregarNivel(filas: InsightRow[], nivel: "conjunto" | "campana", id: st
     padreId,
     cuentaId: filas[0]?.cuentaId ?? "act_1048227",
     objetivo: "mensajes",
-    estado: "activo",
+    estado: filas[0]?.estado ?? "activo",
     gasto: 0,
     impresiones: 0,
     clics: 0,
@@ -483,7 +495,7 @@ function generarCreativos(fechas: string[]): Creativo[] {
       cta: ad.cta,
       urlDestino: ad.cta === "Escríbenos" ? "https://wa.me/57300000000" : null,
       fechaPrimerGasto: fechas[ad.primerDia] ?? DESDE,
-      diasActivo: DIAS - ad.primerDia,
+      diasActivo: (ad.ultimoDia ?? DIAS - 1) - ad.primerDia + 1,
       servicio: ad.servicio,
       anguloDetectado: c.angulo === "sin_clasificar" ? ad.angulo : c.angulo,
       nivelConsciencia: nivelConscienciaTexto(texto),

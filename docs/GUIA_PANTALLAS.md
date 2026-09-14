@@ -48,6 +48,11 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 - **Decir:** «Los anuncios se desgastan. Esta pantalla avisa cuál ya la gente vio demasiado y hay que reemplazar, y cuál todavía trae citas baratas y hay que empujar.»
 - **Cuándo:** cada dos semanas o cuando el costo sube sin explicación.
 
+### 7b. Campañas (en construcción: la pinta el agente de diseño)
+- **Para qué:** cada pauta con cara propia — la que está al aire y las que ya terminaron — con sus propios días, su costo y su participación del gasto. Se eligen dos y se comparan lado a lado; se escoge el periodo (14 / 30 / 90 días / todo).
+- **Decir:** «Las demás pantallas suman toda la cuenta. Aquí se ve pauta por pauta, incluidas las que se pausaron hace meses: nada se pierde. Y se responde "¿cómo le fue a la de junio contra la de ahora?" en dos clics.»
+- **Cuándo:** al cerrar una campaña o antes de lanzar una parecida a una anterior.
+
 ### 8. Audiencias
 - **Para qué:** quién gasta y quién agenda (edad), desde dónde pueden venir (zona) y a qué hora escriben (hora).
 - **Decir:** «Aquí se ve si estamos pagando por gente que no puede venir a la clínica o que escribe cuando nadie contesta. Los grupos muy pequeños se ocultan para proteger la privacidad.»

@@ -22,11 +22,13 @@ import { generarOportunidades, type Oportunidad } from "@/lib/opportunities";
 import { aplicarLentes, type ResultadoLente } from "@/lib/frameworks";
 import { CATALOGO, metricasMaestras, type MetricaCatalogo } from "@/lib/metrics/catalog";
 import { AVISO_PANEL, K_MINIMO } from "@/lib/privacy";
-import { hoyBogota, rangoDias } from "@/lib/format/fechas";
+import { hoyBogota, rangoDias, sumarDias } from "@/lib/format/fechas";
 import { resolverMetrica, type ValorMetrica } from "@/lib/metrics/resolver";
 import * as core from "@/lib/metrics/core";
+import { compararCampanas, resumirCampanas, type ComparacionCampanas, type ResumenCampana } from "@/lib/metrics/campanas";
 
-export { resolverMetrica };
+export { resolverMetrica, compararCampanas };
+export type { ResumenCampana, ComparacionCampanas };
 
 export type NombreFuente = "seed" | "archivo";
 
@@ -123,6 +125,8 @@ export interface ResultadoMotor {
   catalogo: ReadonlyArray<MetricaCatalogo>;
   maestras: ValorMetrica[];
   desgloses: DesgloseVista[];
+  /** Cada pauta con cara propia (viva, pausada o archivada) en todo el periodo del lote. */
+  campanas: ResumenCampana[];
   privacidad: { segmentosOcultos: number; k: number; AVISO_PANEL: string };
   fuentes: EstadoFuente[];
   cliente: ConfigCliente;
@@ -292,9 +296,23 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     serie,
     negocio: { ...ctx.negocio, roasDeclarado: core.roas(ctx.total) },
     desgloses,
+    campanas: resumirCampanas(loteMotor.insights, { desde: loteMotor.meta.desde, hasta: loteMotor.meta.hasta }),
     maestras,
     fuentes,
   };
+}
+
+/** Periodos que ofrece la pantalla de campañas. `todo` = todo lo que tiene el lote. */
+export const PERIODOS_CAMPANAS = ["14", "30", "90", "todo"] as const;
+export type PeriodoCampanas = (typeof PERIODOS_CAMPANAS)[number];
+
+/** Las campañas de la cuenta analizada recortadas a un periodo (contado hacia atrás desde `hoy`). */
+export function campanasEnPeriodo(r: Pick<ResultadoMotor, "lote" | "hoy" | "campanas">, periodo: string | undefined): { periodo: PeriodoCampanas; desde: string; hasta: string; campanas: ResumenCampana[] } {
+  const p: PeriodoCampanas = (PERIODOS_CAMPANAS as ReadonlyArray<string>).includes(periodo ?? "") ? (periodo as PeriodoCampanas) : "todo";
+  const hasta = r.lote.meta.hasta < r.hoy ? r.lote.meta.hasta : r.hoy;
+  if (p === "todo") return { periodo: p, desde: r.lote.meta.desde, hasta, campanas: r.campanas };
+  const desde = sumarDias(hasta, -(Number(p) - 1));
+  return { periodo: p, desde, hasta, campanas: resumirCampanas(r.lote.insights, { desde, hasta }) };
 }
 
 /** Para las páginas (Server Components): lee la cuenta de la cookie. Caché por cuenta en producción. */

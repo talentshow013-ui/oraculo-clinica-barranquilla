@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { correrMotor, fuenteActiva } from "@/lib/datos";
+import { campanasEnPeriodo, correrMotor, fuenteActiva } from "@/lib/datos";
+import { diasEntre, sumarDias } from "@/lib/format/fechas";
 import { generarSeed } from "@/scripts/seed";
 
 describe("correrMotor sobre el seed — encuentra los patrones plantados", () => {
@@ -161,5 +162,67 @@ describe("desgloses agregados por segmento (sumas de crudos, nunca promedios)", 
     expect(barranquilla.nRegistros).toBe(Math.max(...diarias.map((d) => d.nRegistros)));
     expect(barranquilla.costoResultado).toBeCloseTo(barranquilla.gasto / barranquilla.resultados, 3);
     expect(r.desgloses.length).toBeLessThan(80);
+  });
+});
+
+describe("campañas con cara propia — vivas y terminadas en la misma lista", () => {
+  const lote = generarSeed();
+
+  test("la cuenta principal trae la campaña terminada (pausada) junto a la viva; nunca desaparece", async () => {
+    const r = await correrMotor(lote);
+    const ids = r.campanas.map((c) => c.id);
+    expect(ids).toContain("camp_facial");
+    expect(ids).toContain("camp_madre");
+    const madre = r.campanas.find((c) => c.id === "camp_madre")!;
+    expect(madre.estado).toBe("pausado");
+    expect(madre.alAire).toBe(false);
+    expect(madre.ultimoDia).not.toBeNull();
+    expect(madre.ultimoDia! < r.hoy).toBe(true);
+    expect(madre.costoResultado).not.toBeNull();
+    expect(r.campanas.find((c) => c.id === "camp_facial")!.alAire).toBe(true);
+  });
+
+  test("campanasEnPeriodo: en los últimos 14 días la terminada no aparece; en «todo» sí; periodo inválido → todo", async () => {
+    const r = await correrMotor(lote);
+    const quincena = campanasEnPeriodo(r, "14");
+    expect(quincena.periodo).toBe("14");
+    expect(diasEntre(quincena.desde, quincena.hasta)).toBe(14);
+    expect(quincena.campanas.map((c) => c.id)).not.toContain("camp_madre");
+    expect(campanasEnPeriodo(r, "todo").campanas.map((c) => c.id)).toContain("camp_madre");
+    expect(campanasEnPeriodo(r, "loquesea").periodo).toBe("todo");
+  });
+
+  test("las campañas de una cuenta no se mezclan con las de otra", async () => {
+    const norte = await correrMotor(lote, { cuentaId: "act_2213904" });
+    expect(norte.campanas.map((c) => c.id).sort()).toEqual(["camp_corporal", "camp_laser"]);
+  });
+});
+
+describe("¿qué se ve cuando se apaga la pauta? — el motor no se cae ni inventa", () => {
+  test("sin filas en los últimos 14 días: gasto reciente 0, razones «—» (null), sin errores de reglas, historia intacta", async () => {
+    const base = generarSeed();
+    const corte = sumarDias(base.meta.hasta, -20);
+    const apagado = { ...base, insights: base.insights.filter((i) => i.fecha <= corte), desgloses: base.desgloses.filter((d) => d.fecha <= corte) };
+    const r = await correrMotor(apagado);
+    expect(r.erroresReglas).toEqual([]);
+    expect(r.reciente.gasto).toBe(0);
+    expect(r.reciente.costoResultado).toBeNull();
+    expect(r.reciente.cpm).toBeNull();
+    expect(r.previa.gasto).toBeGreaterThan(0);
+    expect(r.total.gasto).toBeGreaterThan(0);
+    for (const c of r.campanas) expect(c.alAire).toBe(false);
+    expect(r.campanas.length).toBeGreaterThan(0);
+    for (const m of r.maestras) expect(Number.isNaN(m.valor as number)).toBe(false);
+  });
+});
+
+describe("R04 con la pauta apagada", () => {
+  test("dice que la pauta está apagada, no «Solo 0 anuncios»", async () => {
+    const base = generarSeed();
+    const corte = sumarDias(base.meta.hasta, -20);
+    const r = await correrMotor({ ...base, insights: base.insights.filter((i) => i.fecha <= corte) });
+    const r04 = r.hallazgos.find((h) => h.reglaId === "R04")!;
+    expect(r04.titulo).toMatch(/apagada/);
+    expect(r04.titulo).not.toMatch(/Solo 0/);
   });
 });

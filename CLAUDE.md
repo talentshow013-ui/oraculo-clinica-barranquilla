@@ -27,7 +27,7 @@ son la interfaz (tema claro, sin librerías de UI). `config/cliente.ts` tiene ti
 calibrar y las cuentas publicitarias. Docs en `docs/` (`CONEXION_MCP.md` es interno).
 
 ## Cómo trabajar aquí
-- TDD en `lib/`: test primero, rojo, verde. 233 tests deben seguir verdes.
+- TDD en `lib/`: test primero, rojo, verde. 250 tests deben seguir verdes.
 - Ventanas iguales al comparar periodos; fechas siempre `America/Bogota` (`lib/format/fechas.ts`).
 - Privacidad por esquema: jamás un campo de paciente; k-anonimato k = 5.
 - Conexiones: solo MCP oficiales desde Claude Code (Meta `https://mcp.facebook.com/ads`, Apify

@@ -32,9 +32,14 @@ export const R04: Regla = {
       reglaId: "R04",
       area: "creativo",
       severidad: "media",
-      titulo: `Solo ${activos.length} ${activos.length === 1 ? "anuncio activo" : "anuncios activos"}: no se está probando nada`,
+      titulo:
+        activos.length === 0
+          ? "La pauta está apagada: ningún anuncio gastó en los últimos 14 días"
+          : `Solo ${activos.length} ${activos.length === 1 ? "anuncio activo" : "anuncios activos"}: no se está probando nada`,
       explicacion:
-        "Con menos de tres piezas compitiendo no hay comparación posible: no se sabe si el resultado es bueno o malo porque no hay contra qué medirlo. Sin prueba no hay aprendizaje, y sin aprendizaje la cuenta no mejora.",
+        activos.length === 0
+          ? "Sin pauta no hay datos nuevos: las cifras recientes quedan en cero o en «—» y la historia se conserva intacta. Si el apagado fue a propósito, esta alerta es solo un recordatorio; si no, hay que revisar la cuenta."
+          : "Con menos de tres piezas compitiendo no hay comparación posible: no se sabe si el resultado es bueno o malo porque no hay contra qué medirlo. Sin prueba no hay aprendizaje, y sin aprendizaje la cuenta no mejora.",
       evidencia: [evNum("Anuncios con gasto en los últimos 14 días", activos.length), evNum("Mínimo para probar", b.creativosActivosMinimo.valor)],
       acciones: [
         "Lanzar al menos dos variantes más del mejor anuncio: cambiar solo el gancho en una y solo la oferta en otra.",
