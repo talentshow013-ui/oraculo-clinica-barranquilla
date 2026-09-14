@@ -100,6 +100,16 @@ function filasPorNivel(filas: ReadonlyArray<InsightRow>, nivel: InsightRow["nive
   return filas.filter((f) => f.nivel === nivel);
 }
 
+const diasCubiertos = (filas: ReadonlyArray<InsightRow>) => new Set(filas.map((f) => f.fecha)).size;
+
+function nivelBase(anuncio: InsightRow[], conjunto: InsightRow[], campana: InsightRow[], todas: ReadonlyArray<InsightRow>): InsightRow[] {
+  const candidatos = [anuncio, conjunto, campana].filter((n) => n.length);
+  if (!candidatos.length) return [...todas];
+  let mejor = candidatos[0]!;
+  for (const c of candidatos.slice(1)) if (diasCubiertos(c) > diasCubiertos(mejor)) mejor = c;
+  return mejor;
+}
+
 function registrosEnRango(r: ReadonlyArray<RegistroEmbudo>, rango: Rango): RegistroEmbudo[] {
   return r.filter((x) => x.fecha >= rango.desde && x.fecha <= rango.hasta);
 }
@@ -118,8 +128,9 @@ export function construirContexto(
   const filasAnuncio = filasPorNivel(lote.insights, "anuncio");
   const filasConjunto = filasPorNivel(lote.insights, "conjunto");
   const filasCampana = filasPorNivel(lote.insights, "campana");
-  // Si la fuente solo trae un nivel, se usa ese.
-  const base = filasAnuncio.length ? filasAnuncio : filasConjunto.length ? filasConjunto : lote.insights;
+  // Un solo nivel para sumar (nunca campaña + anuncio). Manda el nivel que cubre MÁS DÍAS; a igual
+  // cobertura, el más fino. Así una fuente con campañas a 90 días y anuncios a 28 no pierde 62 días.
+  const base = nivelBase(filasAnuncio, filasConjunto, filasCampana, lote.insights);
 
   const total = agregar(base);
   const recienteAgg = agregar(filtrarRango(base, reciente));
@@ -138,7 +149,7 @@ export function construirContexto(
     hoy,
     rango,
     ventanas: { reciente, previa },
-    filasAnuncio: base,
+    filasAnuncio: filasAnuncio.length ? filasAnuncio : base,
     filasConjunto,
     filasCampana,
     total,
@@ -149,7 +160,7 @@ export function construirContexto(
     embudoReciente: construirEmbudo(registrosEnRango(lote.embudo, reciente), recienteAgg.gasto, cliente),
     embudoPrevio: construirEmbudo(registrosEnRango(lote.embudo, previa), previaAgg.gasto, cliente),
     negocio: metricasNegocio(lote.embudo, total.gasto, cliente),
-    creativos: evaluarCreativos(creativos, base, benchmarks),
+    creativos: evaluarCreativos(creativos, filasAnuncio.length ? filasAnuncio : base, benchmarks),
     desglosesVisibles: visibles,
     desglosesOcultos: ocultas.length,
     huecos,

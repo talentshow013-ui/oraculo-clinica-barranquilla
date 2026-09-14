@@ -91,3 +91,35 @@ describe("construirContexto", () => {
     expect(ctx.embudo).toHaveLength(8);
   });
 });
+
+describe("nivel base cuando los niveles no cubren los mismos días", () => {
+  test("los totales salen del nivel que cubre más días (campaña, 90 d) y no del más fino con menos cobertura (anuncio, 28 d)", async () => {
+    const { fila, lote } = await import("@/lib/diagnostics/fixtures");
+    const { rangoDias } = await import("@/lib/format/fechas");
+    const dias90 = rangoDias("2026-06-15", "2026-09-12");
+    const dias28 = rangoDias("2026-08-16", "2026-09-12");
+    const filas = [
+      ...dias90.map((fecha) => fila({ nivel: "campana", id: "c1", padreId: null, fecha, gasto: 1000, impresiones: 100, clics: 10, clicsEnlace: 5 })),
+      ...dias28.map((fecha) => fila({ nivel: "conjunto", id: "s1", padreId: "c1", fecha, gasto: 1000, impresiones: 100, clics: 10, clicsEnlace: 5 })),
+      ...dias28.map((fecha) => fila({ nivel: "anuncio", id: "a1", padreId: "s1", fecha, gasto: 1000, impresiones: 100, clics: 10, clicsEnlace: 5 })),
+    ];
+    const l = lote({ insights: filas, meta: { ...lote().meta, desde: "2026-06-15", hasta: "2026-09-12", huecos: [] } });
+    const ctx = construirContexto(l, cliente, benchmarks, "2026-09-12");
+    expect(ctx.total.gasto).toBe(90 * 1000); // 90 días, no 28
+    expect(ctx.reciente.gasto).toBe(14 * 1000);
+    expect(ctx.filasAnuncio.every((f) => f.nivel === "anuncio")).toBe(true); // las reglas de creativos siguen viendo anuncios
+    expect(ctx.filasAnuncio).toHaveLength(28);
+  });
+
+  test("con la misma cobertura, manda el nivel más fino (anuncio), como siempre", async () => {
+    const { fila, lote } = await import("@/lib/diagnostics/fixtures");
+    const filas = [
+      fila({ nivel: "campana", id: "c1", padreId: null, fecha: "2026-09-01", gasto: 5000 }),
+      fila({ nivel: "anuncio", id: "a1", padreId: "s1", fecha: "2026-09-01", gasto: 2000 }),
+      fila({ nivel: "anuncio", id: "a2", padreId: "s1", fecha: "2026-09-01", gasto: 3000 }),
+    ];
+    const ctx = construirContexto(lote({ insights: filas }), cliente, benchmarks, "2026-09-12");
+    expect(ctx.total.gasto).toBe(5000);
+    expect(ctx.total.entidades).toBe(2);
+  });
+});

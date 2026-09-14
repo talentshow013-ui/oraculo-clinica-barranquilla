@@ -24,7 +24,8 @@ import { razon } from "@/lib/metrics/core";
 export interface PasoEmbudo {
   paso: Paso;
   orden: number;
-  cantidad: number;
+  /** null = paso no medido: nadie lo registró todavía (no es un cero). */
+  cantidad: number | null;
   /** Cantidad / cantidad del paso anterior. null si el anterior es 0 o no hay datos. */
   tasaPaso: number | null;
   /** Cantidad / cantidad del primer paso. */
@@ -45,11 +46,16 @@ const INDICE_CITA_ASISTIDA = PASOS.indexOf("cita_asistida");
 /** Desde aquí existe un contacto pagado que se puede perder. Impresión→clic es exposición. */
 const INDICE_PRIMER_CONTACTO = PASOS.indexOf("conversacion");
 
-/** Suma cantidad de un paso. 0 si no hay registros (medido: nadie llegó). */
+/** Suma cantidad de un paso. 0 si no hay registros. */
 export function cantidadPaso(registros: ReadonlyArray<RegistroEmbudo>, paso: Paso): number {
   let total = 0;
   for (const r of registros) if (r.paso === paso) total += r.cantidad;
   return total;
+}
+
+/** Un paso está medido cuando existe al menos un registro suyo (aunque sea en cero). */
+export function pasoMedido(registros: ReadonlyArray<RegistroEmbudo>, paso: Paso): boolean {
+  return registros.some((r) => r.paso === paso);
 }
 
 function valorPaso(registros: ReadonlyArray<RegistroEmbudo>, paso: Paso): number | null {
@@ -86,18 +92,19 @@ export function construirEmbudo(
 ): PasoEmbudo[] {
   const hayDatos = registros.length > 0;
   const margen = margenEmbudo(registros, cfg);
-  const cantidades = PASOS.map((p) => cantidadPaso(registros, p));
-  const primero = cantidades[0] ?? 0;
+  // Un paso sin ningún registro no es un cero: no se midió. Se muestra «—» y no fuga ni tasa.
+  const cantidades = PASOS.map((p) => (pasoMedido(registros, p) ? cantidadPaso(registros, p) : null));
+  const primero = cantidades[0] ?? null;
 
   return PASOS.map((paso, i) => {
-    const cantidad = cantidades[i] ?? 0;
-    const anterior = i > 0 ? (cantidades[i - 1] ?? 0) : null;
+    const cantidad = cantidades[i] ?? null;
+    const anterior = i > 0 ? (cantidades[i - 1] ?? null) : null;
     const costoUnitario = razon(gasto, cantidad);
     const costoAnterior = anterior === null ? null : razon(gasto, anterior);
 
     const tasaPaso = !hayDatos ? null : anterior === null ? null : razon(cantidad, anterior);
     const tasaAcumulada = !hayDatos ? null : i === 0 ? null : razon(cantidad, primero);
-    const perdidos = anterior === null ? null : Math.max(anterior - cantidad, 0);
+    const perdidos = anterior === null || cantidad === null ? null : Math.max(anterior - cantidad, 0);
 
     let fugaCOP: number | null = null;
     let metodo: PasoEmbudo["metodoValorizacion"] = "no_aplica";

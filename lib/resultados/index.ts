@@ -109,13 +109,18 @@ export function derivarPasosDePauta(insights: ReadonlyArray<InsightRow>): Regist
   return salida;
 }
 
-/** Mezcla los resultados por pauta en el lote (ya filtrado a una cuenta). Sin registros, devuelve el mismo objeto. */
+/**
+ * Mezcla los resultados por pauta en el lote (ya filtrado a una cuenta). Los pasos de pauta (vieron,
+ * clic, escribieron) siempre salen de los insights si el embudo no los trae, haya o no registros de
+ * clínica: así el embudo nunca muestra ceros donde la plataforma sí tiene datos. Sin nada que
+ * agregar, devuelve el mismo objeto.
+ */
 export function fusionarResultados(lote: LoteDatos, registros: ReadonlyArray<RegistroPauta>): LoteDatos {
-  if (!registros.length) return lote;
   const campanas = new Set(registros.map((r) => r.campanaId));
-  const conservados = lote.embudo.filter((r) => !(PASOS_CLINICA.has(r.paso) && r.campanaId !== null && campanas.has(r.campanaId)));
+  const conservados = registros.length ? lote.embudo.filter((r) => !(PASOS_CLINICA.has(r.paso) && r.campanaId !== null && campanas.has(r.campanaId))) : lote.embudo;
   const hayPasosPauta = conservados.some((r) => r.paso === "impresion" || r.paso === "clic" || r.paso === "conversacion");
   const pauta = hayPasosPauta ? [] : derivarPasosDePauta(lote.insights);
+  if (!registros.length && !pauta.length) return lote;
   const manuales = registros.flatMap((s) => pautaAEmbudo(s, diasConGastoDeCampana(lote.insights, s.campanaId)));
   return { ...lote, embudo: [...conservados, ...pauta, ...manuales].sort((a, b) => a.fecha.localeCompare(b.fecha)) };
 }

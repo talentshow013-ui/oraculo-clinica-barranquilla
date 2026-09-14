@@ -116,6 +116,17 @@ describe("R10 inversión fuera del radio", () => {
     });
     expect(correr("R10", l)).toBeNull();
   });
+  test("Meta entrega departamentos: Atlántico (sin tilde) es el radio; «Unknown» no cuenta como fuera", () => {
+    const l = lote({
+      insights: serieAnuncio("ad_1"),
+      desgloses: [
+        desglose({ dimension: "ubicacion", valor: "Atlantico", gasto: 950_000 }),
+        desglose({ dimension: "ubicacion", valor: "Magdalena", gasto: 20_000 }),
+        desglose({ dimension: "ubicacion", valor: "Unknown", gasto: 30_000 }),
+      ],
+    });
+    expect(correr("R10", l)).toBeNull();
+  });
 });
 
 describe("R11 segmento que consume sin producir", () => {
@@ -156,6 +167,56 @@ describe("R11 segmento que consume sin producir", () => {
       ],
     });
     expect(correr("R11", l)).toBeNull();
+  });
+  test("si la dimensión entera viene sin resultados (la fuente no los entrega), no es que nadie produzca: no dispara", () => {
+    const l = lote({
+      insights: serieAnuncio("ad_1"),
+      desgloses: [
+        desglose({ dimension: "edad", valor: "25-34", gasto: 500_000, resultados: 0 }),
+        desglose({ dimension: "edad", valor: "35-44", gasto: 350_000, resultados: 0 }),
+        desglose({ dimension: "genero", valor: "mujer", gasto: 850_000, resultados: 0 }),
+      ],
+    });
+    expect(correr("R11", l)).toBeNull();
+  });
+  test("con culpables en edad y en género, la cuota y la plata no se suman entre dimensiones (es la misma plata)", () => {
+    const l = lote({
+      insights: serieAnuncio("ad_1"),
+      desgloses: [
+        desglose({ dimension: "edad", valor: "25-34", gasto: 800_000, resultados: 50 }),
+        desglose({ dimension: "edad", valor: "65+", gasto: 200_000, resultados: 0 }),
+        desglose({ dimension: "genero", valor: "mujer", gasto: 700_000, resultados: 50 }),
+        desglose({ dimension: "genero", valor: "hombre", gasto: 300_000, resultados: 0 }),
+      ],
+    });
+    const h = correr("R11", l);
+    esperarHallazgoCompleto(h);
+    expect(h!.plataEnRiesgo).toBe(300_000);
+    expect(h!.titulo).toContain("30 %");
+    expect(h!.titulo).toContain("65+");
+  });
+});
+
+describe("R26 la página no alcanza a cargar", () => {
+  test("solo mira los anuncios que llevan a una página: los de mensajes no tienen vistas y no son fuga", () => {
+    const l = lote({
+      insights: [
+        ...serieAnuncio("ad_pagina", () => ({ clicsEnlace: 100, vistasLandingPage: 90 })),
+        ...serieAnuncio("ad_chat", () => ({ clicsEnlace: 900, vistasLandingPage: null })),
+      ],
+    });
+    expect(correr("R26", l)).toBeNull();
+  });
+  test("dispara cuando los anuncios con página sí pierden la mayoría de los clics", () => {
+    const l = lote({
+      insights: [
+        ...serieAnuncio("ad_pagina", () => ({ clicsEnlace: 100, vistasLandingPage: 20 })),
+        ...serieAnuncio("ad_chat", () => ({ clicsEnlace: 900, vistasLandingPage: null })),
+      ],
+    });
+    const h = correr("R26", l);
+    esperarHallazgoCompleto(h);
+    expect(h!.titulo).toContain("80 %");
   });
 });
 

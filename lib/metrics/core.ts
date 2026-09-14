@@ -170,8 +170,9 @@ export const costoInteraccion = (a: Agregado) => razon(a.gasto, a.interacciones)
 export const fugaAterrizaje = (a: Agregado) => caida(a.clicsEnlace, a.vistasLandingPage);
 
 // Video. Meta reporta gancho a 3s y ThruPlay; TikTok a 2s y 6s. Se cae con gracia.
+/** Gancho: 3 s / impresiones; si la fuente no lo da, 2 s; si tampoco, el 25 % visto (Meta no entrega 3 s ni 2 s por anuncio). */
 export const hookRate = (a: Agregado) =>
-  razon(a.reproducciones3s, a.impresiones) ?? razon(a.reproducciones2s, a.impresiones);
+  razon(a.reproducciones3s, a.impresiones) ?? razon(a.reproducciones2s, a.impresiones) ?? razon(a.p25, a.impresiones);
 export const holdRate = (a: Agregado) =>
   razon(a.reproduccionesThru, a.impresiones) ?? razon(a.reproducciones6s, a.impresiones);
 export const tasaFinalizacion = (a: Agregado) => razon(a.p100, a.reproducciones);

@@ -60,6 +60,10 @@ describe("números del conector — texto con separadores y moneda", () => {
     expect(resultadoMeta({ indicator: "actions:lead", value: "3" })).toEqual({ valor: 3, tipo: "lead" });
     expect(resultadoMeta({ indicator: "actions:link_click", value: "Not available" })).toEqual({ valor: null, tipo: "link_click" });
     expect(resultadoMeta(null)).toEqual({ valor: null, tipo: null });
+    // Forma alterna (conjuntos/anuncios): values[] por ventana de atribución
+    expect(resultadoMeta({ indicator: "actions:onsite_conversion.messaging_conversation_started_7d", values: [{ attribution_windows: ["default"], value: "127" }] })).toEqual({ valor: 127, tipo: "conversacion" });
+    expect(resultadoMeta({ indicator: "profile_visit_view", values: [{ value: "161" }] })).toEqual({ valor: 161, tipo: "profile_visit_view" });
+    expect(resultadoMeta({ indicator: "actions:leadgen.other", values: [{ value: "6" }] })).toEqual({ valor: 6, tipo: "lead" });
   });
 
   test("estado: el configurado manda; revisión y rechazo vienen del efectivo", () => {
@@ -197,5 +201,56 @@ describe("construirLoteDesdeCrudos — de los archivos crudos al lote validado",
     expect(v("ubicacion")).toEqual(["Atlantico"]);
     expect(v("hora")).toEqual(["14"]);
     expect(v("plataforma")).toEqual(["instagram_reels"]);
+  });
+
+  test("archivos __creativo__ se cruzan con los anuncios: un creativo por anuncio, con su primer gasto y días activos", async () => {
+    const { construirLoteDesdeCrudos } = await import("./meta.importar");
+    const lote = construirLoteDesdeCrudos([
+      archivo("act_1__anuncio__1.json", [
+        dia("2026-09-01", "a1", { adset_id: "s1", creative_id: "k1", amount_spent: "$ 0 COP" }),
+        dia("2026-09-02", "a1", { adset_id: "s1", creative_id: "k1", amount_spent: "$ 1.000 COP" }),
+        dia("2026-09-02", "a2", { adset_id: "s1", creative_id: "k1", amount_spent: "$ 500 COP" }),
+        dia("2026-09-02", "a3", { adset_id: "s1", creative_id: "k9", amount_spent: "$ 500 COP" }),
+      ]),
+      { nombre: "act_1__creativo__1.json", contenido: JSON.stringify({ ad_creatives: [{ id: "k1", name: "Promo 2026-09-01-0123456789abcdef0123456789abcdef", object_type: "VIDEO", video_id: "v", body: "50% OFF en tu valoración de criolipólisis", title: "Promo", call_to_action_type: "WHATSAPP_MESSAGE" }] }) },
+    ]);
+    expect(lote.creativos.map((c) => c.anuncioId).sort()).toEqual(["a1", "a2"]);
+    const a1 = lote.creativos.find((c) => c.anuncioId === "a1")!;
+    expect(a1.fechaPrimerGasto).toBe("2026-09-02");
+    expect(a1.diasActivo).toBe(1);
+    expect(a1.formato).toBe("video");
+    expect(a1.servicio).toBe("criolipolisis");
+  });
+
+  test("archivos __desglose-<dim>__campana__ son desgloses POR CAMPAÑA: nivel campaña, id de la campaña, sin colisión entre campañas y con fecha del lote si el conector no la trae", async () => {
+    const { construirLoteDesdeCrudos } = await import("./meta.importar");
+    const sinFecha = (id: string, extra: Partial<FilaMetaCruda>): FilaMetaCruda => {
+      const f: FilaMetaCruda = { ...cruda, id, name: `Campaña ${id}`, ...extra };
+      delete f.date_start;
+      delete f.date_stop;
+      return f;
+    };
+    const lote = construirLoteDesdeCrudos([
+      archivo("act_1__campana__1.json", [dia("2026-09-01", "c1"), dia("2026-09-03", "c2")]),
+      archivo("act_1__desglose-edad__campana__1.json", [
+        sinFecha("c1", { age: "25-34", amount_spent: "$ 1.000 COP", results: { indicator: "actions:onsite_conversion.messaging_conversation_started_7d", values: [{ attribution_windows: ["default"], value: "4" }] } }),
+        sinFecha("c2", { age: "25-34", amount_spent: "$ 2.000 COP" }),
+      ]),
+    ]);
+    expect(lote.desgloses).toHaveLength(2);
+    expect(lote.desgloses.every((d) => d.nivel === "campana" && d.dimension === "edad" && d.valor === "25-34")).toBe(true);
+    expect(lote.desgloses.map((d) => d.id).sort()).toEqual(["c1", "c2"]);
+    expect(lote.desgloses.every((d) => d.fecha === "2026-09-03")).toBe(true);
+    expect(lote.desgloses.find((d) => d.id === "c1")!.resultados).toBe(4);
+    expect(lote.desgloses.find((d) => d.id === "c1")!.conversacionesIniciadas).toBe(4);
+  });
+
+  test("«Unknown» en edad, género y ubicación se lee como desconocido", async () => {
+    const { construirLoteDesdeCrudos } = await import("./meta.importar");
+    const lote = construirLoteDesdeCrudos([
+      archivo("act_1__desglose-edad__1.json", [dia("2026-09-01", "act_1", { age: "Unknown" })]),
+      archivo("act_1__desglose-ubicacion__1.json", [dia("2026-09-01", "act_1", { region: "Unknown" })]),
+    ]);
+    expect(lote.desgloses.map((d) => d.valor)).toEqual(["desconocido", "desconocido"]);
   });
 });

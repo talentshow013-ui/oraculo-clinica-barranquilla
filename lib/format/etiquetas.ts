@@ -117,3 +117,10 @@ export const CUADRANTES: Record<Cuadrante, { nombre: string; accion: string }> =
 ) as Record<Cuadrante, { nombre: string; accion: string }>;
 /** Áreas de hallazgo y familias del catálogo comparten nombre público. */
 export const AREAS: Record<Area | Familia, string> = { ...NOMBRE_FAMILIA, ...ETIQUETA_AREA };
+
+/** Cómo se nombra un creativo en pantalla: titular; si no, el arranque del copy; si no, el anuncio. Nunca vacío. */
+export function etiquetaCreativo(c: { titular: string | null; copyPrincipal: string; anuncioId: string }, maximo = 60): string {
+  const primeraLinea = c.copyPrincipal.split(/\r?\n/).map((l) => l.trim()).find((l) => l.length > 0);
+  const base = (c.titular ?? "").trim() || primeraLinea || `anuncio ${c.anuncioId}`;
+  return base.length > maximo ? `${base.slice(0, maximo - 1).trimEnd()}…` : base;
+}

@@ -53,6 +53,16 @@ describe("pautaAEmbudo — los totales de la campaña se reparten en sus días c
 });
 
 describe("fusionarResultados — lo registrado manda para esa campaña; lo de pauta sale de los insights", () => {
+  test("sin registros de clínica, los pasos de pauta (vieron, clic, escribieron) igual salen de los insights", () => {
+    const base = lote({ insights: filasCamp("camp_1", ["2026-09-01", "2026-09-02"]), embudo: [] });
+    const r = fusionarResultados(base, []);
+    const suma = (paso: string) => r.embudo.filter((x) => x.paso === paso).reduce((s, x) => s + x.cantidad, 0);
+    expect(suma("impresion")).toBe(2000);
+    expect(suma("clic")).toBe(100);
+    expect(suma("conversacion")).toBe(20);
+    expect(suma("cita_agendada")).toBe(0);
+  });
+
   test("reemplaza los pasos de clínica de la campaña (todas las fechas) y conserva otras campañas y los pasos de pauta", () => {
     const base = lote({
       insights: [...filasCamp("camp_1", ["2026-09-01", "2026-09-02"]), ...filasCamp("camp_2", ["2026-09-01"])],
@@ -84,8 +94,8 @@ describe("fusionarResultados — lo registrado manda para esa campaña; lo de pa
     expect(r.embudo.some((x) => x.paso === "venta" && x.campanaId === "camp_1")).toBe(false);
   });
 
-  test("sin registros, el lote vuelve tal cual; con registros pasa el guardián de privacidad", async () => {
-    const base = lote({ embudo: [] });
+  test("sin registros ni insights, el lote vuelve tal cual; con registros pasa el guardián de privacidad", async () => {
+    const base = lote({ insights: [], embudo: [] });
     expect(fusionarResultados(base, [])).toBe(base);
     const { validarSinPII } = await import("@/lib/privacy");
     expect(() => validarSinPII(fusionarResultados(lote({ insights: filasCamp("camp_1", ["2026-09-01"]) }), [resultado]))).not.toThrow();

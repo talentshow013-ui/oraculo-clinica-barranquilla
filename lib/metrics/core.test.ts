@@ -126,6 +126,11 @@ describe("compatibilidad de plataformas en video", () => {
     const a = agregar([fila({ impresiones: 1000, reproducciones2s: 500 })]);
     expect(hookRate(a)).toBeCloseTo(0.5);
   });
+  test("hookRate cae al 25 % visto cuando el conector no entrega ni 3 s ni 2 s (Meta a nivel anuncio)", () => {
+    const a = agregar([fila({ impresiones: 1000, reproducciones: 900, p25: 250 })]);
+    expect(hookRate(a)).toBeCloseTo(0.25);
+    expect(hookRate(agregar([fila({ impresiones: 1000 })]))).toBeNull();
+  });
   test("holdRate usa ThruPlay y cae a 6s", () => {
     const conThru = agregar([fila({ impresiones: 1000, reproduccionesThru: 100, reproducciones6s: 200 })]);
     const sinThru = agregar([fila({ impresiones: 1000, reproducciones6s: 200 })]);

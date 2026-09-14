@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { EvaluacionCreativo } from '@/lib/tipos'
-import { CUADRANTES } from '@/lib/format/etiquetas'
+import { CUADRANTES, etiquetaCreativo } from '@/lib/format/etiquetas'
 import { cop, pct } from '@/lib/format'
 
 /**
@@ -9,7 +9,7 @@ import { cop, pct } from '@/lib/format'
  * Los «sin señal» van huecos y grises: no se decide sobre ellos.
  */
 const COLOR = { escalar: '#15803D', arreglar_gancho: '#B45309', arreglar_oferta: '#2563EB', matar: '#DC2626', sin_senal: '#6B7689' }
-export default function Cuadrantes({ creativos, umbralGancho = 0.26, umbralCosto = 12_000 }: { creativos: EvaluacionCreativo[]; umbralGancho?: number; umbralCosto?: number }) {
+export default function Cuadrantes({ creativos, numeros, umbralGancho = 0.26, umbralCosto = 12_000 }: { creativos: EvaluacionCreativo[]; /** número corto por creativo (el de la columna #); sin él, el id */ numeros?: ReadonlyMap<string, number>; umbralGancho?: number; umbralCosto?: number }) {
   const W = 640, H = 380, P = 44
   /* sin video no hay gancho: se usa el CTR de enlace ×18 como proxy, y la burbuja lo dice en su título */
   const gancho = (c: EvaluacionCreativo) => c.hookRate ?? (c.ctrEnlace == null ? null : c.ctrEnlace * 18)
@@ -43,8 +43,8 @@ export default function Cuadrantes({ creativos, umbralGancho = 0.26, umbralCosto
         return (
           <g key={c.creativo.id} className="entra-zoom" style={{ '--retraso': `${200 + i * 60}ms`, transformOrigin: `${cx}px ${cy}px` } as CSSProperties}>
             <circle cx={cx} cy={cy} r={r} fill={sin ? 'transparent' : COLOR[c.cuadrante]} fillOpacity={sin ? 0 : 0.85} stroke={COLOR[c.cuadrante]} strokeWidth={sin ? 1.5 : 0} strokeDasharray={sin ? '3 3' : undefined} />
-            <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={sin ? '#6B7689' : '#fff'} className="num">{c.creativo.id.replace('cr_', '')}</text>
-            <title>{`${c.creativo.titular} · ${c.hookRate == null ? `sin video: CTR ${pct(c.ctrEnlace, 2)} como gancho` : `gancho ${pct(c.hookRate)}`} · costo ${cop(c.costoResultado)} · inversión ${cop(c.agregado.gasto)} · ${CUADRANTES[c.cuadrante].nombre}`}</title>
+            <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={sin ? '#6B7689' : '#fff'} className="num">{numeros?.get(c.creativo.id) ?? c.creativo.id.replace('cr_', '')}</text>
+            <title>{`${etiquetaCreativo(c.creativo)} · ${c.hookRate == null ? `sin video: CTR ${pct(c.ctrEnlace, 2)} como gancho` : `gancho ${pct(c.hookRate)}`} · costo ${cop(c.costoResultado)} · inversión ${cop(c.agregado.gasto)} · ${CUADRANTES[c.cuadrante].nombre}`}</title>
           </g>
         )
       })}

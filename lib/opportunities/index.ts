@@ -72,8 +72,9 @@ function nombreServicio(id: string | null, cliente: ConfigCliente): string {
   return cliente.servicios.find((s) => s.id === id)?.nombre ?? id ?? "el servicio";
 }
 
+/** Puntaje ICE con un decimal: es lo que se muestra como prioridad, sin colas de coma flotante. */
 function calcularICE(impacto: number, confianza: number, esfuerzo: number): number {
-  return (impacto * confianza) / Math.max(1, esfuerzo);
+  return Math.round(((impacto * confianza) / Math.max(1, esfuerzo)) * 10) / 10;
 }
 
 function crear(p: Omit<Oportunidad, "ice" | "yaProbada" | "aprendizajePrevio">): Oportunidad {

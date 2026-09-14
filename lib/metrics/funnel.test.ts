@@ -97,10 +97,10 @@ describe("construirEmbudo", () => {
     expect(sinCalibrar[5]!.fugaCOP).not.toBeNull(); // la anterior sí, porque usa costo
   });
 
-  test("un paso sin registros tiene cantidad 0 y tasa null (no sabemos)", () => {
+  test("un paso sin registros no está medido: cantidad y tasa null (no sabemos)", () => {
     const sinRecompra = construirEmbudo(registros.slice(0, 7), GASTO, cfgCalibrado);
-    expect(sinRecompra[7]!.cantidad).toBe(0);
-    expect(sinRecompra[7]!.tasaPaso).toBe(0);
+    expect(sinRecompra[7]!.cantidad).toBeNull();
+    expect(sinRecompra[7]!.tasaPaso).toBeNull();
     const vacio = construirEmbudo([], GASTO, cfgCalibrado);
     expect(vacio[1]!.tasaPaso).toBeNull();
   });
@@ -149,5 +149,26 @@ describe("métricas de negocio", () => {
     expect(m.poas).toBeNull();
     expect(m.ratioCacMargen).toBeNull();
     expect(m.calibrado).toBe(false);
+  });
+});
+
+describe("construirEmbudo — pasos no medidos", () => {
+  test("un paso sin ningún registro no es cero: es «—» y no genera fuga ni tasa", () => {
+    const soloPauta = registros.slice(0, 3); // impresión, clic, conversación (la clínica aún no anota nada)
+    const pasos = construirEmbudo(soloPauta, GASTO, cfgCalibrado);
+    expect(pasos[2]!.cantidad).toBe(50);
+    expect(pasos[3]!.cantidad).toBeNull();
+    expect(pasos[3]!.tasaPaso).toBeNull();
+    expect(pasos[3]!.perdidos).toBeNull();
+    expect(pasos[3]!.fugaCOP).toBeNull();
+    expect(pasos[6]!.cantidad).toBeNull();
+    expect(fugaMasCara(pasos)?.paso).toBe("conversacion");
+  });
+  test("un paso registrado en cero sí es cero (la clínica anotó 0 citas)", () => {
+    const conCero = [...registros.slice(0, 3), reg("lead_calificado", 25), reg("cita_agendada", 0)];
+    const pasos = construirEmbudo(conCero, GASTO, cfgCalibrado);
+    expect(pasos[4]!.cantidad).toBe(0);
+    expect(pasos[4]!.perdidos).toBe(25);
+    expect(pasos[5]!.cantidad).toBeNull();
   });
 });

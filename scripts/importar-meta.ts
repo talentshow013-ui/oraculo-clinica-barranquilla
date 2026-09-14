@@ -25,6 +25,6 @@ validarSinPII(lote);
 mkdirSync(resolve(destino, ".."), { recursive: true });
 writeFileSync(destino, JSON.stringify(lote), "utf8");
 console.log(`Lote escrito en ${destino}`);
-console.log(`  archivos: ${resumen.archivos} · filas leídas: ${resumen.filasLeidas} · insights: ${resumen.insights} · desgloses: ${resumen.desgloses}`);
+console.log(`  archivos: ${resumen.archivos} · filas leídas: ${resumen.filasLeidas} · insights: ${resumen.insights} · desgloses: ${resumen.desgloses} · creativos: ${resumen.creativos}`);
 console.log(`  cuentas: ${resumen.cuentas.join(", ")} · rango: ${lote.meta.desde} → ${lote.meta.hasta} · huecos: ${lote.meta.huecos.length}`);
 if (resumen.ignorados.length) console.log(`  ignorados (nombre no reconocido): ${resumen.ignorados.join(", ")}`);

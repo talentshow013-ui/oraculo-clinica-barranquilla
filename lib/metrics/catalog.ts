@@ -137,7 +137,7 @@ const interaccion = familia("interaccion", [
 // VIDEO — 14
 // ---------------------------------------------------------------------------
 const video = familia("video", [
-  ["hook_rate", "Gancho (hook rate)", "porcentaje", "reproducciones de 3 s / impresiones (2 s si la fuente no da 3 s)", "Cuánta gente se detiene en los primeros segundos. Decide si el problema es el arranque del video o lo que viene después.", "mayor", true, MT, true],
+  ["hook_rate", "Gancho (hook rate)", "porcentaje", "reproducciones de 3 s / impresiones (2 s si la fuente no da 3 s; 25 % visto si no da ninguna)", "Cuánta gente se detiene en los primeros segundos. Decide si el problema es el arranque del video o lo que viene después.", "mayor", true, MT, true],
   ["hold_rate", "Retención (hold rate)", "porcentaje", "reproducciones completas / impresiones (6 s si no hay completas)", "Cuánta gente aguanta el mensaje. Gancho alto con retención baja: el video promete lo que no cumple.", "mayor", true, MT, true],
   ["tasa_finalizacion", "Tasa de finalización", "porcentaje", "vistas al 100 % / reproducciones", "Cuántos llegan al final donde suele estar la llamada a la acción.", "mayor", true, MT],
   ["retencion_25", "Retención al 25 %", "porcentaje", "vistas al 25 % / reproducciones", "Primer corte de atención. Indica si el gancho sostiene más allá de los 3 segundos.", "mayor", true, MT],

@@ -13,6 +13,8 @@ export type ValorCrudo = string | number | null | undefined;
 export interface ResultadoCrudo {
   indicator?: string | null;
   value?: ValorCrudo;
+  /** Forma alterna del conector: una entrada por ventana de atribución; se toma la primera. */
+  values?: Array<{ attribution_windows?: string[]; value?: ValorCrudo }> | null;
 }
 /** Fila tal cual llega; los campos que no pedimos simplemente no están. */
 export type FilaMetaCruda = Record<string, ValorCrudo | ResultadoCrudo>;
@@ -57,7 +59,8 @@ function tipoDesdeIndicador(indicator: string | null | undefined): string | null
 export function resultadoMeta(r: ResultadoCrudo | ValorCrudo): { valor: number | null; tipo: string | null } {
   if (r === null || r === undefined) return { valor: null, tipo: null };
   if (typeof r !== "object") return { valor: entero(r), tipo: null };
-  return { valor: entero(r.value), tipo: tipoDesdeIndicador(r.indicator) };
+  const crudo = r.value !== undefined ? r.value : r.values?.[0]?.value;
+  return { valor: entero(crudo), tipo: tipoDesdeIndicador(r.indicator) };
 }
 
 export function estadoMeta(status: ValorCrudo, effective: ValorCrudo): Estado {
@@ -139,18 +142,24 @@ export interface ContextoDesglose {
   cuentaId: string;
   dimension: Dimension;
   valorDe: (f: FilaMetaCruda) => string;
+  /** «cuenta» (por defecto): una fila por segmento de toda la cuenta. «campana»: una fila por segmento y campaña (id = campaña). */
+  nivel?: "cuenta" | "campana";
 }
 
-/** Desglose a nivel cuenta: mismos campos + dimensión, valor y nRegistros (alcance; si no, impresiones/frecuencia). */
+/**
+ * Desglose: mismos campos + dimensión, valor y nRegistros (alcance; si no, impresiones/frecuencia).
+ * A nivel campaña Meta sí entrega resultados por segmento (a nivel cuenta no, porque mezcla tipos).
+ */
 export function mapearDesgloseMeta(f: FilaMetaCruda, ctx: ContextoDesglose): BreakdownRow {
   const base = mapearFilaMeta(f, { cuentaId: ctx.cuentaId, nivel: "campana" });
   const alcance = base.alcance;
   const nRegistros = alcance !== null ? alcance : base.frecuencia && base.frecuencia > 0 ? Math.round(base.impresiones / base.frecuencia) : Math.round(base.impresiones / 1.4);
+  const porCampana = ctx.nivel === "campana";
   return {
     ...base,
-    nivel: "cuenta",
-    id: ctx.cuentaId,
-    nombre: "Cuenta",
+    nivel: porCampana ? "campana" : "cuenta",
+    id: porCampana ? base.id : ctx.cuentaId,
+    nombre: porCampana ? base.nombre : "Cuenta",
     padreId: null,
     dimension: ctx.dimension,
     valor: ctx.valorDe(f),

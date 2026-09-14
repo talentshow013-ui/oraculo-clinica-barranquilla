@@ -3,7 +3,7 @@
  * R19 CAC sobre margen, R20 servicio a pérdida.
  */
 import type { Regla } from "@/lib/diagnostics/engine";
-import { costoConversacion, fugaAterrizaje, razon, tasaRespuesta } from "@/lib/metrics/core";
+import { agregar, costoConversacion, filtrarRango, fugaAterrizaje, razon, tasaRespuesta } from "@/lib/metrics/core";
 import { cantidadPaso } from "@/lib/metrics/funnel";
 import { margenUnitario } from "@/config/cliente";
 import { pct, ratio } from "@/lib/format";
@@ -48,10 +48,12 @@ export const R26: Regla = {
   area: "operacion",
   evaluar(ctx) {
     const b = ctx.benchmarks;
-    const fuga = fugaAterrizaje(ctx.reciente);
+    // Solo los anuncios que llevan a una página reportan vistas; los de chat no tienen página que cargar.
+    const conPagina = agregar(filtrarRango(ctx.filasAnuncio, ctx.ventanas.reciente).filter((f) => f.vistasLandingPage !== null));
+    const fuga = fugaAterrizaje(conPagina);
     if (fuga === null || fuga <= b.fugaAterrizajeMaxima.valor) return null;
-    const perdidos = ctx.reciente.clicsEnlace - (ctx.reciente.vistasLandingPage ?? 0);
-    const cpc = razon(ctx.reciente.gasto, ctx.reciente.clicsEnlace);
+    const perdidos = conPagina.clicsEnlace - (conPagina.vistasLandingPage ?? 0);
+    const cpc = razon(conPagina.gasto, conPagina.clicsEnlace);
     return {
       reglaId: "R26",
       area: "operacion",
@@ -60,8 +62,8 @@ export const R26: Regla = {
       explicacion:
         "La gente hace clic y se va antes de que cargue. Es la página, no el anuncio: tarda demasiado, pesa demasiado o el enlace está roto. Cada clic perdido se pagó completo y ni siquiera tuvo la oportunidad de convertir.",
       evidencia: [
-        evNum("Clics de enlace, últimos 14 días", ctx.reciente.clicsEnlace),
-        evNum("Vistas de página", ctx.reciente.vistasLandingPage),
+        evNum("Clics de enlace a una página, últimos 14 días", conPagina.clicsEnlace),
+        evNum("Vistas de página", conPagina.vistasLandingPage),
         evPct("Fuga de aterrizaje", fuga),
         evCop("Costo por clic de enlace", cpc),
       ],

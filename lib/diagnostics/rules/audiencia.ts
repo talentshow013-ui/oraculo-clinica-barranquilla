@@ -45,6 +45,8 @@ export const R10: Regla = {
     let fuera = 0;
     const zonasFuera: [string, number][] = [];
     for (const [zona, a] of porZona) {
+      // La plataforma no supo desde dónde: no es «fuera del radio», es dato ausente.
+      if (/^(unknown|desconocid[oa])$/.test(normalizar(zona))) continue;
       total += a.gasto;
       if (!validas.has(normalizar(zona))) {
         fuera += a.gasto;
@@ -83,21 +85,30 @@ export const R11: Regla = {
   area: "audiencia",
   evaluar(ctx) {
     const b = ctx.benchmarks;
-    // Cada dimensión tiene su propio total: mezclar edad con género diluye las cuotas.
-    const culpables: [string, { gasto: number; resultados: number; impresiones: number }][] = [];
-    let totalReferencia = 0;
+    // Cada dimensión tiene su propio total: mezclar edad con género diluye las cuotas. Y la plata de
+    // edad y la de género es la misma plata: manda la dimensión donde más se pierde, no la suma.
+    type Suma = { gasto: number; resultados: number; impresiones: number };
+    const culpables: [string, Suma][] = [];
+    let total = 0;
+    let gasto = 0;
     for (const dim of ["edad", "genero", "edad_genero"] as const) {
       const filas = porDimension(ctx.desglosesVisibles, [dim]);
-      const total = filas.reduce((s, d) => s + d.gasto, 0);
-      if (total === 0) continue;
-      totalReferencia = Math.max(totalReferencia, total);
+      const totalDim = filas.reduce((s, d) => s + d.gasto, 0);
+      if (totalDim === 0) continue;
+      // Si ningún segmento de la dimensión tiene resultados, la fuente no los entrega: dato ausente, no cero.
+      if (!filas.some((d) => d.resultados > 0)) continue;
+      const culpablesDim: [string, Suma][] = [];
       for (const [valor, a] of sumarPorValor(filas)) {
-        if (a.resultados === 0 && a.gasto / total >= b.segmentoConsumoSinResultado.valor) culpables.push([valor, a]);
+        if (a.resultados === 0 && a.gasto / totalDim >= b.segmentoConsumoSinResultado.valor) culpablesDim.push([valor, a]);
+      }
+      const gastoDim = culpablesDim.reduce((s, [, a]) => s + a.gasto, 0);
+      culpables.push(...culpablesDim);
+      if (culpablesDim.length && gastoDim / totalDim > (total ? gasto / total : 0)) {
+        total = totalDim;
+        gasto = gastoDim;
       }
     }
     if (culpables.length === 0) return null;
-    const total = totalReferencia;
-    const gasto = culpables.reduce((s, [, a]) => s + a.gasto, 0);
     return {
       reglaId: "R11",
       area: "audiencia",

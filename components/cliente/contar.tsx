@@ -28,7 +28,8 @@ export default function Contar({ valor, unidad, duracion = 1100 }: { valor: numb
       const paso = (t: number) => {
         const k = Math.min(1, (t - t0) / duracion)
         const s = 1 - Math.pow(1 - k, 3)
-        setV(valor * s)
+        // Los conteos enteros no muestran decimales a mitad de la animación.
+        setV(Number.isInteger(valor) ? Math.round(valor * s) : valor * s)
         if (k < 1) raf = requestAnimationFrame(paso)
       }
       raf = requestAnimationFrame(paso)

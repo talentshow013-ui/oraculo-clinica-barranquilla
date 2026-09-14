@@ -326,7 +326,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
   const desgloses: DesgloseVista[] = [...porSegmento.values()].map((d) => ({
     ...d,
     costoResultado: core.razon(d.gasto, d.resultados),
-    fueraDeRadio: d.dimension === "ubicacion" && !zonas.has(normalizarTexto(d.valor)),
+    fueraDeRadio: d.dimension === "ubicacion" && d.valor !== "desconocido" && !zonas.has(normalizarTexto(d.valor)),
     fueraDeHorario: d.dimension === "hora" && (Number(d.valor) < inicio || Number(d.valor) >= fin),
   }));
 
