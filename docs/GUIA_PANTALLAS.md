@@ -48,7 +48,7 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 - **Decir:** «Los anuncios se desgastan. Esta pantalla avisa cuál ya la gente vio demasiado y hay que reemplazar, y cuál todavía trae citas baratas y hay que empujar.»
 - **Cuándo:** cada dos semanas o cuando el costo sube sin explicación.
 
-### 7b. Campañas (en construcción: la pinta el agente de diseño)
+### 7b. Campañas
 - **Para qué:** cada pauta con cara propia — la que está al aire y las que ya terminaron — con sus propios días, su costo y su participación del gasto. Se eligen dos y se comparan lado a lado; se escoge el periodo (14 / 30 / 90 días / todo).
 - **Decir:** «Las demás pantallas suman toda la cuenta. Aquí se ve pauta por pauta, incluidas las que se pausaron hace meses: nada se pierde. Y se responde "¿cómo le fue a la de junio contra la de ahora?" en dos clics.»
 - **Cuándo:** al cerrar una campaña o antes de lanzar una parecida a una anterior.
@@ -101,4 +101,4 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 4. Abre **Radar de mercado**: «Y esto es lo que hace la competencia, con sus anuncios reales.»
 5. Cierra con **Informe**: «Esto es lo que le llega cada semana, en una hoja.»
 
-Las otras ocho pantallas se mencionan en una frase: «hay más profundidad cuando se necesite».
+Las otras nueve pantallas se mencionan en una frase: «hay más profundidad cuando se necesite».

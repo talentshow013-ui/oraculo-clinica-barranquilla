@@ -17,6 +17,7 @@ const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: React
   { titulo: 'Entender', rutas: [
     { a: '/embudo', nombre: 'Embudo', icono: I(<><path d="M3 5h18l-7 8v6l-4 2v-8z" /></>) },
     { a: '/rendimiento', nombre: 'Rendimiento', icono: I(<><path d="M4 19V10M10 19V5M16 19v-8M22 19H2" /></>) },
+    { a: '/campanas', nombre: 'Campañas', icono: I(<><path d="M4 6h9M4 12h13M4 18h7" /><circle cx="18" cy="6" r="2" /><circle cx="15" cy="18" r="2" /></>) },
     { a: '/creativos', nombre: 'Creativos', icono: I(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M10 9l5 3-5 3z" /></>) },
     { a: '/audiencias', nombre: 'Audiencias', icono: I(<><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.4" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 18a4 4 0 0 1 7 0" /></>) },
   ] },

@@ -64,6 +64,12 @@ describe("resumirCampanas — cada pauta con cara propia, viva o terminada", () 
     expect(r[0]!.costoResultado).toBeNull();
   });
 
+  test("una campaña con filas pero sin gasto en el periodo no aparece (no gastó: no hay qué juzgar)", () => {
+    const filas = [fila("A", "2026-09-01"), fila("sinGasto", "2026-09-01", { gasto: 0, impresiones: 0, clics: 0, clicsEnlace: 0, resultados: 0, conversacionesIniciadas: 0 })];
+    const r = resumirCampanas(filas, { desde: "2026-09-01", hasta: "2026-09-01" });
+    expect(r.map((c) => c.id)).toEqual(["A"]);
+  });
+
   test("si la fuente no trae nivel campaña, agrupa conjuntos por su padre", () => {
     const filas = [
       filaBase({ nivel: "conjunto", id: "s1", padreId: "C1", fecha: "2026-09-01", gasto: 100, impresiones: 10, clics: 1, clicsEnlace: 1, resultados: 1 }),

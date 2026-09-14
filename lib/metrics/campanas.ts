@@ -87,6 +87,7 @@ export function resumirCampanas(insights: ReadonlyArray<InsightRow>, periodo: Ra
     const ordenadas = [...g].sort((a, b) => a.fecha.localeCompare(b.fecha));
     const ultima = ordenadas[ordenadas.length - 1]!;
     const conGasto = ordenadas.filter((f) => f.gasto > 0);
+    if (!conGasto.length) continue; // sin gasto en el periodo: no hay qué juzgar
     const diasConGasto = new Set(conGasto.map((f) => f.fecha));
     const total = agregar(ordenadas);
     const gastoReciente = conGasto.some((f) => f.fecha >= umbralAlAire);

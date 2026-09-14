@@ -1,5 +1,7 @@
 # PROMPT — Agente de diseño (frontend): pantalla **Campañas**
 
+> **Estado (2026-09-13, noche): INTEGRADO.** La pantalla entregada por el agente de diseño vive en `app/(panel)/campanas/page.tsx` y `components/cliente/campanas-url.tsx`; el menú tiene la entrada. Ajustes de empalme hechos aquí: alias `EstadoCampana` en `lib/tipos.ts`, `tonoDelta(delta, mejorEs)` con la firma real, y el periodo por defecto es «Todo» (el contrato), no 30.
+
 > Pégalo completo como primer mensaje al agente que hace la parte visual. El repositorio ya
 > tiene los números listos; falta **una pantalla nueva** que los pinte. Nada más.
 > Repositorio: `CLIENTE PILAR BARRANQUILA/ANALITICA DE DATOS FACEBOOK` (Next 15, React 19,
