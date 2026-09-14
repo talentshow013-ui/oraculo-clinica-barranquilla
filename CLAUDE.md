@@ -17,7 +17,7 @@ no está, se dice que no está (`null` → «—»). Cero jerga técnica en text
 ## Comandos npm
 `npm run seed` (demo) · `npm run verificar` (motor sin interfaz) · `npm run validar-lote` ·
 `npm run radar:capturar -- --q "…"` (Biblioteca de anuncios, gratis) · `npm run importar-radar` ·
-`npm run doctor` (qué falta en este equipo) · `npm run dev` → http://localhost:3000/panel ·
+`npm run doctor` (qué falta en este equipo) · `npm run dev` → http://localhost:3000/panel · VPS: `deploy/` + `docs/DESPLIEGUE_VPS.md` ·
 `npm run typecheck && npm test && npm run build` antes de dar algo por terminado.
 
 ## Estructura
@@ -30,6 +30,7 @@ calibrar y las cuentas publicitarias. Docs en `docs/` (`CONEXION_MCP.md` es inte
 - TDD en `lib/`: test primero, rojo, verde. 250 tests deben seguir verdes.
 - Ventanas iguales al comparar periodos; fechas siempre `America/Bogota` (`lib/format/fechas.ts`).
 - Privacidad por esquema: jamás un campo de paciente; k-anonimato k = 5.
+- Producción: VPS Ubuntu siempre encendida con Claude Code + reloj diario (`deploy/oraculo-diario.sh`) + panel con candado (`middleware.ts`, `ORACULO_USUARIO/CLAVE`). Constitución 1.1.0.
 - Conexiones: solo MCP oficiales desde Claude Code (Meta `https://mcp.facebook.com/ads`, Apify
   `https://mcp.apify.com`). Sin API propia, sin tokens en archivos. Ver `docs/CONEXION_MCP.md`.
 - Al terminar cualquier cambio: `npm run typecheck && npm test && npm run build`.

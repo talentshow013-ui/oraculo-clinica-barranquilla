@@ -1,0 +1,19 @@
+# Servicio del panel Oráculo (Next.js) — lo instala deploy/instalar-vps.sh
+[Unit]
+Description=Oráculo · panel de marketing
+After=network.target
+
+[Service]
+Type=simple
+User=oraculo
+WorkingDirectory=/home/oraculo/oraculo
+EnvironmentFile=/home/oraculo/oraculo/.env
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=TZ=America/Bogota
+ExecStart=/usr/bin/npm run start -- -p 3000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

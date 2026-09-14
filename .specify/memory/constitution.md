@@ -78,8 +78,14 @@ encontrar los patrones plantados en el seed.
   Tailwind v4 (`@theme`, sin config JS), Vitest, tsx, date-fns-tz.
 - Sin base de datos en fase 1; el adapter lee archivo local. Sin librería de componentes de
   terceros: primitivas propias (`Kpi`, `Panel`, `Etiqueta`, `Barra`, `Vacio`, `Celda`, `Th`, `Aviso`).
-- Corre 100 % local en Windows en el equipo de la coordinadora; el análisis narrativo lo ejecuta
-  Claude Code con la suscripción de ella. Sin backend, sin nube, sin costos recurrentes.
+- Vive en UNA máquina siempre encendida (VPS Ubuntu, `deploy/`) donde conviven el panel, el
+  reloj diario y Claude Code con los conectores MCP; el mismo repositorio corre 100 % local en
+  Windows para desarrollo y demostración (`instalar.ps1`). El análisis narrativo lo ejecuta Claude
+  Code con la suscripción del cliente. Sin backend propio, sin base de datos, sin API propia.
+- Las credenciales de los conectores las guarda Claude Code en su propio perfil de la máquina
+  (OAuth), nunca el repositorio ni un archivo del proyecto. En internet el panel exige usuario y
+  clave (`ORACULO_USUARIO`/`ORACULO_CLAVE`) y, delante, Cloudflare Access; los datos del lote no
+  contienen pacientes (Principio VI) y aun así nunca se sirven sin candado.
 - Idioma de todo lo visible: español (Colombia). Pesos sin decimales, formato `es-CO`,
   `tabular-nums` en toda cifra.
 
@@ -103,4 +109,8 @@ principios; MINOR: principio o sección nueva; PATCH: aclaraciones) y fecha. Tod
 código y cada `/speckit-plan` verifican cumplimiento; la complejidad adicional debe
 justificarse por escrito en el plan.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
+**Version**: 1.1.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
+
+Enmienda 1.1.0 (2026-09-13): despliegue en VPS siempre encendida con Claude Code y reloj diario
+(sección "Restricciones de Stack y Despliegue"); candado del panel en internet. Los principios I–X
+no cambian.

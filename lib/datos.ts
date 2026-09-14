@@ -315,16 +315,21 @@ export function campanasEnPeriodo(r: Pick<ResultadoMotor, "lote" | "hoy" | "camp
   return { periodo: p, desde, hasta, campanas: resumirCampanas(r.lote.insights, { desde, hasta }) };
 }
 
-/** Para las páginas (Server Components): lee la cuenta de la cookie. Caché por cuenta en producción. */
-const cache = new Map<string, Promise<ResultadoMotor>>();
+/**
+ * Para las páginas (Server Components): lee la cuenta de la cookie. Caché por cuenta en producción,
+ * con vencimiento: en la VPS los datos se renuevan cada mañana sin reiniciar el panel.
+ */
+const cache = new Map<string, { promesa: Promise<ResultadoMotor>; creadoEn: number }>();
+const CACHE_SEG = Number(process.env.ORACULO_CACHE_SEG ?? 600);
 
 export async function motor(cuentaId?: string): Promise<ResultadoMotor> {
   const fuente = fuenteActiva();
   const id = cuentaId ?? (await cuentaDesdeCookie()) ?? "";
   const clave = `${fuente.nombre}|${id}`;
   const enCache = cache.get(clave);
-  if (enCache && process.env.NODE_ENV === "production") return enCache;
-  const resultado = correrMotor(undefined, { fuente, cuentaId: id || undefined });
-  cache.set(clave, resultado);
-  return resultado;
+  const vigente = enCache && Date.now() - enCache.creadoEn < CACHE_SEG * 1000;
+  if (vigente && process.env.NODE_ENV === "production") return enCache.promesa;
+  const promesa = correrMotor(undefined, { fuente, cuentaId: id || undefined });
+  cache.set(clave, { promesa, creadoEn: Date.now() });
+  return promesa;
 }
