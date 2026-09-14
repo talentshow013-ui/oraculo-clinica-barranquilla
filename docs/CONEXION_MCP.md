@@ -18,7 +18,7 @@ no contiene ningún cliente HTTP.
 - Alta en Claude Code (una sola vez, en el equipo de la coordinadora):
 
 ```
-claude mcp add --transport http --client-id <META_APP_ID> meta-ads https://mcp.facebook.com/ads
+claude mcp add --transport http --client-id 4572635166299856 meta-ads https://mcp.facebook.com/ads
 ```
 
   El `META_APP_ID` es el de una app creada en developers.facebook.com **por la propia clínica**
