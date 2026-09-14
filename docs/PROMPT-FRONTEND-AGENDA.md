@@ -46,13 +46,14 @@ tasaAsistencia(s)           // asistidas / agendadas → number | null
 tasaCierre(s)               // ventas / asistidas  → number | null
 ```
 
-`RegistroSemanal`: `{ desde, hasta, contactosCalificados, citasAgendadas, citasAsistidas, ventas, valorVentasCOP: number|null, recompras: number|null, registradoEn: string (ISO) }`.
+`RegistroSemanal`: `{ cuentaId, campanaId: string|null (null = toda la cuenta), desde, hasta, contactosCalificados, citasAgendadas, citasAsistidas, ventas, valorVentasCOP: number|null, recompras: number|null, registradoEn: string (ISO) }`.
 
 **El formulario** (los `name` son fijos; la acción los lee así):
 
 | name | tipo | obligatorio |
 |---|---|---|
 | `semana` | `<select>`/radios con `value = desde` de una `Semana` | sí |
+| `campana` | `<select>` con `value = c.id` de `r.campanas` (nombre visible `c.nombre`) o `""` = «Toda la cuenta (no sé de cuál)» | sí (puede ir vacío) |
 | `contactosCalificados` | entero ≥ 0 | sí |
 | `citasAgendadas` | entero ≥ 0 | sí |
 | `citasAsistidas` | entero ≥ 0, ≤ agendadas | sí |
@@ -63,8 +64,11 @@ tasaCierre(s)               // ventas / asistidas  → number | null
 La acción valida, guarda y **redirige**: `/agenda?guardada=<desde>` si salió bien, o
 `/agenda?semana=<desde>&error=<mensaje>` si no. Los mensajes de error ya vienen en español y sin
 jerga («No pueden asistir más citas de las agendadas», «La semana va de lunes a domingo»…):
-muéstralos tal cual. Para **corregir** una semana ya registrada se llega con `?semana=<desde>`:
-el formulario debe venir **prellenado** con los valores de `r.agenda` de esa semana.
+muéstralos tal cual. Para **corregir** una semana ya registrada se llega con `?semana=<desde>&campana=<id|vacío>`:
+el formulario debe venir **prellenado** con los valores de `r.agenda` de esa semana y campaña.
+**Se registra por campaña** (una fila por campaña y semana); «toda la cuenta» es para cuando no se
+sabe de cuál salieron, y reemplaza lo de las campañas de esa semana (y al revés). Muéstralo con una
+frase corta debajo del selector.
 
 Formato: `cop()`, `pct()`, `num()` de `@/lib/format`; `fechaCorta()`, `fechaHora()` de
 `@/lib/format/fechas`. Nunca `toFixed`/`toLocaleString` a mano. `null` → «—».
@@ -93,8 +97,9 @@ agendadas, ventas no puede superar asistidas; si pasa, avisar antes de enviar.
 Al pie: «Solo cantidades. Ni nombres, ni teléfonos, ni notas: aquí no caben y el sistema los
 rechaza.» Botón único **«Guardar semana»**.
 
-**Bloque 3 — Registradas**: tabla o tarjetas con `r.agenda`: semana (enlace a `?semana=<desde>`
-para corregir), agendadas, asistieron (+ `Etiqueta` con `tasaAsistencia`: ≥ 75 % bien, ≥ 60 % ojo,
+**Bloque 3 — Registradas**: tabla o tarjetas con `r.agenda`, agrupadas por semana y dentro por
+campaña (nombre desde `r.campanas`; `null` → «Toda la cuenta»): semana (enlace a
+`?semana=<desde>&campana=<id>` para corregir), agendadas, asistieron (+ `Etiqueta` con `tasaAsistencia`: ≥ 75 % bien, ≥ 60 % ojo,
 menos mal), ventas (+ `tasaCierre` pequeño), valor, «registrada el …» (`fechaHora`).
 Vacío: `Vacio` «El embudo termina en la conversación» + «Registra la semana pasada para empezar».
 
@@ -110,7 +115,7 @@ Vacío: `Vacio` «El embudo termina en la conversación» + «Registra la semana
 
 ## 6. Cómo verifico la entrega
 
-- `npm run typecheck` limpio · `npm test` verde (272) · `npm run build` sin errores.
+- `npm run typecheck` limpio · `npm test` verde (278) · `npm run build` sin errores.
 - `/agenda`, `/agenda?semana=2026-08-31`, `/agenda?guardada=2026-08-31`,
   `/agenda?error=prueba` → 200.
 - Guardar desde el navegador crea `datos/agenda.json`; corregir la misma semana la reemplaza;

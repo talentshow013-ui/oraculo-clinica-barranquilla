@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { fila as filaBase } from "@/lib/diagnostics/fixtures";
+import { fila as filaBase, registro } from "@/lib/diagnostics/fixtures";
 import { compararCampanas, resumirCampanas } from "./campanas";
 
 /** Filas de nivel campaña, un día cada una. */
@@ -95,11 +95,35 @@ describe("resumirCampanas — cada pauta con cara propia, viva o terminada", () 
   });
 });
 
+describe("resumirCampanas con agenda — citas y ventas por campaña", () => {
+  test("suma los pasos de clínica de esa campaña en el periodo y calcula costo por cita asistida; sin agenda → null", () => {
+    const filas = [fila("A", "2026-09-01", { gasto: 200_000 }), fila("B", "2026-09-01")];
+    const embudo = [
+      registro("cita_agendada", 10, { fecha: "2026-09-01", campanaId: "A" }),
+      registro("cita_asistida", 8, { fecha: "2026-09-01", campanaId: "A" }),
+      registro("venta", 4, { fecha: "2026-09-01", campanaId: "A", valorCOP: 2_000_000 }),
+      registro("cita_asistida", 3, { fecha: "2026-08-01", campanaId: "A" }), // fuera del periodo
+      registro("cita_asistida", 5, { fecha: "2026-09-01", campanaId: null }), // toda la cuenta: no es de A
+    ];
+    const r = resumirCampanas(filas, { desde: "2026-09-01", hasta: "2026-09-02" }, embudo);
+    const a = r.find((c) => c.id === "A")!;
+    expect(a.citasAgendadas).toBe(10);
+    expect(a.citasAsistidas).toBe(8);
+    expect(a.ventas).toBe(4);
+    expect(a.valorVentasCOP).toBe(2_000_000);
+    expect(a.costoCitaAsistida).toBe(25_000);
+    const b = r.find((c) => c.id === "B")!;
+    expect(b.citasAgendadas).toBeNull();
+    expect(b.costoCitaAsistida).toBeNull();
+  });
+});
+
 describe("compararCampanas — dos pautas lado a lado, cada una en sus propios días", () => {
   test("devuelve delta por métrica y avisa cuando los días de pauta difieren", () => {
     const filas = [fila("A", "2026-09-01", { gasto: 100_000, resultados: 10 }), fila("A", "2026-09-02", { gasto: 100_000, resultados: 10 }), fila("B", "2026-09-01", { gasto: 100_000, resultados: 5 })];
     const [a, b] = resumirCampanas(filas, { desde: "2026-09-01", hasta: "2026-09-02" });
     const c = compararCampanas(a!, b!);
+    expect(c.metricas.some((m) => m.id === "costo_cita_asistida")).toBe(true);
     const cpr = c.metricas.find((m) => m.id === "costo_resultado")!;
     expect(cpr.a).toBe(10_000);
     expect(cpr.b).toBe(20_000);

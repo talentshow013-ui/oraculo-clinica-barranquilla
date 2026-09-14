@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fila, lote, registro } from "@/lib/diagnostics/fixtures";
 import { RegistroSemanalSchema, derivarPasosDePauta, fusionarAgenda, guardarSemana, leerAgenda, semanaDe, semanasRecientes, semanalAEmbudo, tasaAsistencia } from "./index";
 
-const semana = { desde: "2026-09-07", hasta: "2026-09-13", contactosCalificados: 40, citasAgendadas: 21, citasAsistidas: 14, ventas: 7, valorVentasCOP: 4_900_000, recompras: null, registradoEn: "2026-09-14T09:00:00-05:00" };
+const semana = { cuentaId: "act_1", campanaId: "camp_1", desde: "2026-09-07", hasta: "2026-09-13", contactosCalificados: 40, citasAgendadas: 21, citasAsistidas: 14, ventas: 7, valorVentasCOP: 4_900_000, recompras: null, registradoEn: "2026-09-14T09:00:00-05:00" };
 
 describe("registro semanal — cinco números, ni un nombre", () => {
   test("acepta la semana válida y rechaza campos extra (privacidad por esquema)", () => {
@@ -57,7 +57,8 @@ describe("semanalAEmbudo — reparte la semana en sus 7 días, sin inventar deci
     expect(suma("venta")).toBe(7);
     expect(regs.every((r) => r.fecha >= "2026-09-07" && r.fecha <= "2026-09-13")).toBe(true);
     expect(regs.every((r) => Number.isInteger(r.cantidad) && r.nRegistros === r.cantidad)).toBe(true);
-    expect(regs.every((r) => r.campanaId === null && r.fuenteAtribuida === "meta")).toBe(true);
+    expect(regs.every((r) => r.campanaId === "camp_1" && r.fuenteAtribuida === "meta")).toBe(true);
+    expect(semanalAEmbudo({ ...semana, campanaId: null }).every((r) => r.campanaId === null)).toBe(true);
   });
 
   test("el valor de ventas se reparte proporcional a las ventas de cada día y suma el total", () => {
@@ -106,6 +107,20 @@ describe("fusionarAgenda — lo manual manda en su semana; lo de la pauta sale d
     expect(r.embudo.some((x) => x.paso === "cita_asistida")).toBe(true);
   });
 
+  test("por campaña: la semana de camp_1 no borra lo registrado de camp_2 en la misma semana; ambas suman", () => {
+    const base = lote({ embudo: [registro("cita_agendada", 99, { fecha: "2026-09-08", campanaId: "camp_1" }), registro("cita_agendada", 7, { fecha: "2026-09-08", campanaId: "camp_2" })] });
+    const r = fusionarAgenda(base, [semana]);
+    const porCamp = (c: string) => r.embudo.filter((x) => x.paso === "cita_agendada" && x.campanaId === c).reduce((s, x) => s + x.cantidad, 0);
+    expect(porCamp("camp_1")).toBe(21);
+    expect(porCamp("camp_2")).toBe(7);
+  });
+
+  test("«toda la cuenta» (campanaId null) reemplaza TODO lo de clínica de esa semana, con o sin campaña", () => {
+    const base = lote({ embudo: [registro("cita_agendada", 99, { fecha: "2026-09-08", campanaId: "camp_1" }), registro("cita_agendada", 7, { fecha: "2026-09-08", campanaId: null })] });
+    const r = fusionarAgenda(base, [{ ...semana, campanaId: null }]);
+    expect(r.embudo.filter((x) => x.paso === "cita_agendada").reduce((s, x) => s + x.cantidad, 0)).toBe(21);
+  });
+
   test("sin semanas manuales, el lote vuelve tal cual", () => {
     const base = lote({ embudo: [registro("venta", 3, { fecha: "2026-09-08" })] });
     expect(fusionarAgenda(base, [])).toBe(base);
@@ -126,12 +141,28 @@ describe("archivo datos/agenda.json — leer y guardar sin pisar otras semanas",
       expect(leerAgenda(ruta)).toEqual([]);
       guardarSemana(ruta, semana);
       guardarSemana(ruta, { ...semana, desde: "2026-08-31", hasta: "2026-09-06", citasAgendadas: 10, citasAsistidas: 8, ventas: 3 });
-      guardarSemana(ruta, { ...semana, citasAgendadas: 25, citasAsistidas: 20, ventas: 9 }); // misma semana: reemplaza
+      guardarSemana(ruta, { ...semana, citasAgendadas: 25, citasAsistidas: 20, ventas: 9 }); // misma semana y campaña: reemplaza
+      guardarSemana(ruta, { ...semana, campanaId: "camp_2", citasAgendadas: 4, citasAsistidas: 3, ventas: 1 }); // otra campaña: se suma
       const s = leerAgenda(ruta);
-      expect(s).toHaveLength(2);
+      expect(s).toHaveLength(3);
       expect(s[0]!.desde).toBe("2026-09-07");
       expect(s[0]!.citasAgendadas).toBe(25);
-      expect(JSON.parse(readFileSync(ruta, "utf8")).semanas).toHaveLength(2);
+      expect(JSON.parse(readFileSync(ruta, "utf8")).semanas).toHaveLength(3);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("guardar «toda la cuenta» borra las campañas de esa semana y viceversa (no se cuenta doble)", () => {
+    const dir = mkdtempSync(join(tmpdir(), "agenda-"));
+    const ruta = join(dir, "agenda.json");
+    try {
+      guardarSemana(ruta, semana);
+      guardarSemana(ruta, { ...semana, campanaId: "camp_2" });
+      guardarSemana(ruta, { ...semana, campanaId: null });
+      expect(leerAgenda(ruta).map((s) => s.campanaId)).toEqual([null]);
+      guardarSemana(ruta, { ...semana, campanaId: "camp_1" });
+      expect(leerAgenda(ruta).map((s) => s.campanaId)).toEqual(["camp_1"]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

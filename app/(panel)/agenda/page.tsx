@@ -20,12 +20,14 @@ const CAMPOS: { id: string; nombre: string; ayuda: string; opcional?: boolean }[
   { id: 'recompras', nombre: 'Recompras', ayuda: 'Pacientes anteriores que volvieron a comprar. Si no se lleva, en blanco.', opcional: true },
 ]
 
-export default async function Agenda({ searchParams }: { searchParams: Promise<{ semana?: string; guardada?: string; error?: string }> }) {
-  const { semana, guardada, error } = await searchParams
+export default async function Agenda({ searchParams }: { searchParams: Promise<{ semana?: string; campana?: string; guardada?: string; error?: string }> }) {
+  const { semana, campana, guardada, error } = await searchParams
   const r = await motor()
   const opciones = semanasRecientes(r.hoy, 10)
   const elegida = opciones.find((s) => s.desde === semana) ?? opciones[0]!
-  const existente = r.agenda.find((s) => s.desde === elegida.desde)
+  const campanaElegida = r.campanas.some((c) => c.id === campana) ? campana! : null
+  const nombreCampana = (id: string | null) => (id === null ? 'Toda la cuenta' : (r.campanas.find((c) => c.id === id)?.nombre ?? id))
+  const existente = r.agenda.find((s) => s.desde === elegida.desde && s.campanaId === campanaElegida)
   const valor = (id: string) => (existente ? ((existente as unknown as Record<string, number | null>)[id] ?? '') : '')
   const campo = 'num w-full rounded-[12px] border border-borde bg-superficie px-3 py-2 text-[15px] text-texto outline-none ring-acento/30 focus:border-acento focus:ring-4'
 
@@ -49,6 +51,14 @@ export default async function Agenda({ searchParams }: { searchParams: Promise<{
               </select>
               <span className="mt-1 block text-[11.5px] text-texto-3">Para corregir otra semana, elígela en la tabla de la derecha.</span>
             </label>
+            <label className="block">
+              <span className="rotulo">Campaña de la que salieron estas citas</span>
+              <select name="campana" defaultValue={campanaElegida ?? ''} className={`${campo} mt-1.5`}>
+                <option value="">Toda la cuenta (no sé de cuál)</option>
+                {r.campanas.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+              </select>
+              <span className="mt-1 block text-[11.5px] text-texto-3">Una fila por campaña y semana. Si registras «toda la cuenta», reemplaza lo de las campañas de esa semana (y al revés).</span>
+            </label>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {CAMPOS.map((c) => (
                 <label key={c.id} className="block">
@@ -70,14 +80,15 @@ export default async function Agenda({ searchParams }: { searchParams: Promise<{
             <Vacio titulo="El embudo termina en la conversación" texto="Mientras no haya semanas registradas, cita, asistencia y venta se muestran como «—». Registra la semana pasada para empezar." />
           ) : (
             <Tabla minAncho={420}>
-              <thead><tr><Th>Semana</Th><Th num>Agendadas</Th><Th num>Asistieron</Th><Th num>Ventas</Th><Th num>Valor</Th></tr></thead>
+              <thead><tr><Th>Semana · campaña</Th><Th num>Agendadas</Th><Th num>Asistieron</Th><Th num>Ventas</Th><Th num>Valor</Th></tr></thead>
               <tbody>
                 {r.agenda.map((s) => {
                   const asis = tasaAsistencia(s)
                   return (
-                    <tr key={s.desde}>
+                    <tr key={`${s.desde}|${s.campanaId ?? ''}`}>
                       <Celda>
-                        <a href={`/agenda?semana=${s.desde}`} className="font-medium text-texto underline-offset-2 hover:underline">{fechaCorta(s.desde)} → {fechaCorta(s.hasta)}</a>
+                        <a href={`/agenda?semana=${s.desde}&campana=${s.campanaId ?? ''}`} className="font-medium text-texto underline-offset-2 hover:underline">{fechaCorta(s.desde)} → {fechaCorta(s.hasta)}</a>
+                        <span className="block text-[11.5px] text-texto-2">{nombreCampana(s.campanaId)}</span>
                         <span className="block text-[11px] text-texto-3">registrada {fechaHora(s.registradoEn)}</span>
                       </Celda>
                       <Celda num>{num(s.citasAgendadas)}</Celda>

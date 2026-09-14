@@ -61,6 +61,7 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
 | `costoResultado`, `costoConversacion`, `cpm` | `number \| null` | pesos |
 | `ctrEnlace`, `tasaConversacion` | `number \| null` | fracción 0–1 |
 | `frecuencia` | `number \| null` | razón |
+| `citasAgendadas`, `citasAsistidas`, `ventas`, `valorVentasCOP`, `costoCitaAsistida` | `number \| null` | agenda de la clínica atribuida a la campaña en el periodo (null = no se registró). **Pendiente de pintar**: tres columnas más en la tabla (Citas asistidas · Costo por cita asistida · Ventas), con «—» cuando sea null. La comparación ya las trae en `metricas[]`. |
 
 `ComparacionCampanas`: `{ a, b, diasDistintos, aviso: string | null, metricas: MetricaComparada[] }`
 con `MetricaComparada = { id, nombre, unidad: 'cop'|'numero'|'porcentaje'|'ratio', mejorEs: 'mayor'|'menor'|'rango'|'informativo', a, b, delta, comparable }`.

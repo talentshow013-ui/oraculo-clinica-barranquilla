@@ -7,7 +7,11 @@
  * - Cada semana se reparte en sus 7 días como registros del embudo, para que las ventanas de
  *   14 días del motor funcionen igual que con datos diarios.
  * - Lo manual manda: en una semana registrada, reemplaza los pasos de clínica que trajera la
- *   sincronización. Los pasos de pauta (impresión, clic, conversación) salen de los insights.
+ *   sincronización PARA ESA CAMPAÑA. Los pasos de pauta (impresión, clic, conversación) salen de
+ *   los insights.
+ * - Por campaña: cada semana se registra por campaña (`campanaId`) o, si no se sabe, para «toda
+ *   la cuenta» (`campanaId: null`). Las dos formas no conviven en la misma semana: guardar una
+ *   borra la otra, para no contar doble.
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -23,6 +27,10 @@ const entero = z.number().int().min(0);
 
 export const RegistroSemanalSchema = z
   .object({
+    /** Cuenta publicitaria a la que pertenece (el panel analiza una cuenta a la vez). */
+    cuentaId: z.string().min(1),
+    /** Campaña de la que salieron esas citas; null = «toda la cuenta» (no se sabe de cuál). */
+    campanaId: z.string().min(1).nullable(),
     /** Lunes. */
     desde: FECHA,
     /** Domingo. */
@@ -95,7 +103,7 @@ export function semanalAEmbudo(s: RegistroSemanal): RegistroEmbudo[] {
     const cantidades = repartir(total, dias.length);
     const valores = valorTotal === null ? null : total === 0 ? cantidades.map(() => 0) : repartirValor(valorTotal, cantidades);
     dias.forEach((fecha, i) => {
-      salida.push({ fecha, campanaId: null, fuenteAtribuida: "meta", paso, cantidad: cantidades[i]!, valorCOP: valores ? valores[i]! : null, servicio: null, sede: null, nRegistros: cantidades[i]! });
+      salida.push({ fecha, campanaId: s.campanaId, fuenteAtribuida: "meta", paso, cantidad: cantidades[i]!, valorCOP: valores ? valores[i]! : null, servicio: null, sede: null, nRegistros: cantidades[i]! });
     });
   };
   emitir("lead_calificado", s.contactosCalificados, null);
@@ -136,8 +144,10 @@ export function derivarPasosDePauta(insights: ReadonlyArray<InsightRow>): Regist
 /** Mezcla la agenda manual en el lote. Sin semanas, devuelve el mismo objeto. */
 export function fusionarAgenda(lote: LoteDatos, semanas: ReadonlyArray<RegistroSemanal>): LoteDatos {
   if (!semanas.length) return lote;
-  const enSemanaManual = (fecha: string) => semanas.some((s) => fecha >= s.desde && fecha <= s.hasta);
-  const conservados = lote.embudo.filter((r) => !(PASOS_CLINICA.has(r.paso) && enSemanaManual(r.fecha)));
+  // Un registro manual cubre su semana y su campaña; «toda la cuenta» (null) cubre la semana entera.
+  const cubierto = (r: RegistroEmbudo) =>
+    PASOS_CLINICA.has(r.paso) && semanas.some((s) => r.fecha >= s.desde && r.fecha <= s.hasta && (s.campanaId === null || s.campanaId === r.campanaId));
+  const conservados = lote.embudo.filter((r) => !cubierto(r));
   const hayPasosPauta = conservados.some((r) => r.paso === "impresion" || r.paso === "clic" || r.paso === "conversacion");
   const pauta = hayPasosPauta ? [] : derivarPasosDePauta(lote.insights);
   const manuales = semanas.flatMap(semanalAEmbudo);
@@ -159,8 +169,14 @@ export function leerAgenda(ruta: string = RUTA_AGENDA): RegistroSemanal[] {
 /** Guarda una semana (reemplaza si ya existía). Escritura atómica: primero a un temporal. */
 export function guardarSemana(ruta: string, semana: RegistroSemanal): RegistroSemanal[] {
   const valida = RegistroSemanalSchema.parse(semana);
-  const actuales = leerAgenda(ruta).filter((s) => s.desde !== valida.desde);
-  const semanas = [...actuales, valida].sort((a, b) => b.desde.localeCompare(a.desde));
+  // Misma cuenta y semana: si es «toda la cuenta» borra las campañas; si es una campaña, borra el
+  // «toda la cuenta» y la misma campaña. Nunca se cuenta doble.
+  const actuales = leerAgenda(ruta).filter((s) => {
+    if (s.cuentaId !== valida.cuentaId || s.desde !== valida.desde) return true;
+    if (valida.campanaId === null) return false;
+    return s.campanaId !== null && s.campanaId !== valida.campanaId;
+  });
+  const semanas = [...actuales, valida].sort((a, b) => b.desde.localeCompare(a.desde) || (a.campanaId ?? "").localeCompare(b.campanaId ?? ""));
   mkdirSync(dirname(ruta), { recursive: true });
   const tmp = `${ruta}.tmp`;
   writeFileSync(tmp, JSON.stringify({ semanas }, null, 2), "utf8");

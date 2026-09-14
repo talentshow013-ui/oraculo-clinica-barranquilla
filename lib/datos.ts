@@ -226,14 +226,16 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
   const fuente = opciones.fuente ?? fuenteActiva();
   const cfg = opciones.cliente ?? clientePorDefecto;
   const b = opciones.benchmarks ?? benchmarks;
-  const agenda = opciones.agenda ?? (lote ? [] : leerAgendaSegura());
-  const datosCompletos = fusionarAgenda(lote ?? (await obtenerLote(fuente)), agenda);
-  const fuentes = lote ? [] : [...(await fuente.estado()), estadoAgenda(agenda)];
+  const agendaToda = opciones.agenda ?? (lote ? [] : leerAgendaSegura());
+  const datosCompletos = lote ?? (await obtenerLote(fuente));
+  const fuentes = lote ? [] : [...(await fuente.estado()), estadoAgenda(agendaToda)];
 
   const cuentas = resolverCuentas(datosCompletos, cfg, fuentes);
   const principal = cuentas[0] ?? { id: "sin_cuenta", nombre: "Sin cuenta", plataforma: "meta" as const, moneda: "COP" as const, activa: false, ultimaSincronizacion: null };
   const cuenta = cuentas.find((c) => c.id === opciones.cuentaId) ?? principal;
-  const datos = filtrarPorCuenta(datosCompletos, cuenta.id);
+  // La agenda es por cuenta (y por campaña): se mezcla DESPUÉS de filtrar la cuenta.
+  const agenda = agendaToda.filter((s) => s.cuentaId === cuenta.id);
+  const datos = fusionarAgenda(filtrarPorCuenta(datosCompletos, cuenta.id), agenda);
 
   // Con demostración, "hoy" es el último día del seed: no se analiza más allá de los datos.
   const hoy = datos.meta.origen === "seed" ? datos.meta.hasta : hoyBogota();
@@ -326,7 +328,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     serie,
     negocio: { ...ctx.negocio, roasDeclarado: core.roas(ctx.total) },
     desgloses,
-    campanas: resumirCampanas(loteMotor.insights, { desde: loteMotor.meta.desde, hasta: loteMotor.meta.hasta }),
+    campanas: resumirCampanas(loteMotor.insights, { desde: loteMotor.meta.desde, hasta: loteMotor.meta.hasta }, loteMotor.embudo),
     agenda,
     maestras,
     fuentes,
@@ -343,7 +345,7 @@ export function campanasEnPeriodo(r: Pick<ResultadoMotor, "lote" | "hoy" | "camp
   const hasta = r.lote.meta.hasta < r.hoy ? r.lote.meta.hasta : r.hoy;
   if (p === "todo") return { periodo: p, desde: r.lote.meta.desde, hasta, campanas: r.campanas };
   const desde = sumarDias(hasta, -(Number(p) - 1));
-  return { periodo: p, desde, hasta, campanas: resumirCampanas(r.lote.insights, { desde, hasta }) };
+  return { periodo: p, desde, hasta, campanas: resumirCampanas(r.lote.insights, { desde, hasta }, r.lote.embudo) };
 }
 
 /**

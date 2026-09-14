@@ -9,7 +9,7 @@
  * - Comparar dos campañas que corrieron días distintos: las razones (costo por…, tasas) sí son
  *   comparables; las sumas (inversión, resultados) no, y se marca.
  */
-import type { Estado, InsightRow, Rango } from "@/lib/adapters/types";
+import type { Estado, InsightRow, Rango, RegistroEmbudo } from "@/lib/adapters/types";
 import type { MejorEs } from "@/lib/metrics/catalog";
 import { sumarDias } from "@/lib/format/fechas";
 import { agregar, cpm, ctrEnlace, cpa, costoConversacion, delta, filtrarRango, frecuencia, razon, tasaConversacion, type Agregado } from "./core";
@@ -36,6 +36,12 @@ export interface ResumenCampana {
   cpm: number | null;
   frecuencia: number | null;
   tasaConversacion: number | null;
+  // Agenda de la clínica atribuida a esta campaña en el periodo (null = no se registró)
+  citasAgendadas: number | null;
+  citasAsistidas: number | null;
+  ventas: number | null;
+  valorVentasCOP: number | null;
+  costoCitaAsistida: number | null;
 }
 
 const DIAS_AL_AIRE = 3;
@@ -51,7 +57,19 @@ function filasBase(filas: ReadonlyArray<InsightRow>): { filas: InsightRow[]; cla
   return { filas: [...filas], clave: (f) => f.id };
 }
 
-export function resumirCampanas(insights: ReadonlyArray<InsightRow>, periodo: Rango): ResumenCampana[] {
+/** Suma de un paso del embudo para una campaña en el periodo; null si no hay ningún registro. */
+function pasoCampana(embudo: ReadonlyArray<RegistroEmbudo>, campanaId: string, periodo: Rango, paso: RegistroEmbudo["paso"], campo: "cantidad" | "valorCOP" = "cantidad"): number | null {
+  let suma: number | null = null;
+  for (const r of embudo) {
+    if (r.campanaId !== campanaId || r.paso !== paso || r.fecha < periodo.desde || r.fecha > periodo.hasta) continue;
+    const v = r[campo];
+    if (v === null) continue;
+    suma = (suma ?? 0) + v;
+  }
+  return suma;
+}
+
+export function resumirCampanas(insights: ReadonlyArray<InsightRow>, periodo: Rango, embudo: ReadonlyArray<RegistroEmbudo> = []): ResumenCampana[] {
   const enPeriodo = filtrarRango(insights, periodo);
   const { filas, clave } = filasBase(enPeriodo);
   const esNivelCampana = filas[0]?.nivel === "campana";
@@ -110,6 +128,11 @@ export function resumirCampanas(insights: ReadonlyArray<InsightRow>, periodo: Ra
       cpm: cpm(total),
       frecuencia: frecuencia(total),
       tasaConversacion: tasaConversacion(total),
+      citasAgendadas: pasoCampana(embudo, id, periodo, "cita_agendada"),
+      citasAsistidas: pasoCampana(embudo, id, periodo, "cita_asistida"),
+      ventas: pasoCampana(embudo, id, periodo, "venta"),
+      valorVentasCOP: pasoCampana(embudo, id, periodo, "venta", "valorCOP"),
+      costoCitaAsistida: razon(total.gasto, pasoCampana(embudo, id, periodo, "cita_asistida")),
     });
   }
 
@@ -153,6 +176,9 @@ const METRICAS_COMPARACION: { id: string; nombre: string; unidad: MetricaCompara
   { id: "cpm", nombre: "Costo por mil", unidad: "cop", mejorEs: "menor", suma: false, f: (c) => c.cpm },
   { id: "frecuencia", nombre: "Frecuencia", unidad: "ratio", mejorEs: "rango", suma: false, f: (c) => c.frecuencia },
   { id: "tasa_conversacion", nombre: "Clics que se vuelven conversación", unidad: "porcentaje", mejorEs: "mayor", suma: false, f: (c) => c.tasaConversacion },
+  { id: "citas_asistidas", nombre: "Citas asistidas (agenda)", unidad: "numero", mejorEs: "mayor", suma: true, f: (c) => c.citasAsistidas },
+  { id: "costo_cita_asistida", nombre: "Costo por cita asistida", unidad: "cop", mejorEs: "menor", suma: false, f: (c) => c.costoCitaAsistida },
+  { id: "ventas", nombre: "Ventas (agenda)", unidad: "numero", mejorEs: "mayor", suma: true, f: (c) => c.ventas },
 ];
 
 export function compararCampanas(a: ResumenCampana, b: ResumenCampana): ComparacionCampanas {
