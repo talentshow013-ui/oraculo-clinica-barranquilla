@@ -34,6 +34,10 @@ describe("compararVarias — las campañas que uno escoja, lado a lado", () => {
     const r = compararVarias([a, b]);
     expect(r.diasDistintos).toBe(true);
     expect(r.metricas.find((m) => m.id === "gasto")!.comparable).toBe(false);
+    const res = r.metricas.find((m) => m.id === "resultados")!;
+    expect(res.comparable).toBe(false);
+    expect(res.mejorIndice).toBeNull(); // una suma con días distintos no tiene "mejor"
+    expect(res.deltasFrenteAlMejor.every((d) => d === null)).toBe(true);
     expect(r.metricas.find((m) => m.id === "costo_resultado")!.comparable).toBe(true);
     expect(r.aviso).toMatch(/días/);
     expect(compararVarias([a, camp("C", 50_000)]).diasDistintos).toBe(false);

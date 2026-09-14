@@ -50,8 +50,10 @@ export function compararVarias(campanas: ReadonlyArray<ResumenCampana>): Compara
     aviso: diasDistintos ? "Corrieron distinto número de días: compara los costos y las tasas, no las sumas." : null,
     metricas: METRICAS_COMPARACION.map((m) => {
       const valores = lista.map((c) => m.f(c));
+      const comparable = !(m.suma && diasDistintos);
       let mejorIndice: number | null = null;
-      if (m.mejorEs === "mayor" || m.mejorEs === "menor") {
+      // Una suma con días distintos no tiene "mejor": no se resalta nada.
+      if (comparable && (m.mejorEs === "mayor" || m.mejorEs === "menor")) {
         valores.forEach((v, i) => {
           if (v === null) return;
           const actual = mejorIndice === null ? null : valores[mejorIndice]!;
@@ -67,7 +69,7 @@ export function compararVarias(campanas: ReadonlyArray<ResumenCampana>): Compara
         valores,
         mejorIndice,
         deltasFrenteAlMejor: valores.map((v) => (v === null || mejor === null || mejor === 0 ? null : (v - mejor) / mejor)),
-        comparable: !(m.suma && diasDistintos),
+        comparable,
       };
     }),
   };

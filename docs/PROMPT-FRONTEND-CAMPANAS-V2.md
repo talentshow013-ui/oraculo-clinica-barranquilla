@@ -1,5 +1,7 @@
 # PROMPT — Agente de diseño (frontend): **Campañas v2** — comparar varias y «cómo nos fue»
 
+> **Estado: INTEGRADO** (selector de comparación con casillas, tabla métrica × campañas y «Cómo nos fue» ya viven en `app/(panel)/campanas/`).
+
 > Pégalo completo como primer mensaje al agente que hace la parte visual. Son **dos cambios dentro
 > de `/campanas`** (que ya existe y ya tiene el bloque de Resultados). No se crea ninguna pestaña.
 > El motor ya lo calcula todo. Repositorio: `CLIENTE PILAR BARRANQUILA/ANALITICA DE DATOS FACEBOOK`
