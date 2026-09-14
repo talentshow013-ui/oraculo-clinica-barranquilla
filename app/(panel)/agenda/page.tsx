@@ -1,4 +1,6 @@
 import { motor } from '@/lib/datos'
+
+/** PROVISIONAL: la pantalla definitiva la hace el agente de diseño (docs/PROMPT-FRONTEND-AGENDA.md). Esta solo demuestra el guardado. */
 import { semanasRecientes, tasaAsistencia, tasaCierre } from '@/lib/agenda'
 import { cop, num, pct } from '@/lib/format'
 import { fechaCorta, fechaHora } from '@/lib/format/fechas'
