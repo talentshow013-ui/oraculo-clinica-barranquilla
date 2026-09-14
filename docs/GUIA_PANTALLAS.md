@@ -24,11 +24,6 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 - **Decir:** «Aquí no hay corazonadas. Cada idea dice qué probar, por qué, cuánto tiempo y con qué número sabremos si ganó. Y recuerda lo que ya probamos antes para no repetir errores.»
 - **Cuándo:** cuando se va a lanzar algo nuevo o hay presupuesto libre.
 
-### 3b. Reunión quincenal (la pinta el agente de diseño)
-- **Para qué:** la bitácora. Cada 15 días se abre la reunión (el sistema guarda la foto de las cifras), se anotan las decisiones y, en la siguiente, se evalúa cada una con antes → ahora: ganó, perdió o sin señal, y qué se aprendió.
-- **Decir:** «Aquí queda lo que decidimos y cómo nos fue. La próxima reunión no empieza de cero: se abre esta pantalla y se ve qué funcionó y qué no, con los números del sistema, no de memoria.»
-- **Cuándo:** en cada reunión de los 15 días. Es la que ordena la reunión.
-
 ### 4. Informe
 - **Para qué:** el resumen semanal en una hoja, listo para imprimir o enviar por WhatsApp.
 - **Decir:** «Esto es lo que le llega a dirección: la fuga más cara, las cifras clave y las tres acciones de la semana. Una página.»
@@ -45,8 +40,8 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 
 ### 6. Rendimiento
 - **Para qué:** las cifras de Meta comparadas **14 días contra 14 días**, siempre periodos iguales.
-- **Decir:** «Inversión, clics, costo por mil y resultados. Comparamos dos semanas contra las dos anteriores, nunca un mes contra una semana, para que la comparación sea justa.»
-- **Cuándo:** para confirmar si un cambio funcionó.
+- **Decir:** «Inversión, clics, costo por mil y resultados. Comparamos dos semanas contra las dos anteriores, nunca un mes contra una semana, para que la comparación sea justa. Y abajo, cada lunes, se escriben cinco números de la semana (contactos cerrados, citas, asistidas, ventas, valor) por campaña: con eso citas y ventas entran a la misma comparación.»
+- **Cuándo:** para confirmar si un cambio funcionó, y cada lunes para registrar la semana.
 
 ### 7. Creativos
 - **Para qué:** cada anuncio es una burbuja; el tamaño es lo que se invirtió. Se ve cuál está cansando a la gente (fatiga) y cuál merece más presupuesto.
@@ -55,8 +50,8 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 
 ### 7b. Campañas
 - **Para qué:** cada pauta con cara propia — la que está al aire y las que ya terminaron — con sus propios días, su costo y su participación del gasto. Se eligen dos y se comparan lado a lado; se escoge el periodo (14 / 30 / 90 días / todo).
-- **Decir:** «Las demás pantallas suman toda la cuenta. Aquí se ve pauta por pauta, incluidas las que se pausaron hace meses: nada se pierde. Y se responde "¿cómo le fue a la de junio contra la de ahora?" en dos clics.»
-- **Cuándo:** al cerrar una campaña o antes de lanzar una parecida a una anterior.
+- **Decir:** «Las demás pantallas suman toda la cuenta. Aquí se ve pauta por pauta, incluidas las que se pausaron hace meses: nada se pierde. Y se responde "¿cómo le fue a la de junio contra la de ahora?" en dos clics. Como Meta solo ve hasta la conversación, aquí mismo se le anotan a cada campaña sus cinco números (contactos cerrados, citas, asistidas, ventas, valor), y con eso la comparación llega hasta la venta.»
+- **Cuándo:** al cerrar una campaña, antes de lanzar una parecida, y en la reunión de los 15 para anotar resultados.
 
 ### 8. Audiencias
 - **Para qué:** quién gasta y quién agenda (edad), desde dónde pueden venir (zona) y a qué hora escriben (hora).
@@ -86,11 +81,6 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 
 ## Grupo 4 · CONFIAR (de dónde salen los números)
 
-### 11b. Agenda semanal
-- **Para qué:** lo que Meta no ve. Cada lunes la coordinadora escribe cinco números de la semana anterior (contactos calificados, citas agendadas, asistidas, ventas, valor). Dos minutos. Sin nombres ni planillas.
-- **Decir:** «Meta sabe hasta que alguien escribe. Lo que pasa después solo lo sabe la clínica. Con estos cinco números el embudo llega hasta la venta y vemos cuánta plata se pierde en cada paso. Si una semana no se registra, no pasa nada: el panel sigue y muestra "—" en esa parte.»
-- **Cuándo:** cada lunes, antes de mirar el Centro de mando.
-
 ### 12. Catálogo de métricas
 - **Para qué:** el diccionario. Las 145 métricas que existen, con su definición, y las 18 que de verdad mandan marcadas.
 - **Decir:** «No hay que leerlo. Es para cuando alguien pregunta "¿y esto qué significa?". Las 18 marcadas son las que importan; las demás explican el porqué cuando algo falla.»
@@ -111,4 +101,4 @@ Regla que se repite en todas: si un dato no existe, aparece «—». Nunca se in
 4. Abre **Radar de mercado**: «Y esto es lo que hace la competencia, con sus anuncios reales.»
 5. Cierra con **Informe**: «Esto es lo que le llega cada semana, en una hoja.»
 
-Las otras once pantallas se mencionan en una frase: «hay más profundidad cuando se necesite».
+Las otras nueve pantallas se mencionan en una frase: «hay más profundidad cuando se necesite».

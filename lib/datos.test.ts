@@ -227,28 +227,28 @@ describe("R04 con la pauta apagada", () => {
   });
 });
 
-describe("agenda semanal por cuenta y campaña — no contamina otras cuentas ni toca lo de Meta", () => {
-  const semana = { cuentaId: "act_1048227", campanaId: "camp_facial", desde: "2026-08-31", hasta: "2026-09-06", contactosCalificados: 60, citasAgendadas: 30, citasAsistidas: 15, ventas: 6, valorVentasCOP: 4_200_000, recompras: null, registradoEn: "2026-09-08T09:00:00-05:00" };
+describe("resultados por pauta — por cuenta y campaña; no contaminan otras cuentas ni tocan lo de Meta", () => {
+  const registro = { cuentaId: "act_1048227", campanaId: "camp_facial", contactosCerrados: 600, citasAgendadas: 300, citasAsistidas: 150, ventas: 60, valorVentasCOP: 42_000_000, registradoEn: "2026-09-08T09:00:00-05:00" };
 
-  test("lo de Meta no cambia; lo de negocio sí; la campaña recibe sus citas", async () => {
+  test("lo de Meta no cambia; la campaña recibe sus citas y ventas; el total del periodo es exacto", async () => {
     const lote = generarSeed();
-    const a = await correrMotor(lote, { agenda: [] });
-    const d = await correrMotor(lote, { agenda: [semana] });
+    const a = await correrMotor(lote, { resultados: [] });
+    const d = await correrMotor(lote, { resultados: [registro] });
     expect(d.total.gasto).toBe(a.total.gasto);
     expect(d.total.cpm).toBe(a.total.cpm);
-    expect(d.total.conversacionesIniciadas).toBe(a.total.conversacionesIniciadas);
     expect(d.creativos.length).toBe(a.creativos.length);
-    const asistidasSemana = d.lote.embudo.filter((r) => r.paso === "cita_asistida" && r.campanaId === "camp_facial" && r.fecha >= "2026-08-31" && r.fecha <= "2026-09-06").reduce((s, r) => s + r.cantidad, 0);
-    expect(asistidasSemana).toBe(15);
-    expect(d.agenda).toHaveLength(1);
+    const facial = d.campanas.find((c) => c.id === "camp_facial")!;
+    expect(facial.citasAsistidas).toBe(150);
+    expect(facial.ventas).toBe(60);
+    expect(facial.valorVentasCOP).toBe(42_000_000);
+    expect(facial.costoCitaAsistida).toBeCloseTo(facial.total.gasto / 150);
+    expect(d.resultadosPauta).toHaveLength(1);
   });
 
-  test("la semana registrada para Riomar no aparece en la cuenta Norte", async () => {
+  test("lo registrado para Riomar no aparece en la cuenta Norte", async () => {
     const lote = generarSeed();
-    const norte = await correrMotor(lote, { agenda: [semana], cuentaId: "act_2213904" });
-    expect(norte.agenda).toHaveLength(0);
+    const norte = await correrMotor(lote, { resultados: [registro], cuentaId: "act_2213904" });
+    expect(norte.resultadosPauta).toHaveLength(0);
     expect(norte.lote.embudo.some((r) => r.campanaId === "camp_facial")).toBe(false);
-    const sinAgenda = await correrMotor(lote, { agenda: [], cuentaId: "act_2213904" });
-    expect(norte.negocio.showRate).toBe(sinAgenda.negocio.showRate);
   });
 });

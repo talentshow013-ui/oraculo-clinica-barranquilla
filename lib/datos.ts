@@ -26,11 +26,10 @@ import { hoyBogota, rangoDias, sumarDias } from "@/lib/format/fechas";
 import { resolverMetrica, type ValorMetrica } from "@/lib/metrics/resolver";
 import * as core from "@/lib/metrics/core";
 import { compararCampanas, resumirCampanas, type ComparacionCampanas, type ResumenCampana } from "@/lib/metrics/campanas";
-import { fusionarAgenda, leerAgenda, type RegistroSemanal } from "@/lib/agenda";
-import { decisionesPendientes, leerReuniones, reunionesAExperimentos, tomarFoto, type DecisionPendiente, type FotoReunion, type Reunion } from "@/lib/reuniones";
+import { fusionarResultados, leerResultados, type RegistroPauta } from "@/lib/resultados";
 
 export { resolverMetrica, compararCampanas };
-export type { ResumenCampana, ComparacionCampanas, RegistroSemanal, Reunion, FotoReunion, DecisionPendiente };
+export type { ResumenCampana, ComparacionCampanas, RegistroPauta };
 
 export type NombreFuente = "seed" | "archivo";
 
@@ -129,13 +128,8 @@ export interface ResultadoMotor {
   desgloses: DesgloseVista[];
   /** Cada pauta con cara propia (viva, pausada o archivada) en todo el periodo del lote. */
   campanas: ResumenCampana[];
-  /** Semanas que la clínica registró a mano en el panel (reciente primero). */
-  agenda: RegistroSemanal[];
-  /** Bitácora de reuniones quincenales de esta cuenta (reciente primero) y lo que falta evaluar. */
-  reuniones: Reunion[];
-  decisionesPendientes: DecisionPendiente[];
-  /** Las cifras que mandan, hoy: es lo que se guarda como foto al abrir una reunión. */
-  fotoActual: FotoReunion;
+  /** Resultados que la clínica registró a mano por campaña (los de esta cuenta). */
+  resultadosPauta: RegistroPauta[];
   privacidad: { segmentosOcultos: number; k: number; AVISO_PANEL: string };
   fuentes: EstadoFuente[];
   cliente: ConfigCliente;
@@ -185,46 +179,26 @@ async function cuentaDesdeCookie(): Promise<string | undefined> {
 }
 
 // ---------------------------------------------------------------------------
-// Agenda manual (datos/agenda.json)
+// Resultados por pauta (datos/resultados.json)
 // ---------------------------------------------------------------------------
 
 /** Un archivo dañado no tumba el panel: se ignora y la fuente lo dice. */
-function leerAgendaSegura(): RegistroSemanal[] {
+function leerResultadosSeguros(): RegistroPauta[] {
   try {
-    return leerAgenda();
+    return leerResultados();
   } catch {
     return [];
   }
 }
 
-function leerReunionesSeguras(): Reunion[] {
-  try {
-    return leerReuniones();
-  } catch {
-    return [];
-  }
-}
-
-function estadoReuniones(reuniones: ReadonlyArray<Reunion>): EstadoFuente {
-  const ultima = reuniones[0];
-  const abiertas = decisionesPendientes(reuniones).length;
+function estadoResultados(registros: ReadonlyArray<RegistroPauta>): EstadoFuente {
+  const ultimo = registros[0];
   return {
-    id: "reuniones",
-    etiquetaPublica: "Bitácora de reuniones (decisiones y resultados)",
-    conectado: reuniones.length > 0,
-    ultimaActualizacion: ultima?.registradaEn ?? null,
-    detalle: ultima ? `${reuniones.length} ${reuniones.length === 1 ? "reunión" : "reuniones"}; ${abiertas} ${abiertas === 1 ? "decisión por evaluar" : "decisiones por evaluar"}.` : "Todavía no hay reuniones registradas. Se abren en la pantalla Reunión quincenal.",
-  };
-}
-
-function estadoAgenda(agenda: ReadonlyArray<RegistroSemanal>): EstadoFuente {
-  const ultima = agenda[0];
-  return {
-    id: "agenda",
-    etiquetaPublica: "Agenda de la clínica (registro semanal en el panel)",
-    conectado: agenda.length > 0,
-    ultimaActualizacion: ultima?.registradoEn ?? null,
-    detalle: ultima ? `${agenda.length} ${agenda.length === 1 ? "semana registrada" : "semanas registradas"}; la última va del ${ultima.desde} al ${ultima.hasta}.` : "Todavía no se ha registrado ninguna semana. Se hace en la pantalla Agenda semanal.",
+    id: "resultados",
+    etiquetaPublica: "Resultados de la clínica por campaña (registrados en el panel)",
+    conectado: registros.length > 0,
+    ultimaActualizacion: ultimo?.registradoEn ?? null,
+    detalle: ultimo ? `${registros.length} ${registros.length === 1 ? "campaña con resultados registrados" : "campañas con resultados registrados"}.` : "Todavía no se han registrado resultados. Se hace en la pantalla Campañas, campaña por campaña.",
   };
 }
 
@@ -243,10 +217,8 @@ export interface OpcionesMotor {
   fuente?: FuenteDatos;
   /** Id de la cuenta a analizar; desconocida o ausente → principal. */
   cuentaId?: string;
-  /** Agenda manual; si no se pasa y no hay lote explícito, se lee datos/agenda.json. */
-  agenda?: RegistroSemanal[];
-  /** Bitácora; si no se pasa y no hay lote explícito, se lee datos/reuniones.json. */
-  reuniones?: Reunion[];
+  /** Resultados por pauta; si no se pasan y no hay lote explícito, se leen de datos/resultados.json. */
+  resultados?: RegistroPauta[];
 }
 
 /** Corre el motor completo sobre UNA cuenta. Puro salvo por la fecha de hoy (para datos reales). */
@@ -254,21 +226,16 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
   const fuente = opciones.fuente ?? fuenteActiva();
   const cfg = opciones.cliente ?? clientePorDefecto;
   const b = opciones.benchmarks ?? benchmarks;
-  const agendaToda = opciones.agenda ?? (lote ? [] : leerAgendaSegura());
-  const reunionesTodas = opciones.reuniones ?? (lote ? [] : leerReunionesSeguras());
+  const resultadosTodos = opciones.resultados ?? (lote ? [] : leerResultadosSeguros());
   const datosCompletos = lote ?? (await obtenerLote(fuente));
-  const fuentes = lote ? [] : [...(await fuente.estado()), estadoAgenda(agendaToda), estadoReuniones(reunionesTodas)];
+  const fuentes = lote ? [] : [...(await fuente.estado()), estadoResultados(resultadosTodos)];
 
   const cuentas = resolverCuentas(datosCompletos, cfg, fuentes);
   const principal = cuentas[0] ?? { id: "sin_cuenta", nombre: "Sin cuenta", plataforma: "meta" as const, moneda: "COP" as const, activa: false, ultimaSincronizacion: null };
   const cuenta = cuentas.find((c) => c.id === opciones.cuentaId) ?? principal;
-  // La agenda es por cuenta (y por campaña): se mezcla DESPUÉS de filtrar la cuenta.
-  const agenda = agendaToda.filter((s) => s.cuentaId === cuenta.id);
-  const reuniones = reunionesTodas.filter((r) => r.cuentaId === cuenta.id);
-  const datosCuenta = fusionarAgenda(filtrarPorCuenta(datosCompletos, cuenta.id), agenda);
-  // Las decisiones de las reuniones son experimentos: las oportunidades recuerdan lo ya probado.
-  const experimentosReunion = reunionesAExperimentos(reuniones);
-  const datos = experimentosReunion.length ? { ...datosCuenta, experimentos: [...datosCuenta.experimentos, ...experimentosReunion] } : datosCuenta;
+  // Los resultados son por cuenta y campaña: se mezclan DESPUÉS de filtrar la cuenta.
+  const resultadosPauta = resultadosTodos.filter((s) => s.cuentaId === cuenta.id);
+  const datos = fusionarResultados(filtrarPorCuenta(datosCompletos, cuenta.id), resultadosPauta);
 
   // Con demostración, "hoy" es el último día del seed: no se analiza más allá de los datos.
   const hoy = datos.meta.origen === "seed" ? datos.meta.hasta : hoyBogota();
@@ -362,10 +329,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     negocio: { ...ctx.negocio, roasDeclarado: core.roas(ctx.total) },
     desgloses,
     campanas: resumirCampanas(loteMotor.insights, { desde: loteMotor.meta.desde, hasta: loteMotor.meta.hasta }, loteMotor.embudo),
-    agenda,
-    reuniones,
-    decisionesPendientes: decisionesPendientes(reuniones),
-    fotoActual: tomarFoto(maestras, hoy),
+    resultadosPauta,
     maestras,
     fuentes,
   };

@@ -12,8 +12,9 @@ Todo lo que hay que tener y hacer, en orden. Marca cada línea.
 - [ ] **Las cuentas publicitarias reales**: nombre e id (`act_…`) de cada una. Hoy en el sistema hay
       tres de ejemplo ("Vivante Riomar / Norte / Médicos"): se reemplazan por las reales.
 - [ ] **App ID de Meta** (de la agencia, developers.facebook.com). Sin esto no se conecta el conector.
-- [ ] **Nada de planillas.** La agenda se registra en el panel (pantalla «Agenda semanal»): cinco
-      números cada lunes. Solo hay que decidir **quién** lo va a hacer (normalmente la coordinadora).
+- [ ] **Nada de planillas.** Los resultados se anotan en el panel, en **Campañas**, por campaña:
+      cinco números (contactos cerrados, citas, asistidas, ventas, valor). Solo hay que decidir
+      **quién** lo hace (normalmente la coordinadora, en la reunión de los 15).
 - [ ] **Precios y costos** de los 6–8 servicios principales (ticket y costo directo) para calibrar;
       mientras no estén, el panel muestra «—» en retorno sobre margen.
 - [ ] **6 a 10 páginas de Facebook de competidores** (nombre o enlace) para el radar.
@@ -35,7 +36,7 @@ Todo lo que hay que tener y hacer, en orden. Marca cada línea.
 8. **La puerta**: Cloudflare túnel a `oraculo.<dominio>` + Access con sus correos
    (o Tailscale si no quieren dominio). Probar desde el celular del cliente.
 9. **Entregar**: usuario y clave del panel; mostrarles Centro de mando → Diagnóstico → Campañas → Radar
-   y **registrar juntos la semana pasada en Agenda semanal** (así aprenden el ritual de los lunes).
+   y **anotar juntos los resultados de la campaña actual** en Campañas (así aprenden a hacerlo).
    Guion: `docs/GUIA_PANTALLAS.md`.
 
 ## C. Si mañana NO hay VPS (instalar en el PC de la coordinadora)
@@ -51,7 +52,7 @@ Todo lo que hay que tener y hacer, en orden. Marca cada línea.
 
 - No pedir ni copiar tokens, claves de API ni contraseñas de Facebook: todo entra por "iniciar sesión".
 - No abrir el puerto de la VPS al mundo sin la puerta (Cloudflare/Tailscale).
-- No cargar nombres de pacientes en ningún lado: la Agenda semanal solo acepta cantidades.
+- No cargar nombres de pacientes en ningún lado: los resultados por campaña solo aceptan cantidades.
 
 ## E. Después de la llamada
 

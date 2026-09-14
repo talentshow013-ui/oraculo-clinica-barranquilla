@@ -59,14 +59,14 @@ si tampoco, `Math.round(impresiones / 1.4)`). Es lo que protege el k-anonimato.
 
 ## Paso 3 — Agenda y ventas (datos de la clínica)
 
-**La agenda NO se sincroniza aquí.** La coordinadora la registra cada lunes en la pantalla
-«Agenda semanal» del panel (`datos/agenda.json`, cinco números por semana) y el motor la mezcla
-solo (`lib/agenda`). En `embudo` deja únicamente los pasos de pauta: `impresion` (impresiones),
+**Los resultados de la clínica NO se sincronizan aquí.** Se anotan por campaña en la pantalla
+Campañas del panel (`datos/resultados.json`, cinco números por campaña) y el motor los mezcla
+solo (`lib/resultados`). En `embudo` deja únicamente los pasos de pauta: `impresion` (impresiones),
 `clic` (clics de enlace) y `conversacion` (conversaciones iniciadas) por día y campaña, desde los
 insights de nivel campaña. Si no los escribes, el motor los deriva de los insights igual.
 Solo si te entregan una planilla agregada (sin nombres ni teléfonos; si los trae, no la leas y
-avisa), puedes convertirla en registros `lead_calificado`…`recompra`, pero una semana registrada
-en el panel siempre manda sobre eso.
+avisa), puedes convertirla en registros `lead_calificado`…`recompra`, pero lo registrado en el
+panel para una campaña siempre manda sobre eso.
 
 ## Paso 4 — Creativos
 

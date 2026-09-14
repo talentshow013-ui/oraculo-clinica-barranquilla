@@ -61,7 +61,7 @@ el panel se recalcula para esa cuenta (nunca se suman entre sí). Las cuentas se
 npm install
 npm run seed          # datos de demostración (180 días, deterministas)
 npm run typecheck     # TypeScript strict
-npm test              # 286 tests (Vitest)
+npm test              # 271 tests (Vitest)
 npm run verificar     # corre el motor sin interfaz e imprime hallazgos por plata
 npm run doctor        # qué tiene y qué le falta a este equipo (Meta, radar, calibración)
 npm run radar:capturar -- --q "clínica estética barranquilla"   # radar de competencia (Biblioteca pública, gratis)
