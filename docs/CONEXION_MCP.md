@@ -21,8 +21,9 @@ no contiene ningún cliente HTTP.
 claude mcp add --transport http --client-id <META_APP_ID> meta-ads https://mcp.facebook.com/ads
 ```
 
-  El `META_APP_ID` es el de la app de la agencia en developers.facebook.com (no requiere revisión
-  para uso propio). Al primer uso, Claude Code abre el navegador para autorizar con la cuenta que
+  El `META_APP_ID` es el de una app creada en developers.facebook.com **por la propia clínica**
+  (tipo Empresa, asociada a su Business Manager); no requiere revisión para uso propio. Así todo
+  corre a nombre del cliente y la agencia no queda en la cadena de acceso. Al primer uso, Claude Code abre el navegador para autorizar con la cuenta que
   administra el Business Manager de la clínica. El token vive en la sesión; no se copia a ningún
   archivo del proyecto.
 - Permisos que pedirá: `ads_mcp_management`, `ads_read`, `ads_management`, `catalog_management`,

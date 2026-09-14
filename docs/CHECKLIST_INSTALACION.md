@@ -11,7 +11,10 @@ Todo lo que hay que tener y hacer, en orden. Marca cada línea.
       publicitarias en el Business Manager de la clínica. Debe estar en la llamada.
 - [ ] **Las cuentas publicitarias reales**: nombre e id (`act_…`) de cada una. Hoy en el sistema hay
       tres de ejemplo ("Vivante Riomar / Norte / Médicos"): se reemplazan por las reales.
-- [ ] **App ID de Meta** (de la agencia, developers.facebook.com). Sin esto no se conecta el conector.
+- [ ] **App ID de Meta, creado por ELLA** (todo corre a nombre de la clínica): con el Facebook que
+      administra su Business Manager → developers.facebook.com → Mis apps → Crear app → tipo
+      **Empresa**, nombre «Oráculo Clínica», asociada a su Business Manager → copiar el **ID de la
+      app**. No requiere revisión ni publicarla (uso propio). Se puede hacer en la llamada (5 min).
 - [ ] **Nada de planillas.** Los resultados se anotan en el panel, en **Campañas**, por campaña:
       cinco números (contactos cerrados, citas, asistidas, ventas, valor). Solo hay que decidir
       **quién** lo hace (normalmente la coordinadora, en la reunión de los 15).
