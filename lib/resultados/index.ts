@@ -16,7 +16,8 @@ import { z } from "zod";
 import type { InsightRow, LoteDatos, RegistroEmbudo } from "@/lib/adapters/types";
 import { razon } from "@/lib/metrics/core";
 
-export const RUTA_RESULTADOS = resolve(process.cwd(), "datos", "resultados.json");
+/** Dónde viven los resultados anotados. `ORACULO_RUTA_RESULTADOS` permite sacarlos del código (disco persistente en un servidor). */
+export const RUTA_RESULTADOS = process.env.ORACULO_RUTA_RESULTADOS ? resolve(process.env.ORACULO_RUTA_RESULTADOS) : resolve(process.cwd(), "datos", "resultados.json");
 
 const entero = z.number().int().min(0);
 

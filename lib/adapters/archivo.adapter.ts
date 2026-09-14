@@ -5,7 +5,8 @@
 import { resolve } from "node:path";
 import { FuenteArchivoBase } from "./archivo.base";
 
-export const RUTA_LOTE = resolve(process.cwd(), "datos", "lote.json");
+/** `ORACULO_RUTA_LOTE` permite leer el lote desde otra carpeta (disco persistente en un servidor). */
+export const RUTA_LOTE = process.env.ORACULO_RUTA_LOTE ? resolve(process.env.ORACULO_RUTA_LOTE) : resolve(process.cwd(), "datos", "lote.json");
 
 export class FuenteArchivo extends FuenteArchivoBase {
   readonly nombre = "campanas_y_audiencias";
