@@ -164,6 +164,8 @@ export function vidaUtil(filas: ReadonlyArray<InsightRow>, b: Benchmarks): numbe
 export interface EvaluacionCreativo {
   creativo: Creativo;
   agregado: Agregado;
+  /** Puesto del mejor (1) al peor, cuando la lista viene ordenada (ordenarCreativos). */
+  puesto?: number;
   hookRate: number | null;
   holdRate: number | null;
   ctrEnlace: number | null;
@@ -228,4 +230,25 @@ export function ritmoRenovacion(creativos: ReadonlyArray<Creativo>, desde: strin
     7,
   );
   return razon(nuevos, semanas);
+}
+
+/** Orden de las decisiones: primero lo que hay que escalar, al final lo que hay que apagar. */
+const ORDEN_CUADRANTE: Record<Cuadrante, number> = { escalar: 0, arreglar_oferta: 1, arreglar_gancho: 2, sin_senal: 3, matar: 4 };
+
+/**
+ * Del más exitoso al menos: por decisión, y dentro de cada decisión por resultados (más primero)
+ * y costo por resultado (más barato primero). Devuelve copias con `puesto` 1..n.
+ */
+export function ordenarCreativos(evaluaciones: ReadonlyArray<EvaluacionCreativo>): EvaluacionCreativo[] {
+  return [...evaluaciones]
+    .sort((a, b) => {
+      const d = ORDEN_CUADRANTE[a.cuadrante] - ORDEN_CUADRANTE[b.cuadrante];
+      if (d !== 0) return d;
+      if (b.agregado.resultados !== a.agregado.resultados) return b.agregado.resultados - a.agregado.resultados;
+      const ca = a.costoResultado ?? Number.POSITIVE_INFINITY;
+      const cb = b.costoResultado ?? Number.POSITIVE_INFINITY;
+      if (ca !== cb) return ca - cb;
+      return b.agregado.gasto - a.agregado.gasto;
+    })
+    .map((c, i) => ({ ...c, puesto: i + 1 }));
 }

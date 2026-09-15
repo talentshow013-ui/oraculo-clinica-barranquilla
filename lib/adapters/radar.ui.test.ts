@@ -165,4 +165,15 @@ describe("mapearRadarUI — agrupa competidores desde tarjetas de la interfaz", 
     expect(r.competidores[0]?.serviciosConocidos.sort()).toEqual(["depilacion", "toxina"]);
     expect(r.competidores[0]?.urlPagina).toBe("https://www.facebook.com/61563977975719/");
   });
+
+  test("las páginas propias de la clínica y los rubros ajenos (odontología, cursos, prensa) no entran al radar", async () => {
+    const { mapearRadarUI } = await import("@/lib/adapters/radar.ui");
+    const base: TarjetaCruda = { texto: textoActivo, imagenes: [], videosPoster: [], enlaces: [], paginaHref: "https://www.facebook.com/61563977975719/", plataformas: ["facebook"] };
+    const propia = { ...base, paginaHref: "https://www.facebook.com/Vivantemedicinaestetica/", texto: textoActivo.replace("1229350099285014", "1229350099285077") };
+    const dental = { ...base, paginaHref: "https://www.facebook.com/Odontointegrasmile/", texto: textoActivo.replace("1229350099285014", "1229350099285088").replace("Clínica Dermalux", "Odonto Integra Smile") };
+    const r = mapearRadarUI([base, propia, dental], "2026-09-12", {}, "Barranquilla", { paginasPropias: ["Vivantemedicinaestetica"], excluirNombres: ["odonto", "dental", "escuela", "curso"] });
+    expect(r.competidores.map((c) => c.id)).toEqual(["61563977975719"]);
+    expect(r.anunciosCompetencia).toHaveLength(1);
+    expect(r.excluidos).toBe(2);
+  });
 });

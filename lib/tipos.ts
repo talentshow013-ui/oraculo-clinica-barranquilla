@@ -2,7 +2,7 @@
  * Barril de tipos para la interfaz. Reexporta los tipos REALES del motor y del contrato.
  * (El frontend se construyó contra tipos deducidos; este archivo los reemplaza sin tocar imports.)
  */
-export type { ResultadoMotor, CuentaPublicitaria, AgregadoVista as Agregado, PuntoSerieVista, DesgloseVista, NegocioVista, PeriodoCampanas } from "@/lib/datos";
+export type { ResultadoMotor, CuentaPublicitaria, AgregadoVista as Agregado, PuntoSerieVista, DesgloseVista, NegocioVista, PeriodoCampanas, PeriodoElegido } from "@/lib/datos";
 export type { ResumenCampana, ComparacionCampanas, MetricaComparada } from "@/lib/metrics/campanas";
 export type { RegistroPauta } from "@/lib/resultados";
 export type { ComparacionVarias, MetricaVarias, VeredictoCampana, Veredicto, CreativoDeCampana } from "@/lib/metrics/veredicto";

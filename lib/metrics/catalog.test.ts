@@ -48,10 +48,14 @@ describe("catálogo de métricas", () => {
     }
   });
 
-  test("aproximadamente 18 maestras para el Centro de Mando", () => {
-    const n = metricasMaestras().length;
-    expect(n).toBeGreaterThanOrEqual(16);
-    expect(n).toBeLessThanOrEqual(20);
+  test("las maestras del Centro de Mando existen, van en orden de importancia y empiezan por la plata", () => {
+    const m = metricasMaestras();
+    expect(m.length).toBeGreaterThanOrEqual(16);
+    expect(m.length).toBeLessThanOrEqual(20);
+    expect(m.slice(0, 5).map((x) => x.id)).toEqual(["inversion", "conversaciones_iniciadas", "costo_conversacion", "cpc_enlace", "cpa"]);
+    expect(m.map((x) => x.id)).toContain("cac");
+    expect(m.map((x) => x.id)).not.toContain("paso_venta");
+    for (const x of m) expect(x.maestra).toBe(true);
   });
 
   test("las métricas críticas del negocio existen", () => {

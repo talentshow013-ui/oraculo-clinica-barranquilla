@@ -50,3 +50,15 @@ describe("fechas en America/Bogota", () => {
     expect(listarHuecos("2026-09-01", "2026-09-03", presentes)).toEqual(["2026-09-02"]);
   });
 });
+
+describe("etiquetaHora — la hora como en un reloj", () => {
+  test("0 → 12 a. m., 1 → 1 a. m., 12 → 12 p. m., 13 → 1 p. m., 23 → 11 p. m.; lo raro queda igual", async () => {
+    const { etiquetaHora } = await import("@/lib/format/etiquetas");
+    expect(etiquetaHora("0")).toBe("12 a. m.");
+    expect(etiquetaHora("1")).toBe("1 a. m.");
+    expect(etiquetaHora("12")).toBe("12 p. m.");
+    expect(etiquetaHora("13")).toBe("1 p. m.");
+    expect(etiquetaHora("23")).toBe("11 p. m.");
+    expect(etiquetaHora("desconocido")).toBe("desconocido");
+  });
+});

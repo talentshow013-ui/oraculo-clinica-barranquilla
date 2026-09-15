@@ -104,5 +104,15 @@ describe("radar", () => {
     expect(r.espaciosVacios.length).toBeGreaterThan(0);
     expect(r.perfiles.length).toBe(3);
     expect(r.usoPrecio).toBeCloseTo(2 / 5);
+    expect(r.sinDatos).toBe(false);
+    expect(r.espaciosDestacados.length).toBeGreaterThan(0);
+    expect(r.espaciosDestacados.length).toBeLessThanOrEqual(8);
+  });
+
+  test("sin anuncios de competencia el radar lo dice (sinDatos) y no destaca huecos: sin mercado observado no hay hueco", () => {
+    const r = analizarRadar([], [creativo()], cliente, benchmarks, HOY);
+    expect(r.sinDatos).toBe(true);
+    expect(r.espaciosDestacados).toEqual([]);
+    expect(r.competidoresActivos).toBe(0);
   });
 });

@@ -234,6 +234,14 @@ export interface ResultadoRadar {
   movimientos: ReturnType<typeof entradasYSalidas>;
   mapaAngulos: DensidadAngulo[];
   espaciosVacios: EspacioVacio[];
+  /**
+   * Los espacios vacíos que vale la pena mostrar: primero los servicios que la clínica ya pauta y los
+   * ángulos que el mercado sí usa (hay señal de que funcionan), máximo 8. Con 0 competidores, ninguno:
+   * sin mercado observado no hay «hueco», hay falta de datos.
+   */
+  espaciosDestacados: EspacioVacio[];
+  /** true cuando no hay ningún anuncio de competencia observado: la pantalla debe decirlo, no pintar ceros. */
+  sinDatos: boolean;
   participacionVoz: number | null;
   perfiles: PerfilCompetidor[];
   usoPrecio: number | null;
@@ -277,6 +285,7 @@ export function analizarRadar(
   const nombreDe = (id: string) => fichaDe(id)?.nombre ?? anuncios.find((a) => a.competidorId === id)?.nombreAnunciante ?? id;
   const cadencia = cadenciaSemanal(anuncios, hoy);
   const activosCompetencia = anuncios.filter((a) => a.activo);
+  const vacios = espaciosVacios(anuncios, cliente);
   return {
     competidoresActivos: new Set(anuncios.filter((a) => a.activo).map((a) => a.competidorId)).size,
     anunciosActivos: anuncios.filter((a) => a.activo).length,
@@ -290,11 +299,25 @@ export function analizarRadar(
     movimientosSemanales: movimientosSemanales(anuncios, hoy),
     movimientos: entradasYSalidas(anuncios, hoy),
     mapaAngulos: mapaAngulos(anuncios),
-    espaciosVacios: espaciosVacios(anuncios, cliente),
+    espaciosVacios: vacios,
+    espaciosDestacados: destacarEspacios(vacios, anuncios, creativosPropios),
+    sinDatos: anuncios.length === 0,
     participacionVoz: participacionVoz(activosPropios, anuncios),
     perfiles: competidores.map((id) => perfilar(id, anuncios, b, fichaDe(id))),
     usoPrecio: razon(anuncios.filter((a) => a.usaPrecio).length, anuncios.length),
     usoTestimonio: razon(anuncios.filter((a) => a.usaTestimonio).length, anuncios.length),
     variantesPromedio: razon(anuncios.reduce((s, a) => s + a.variantesDelConcepto, 0), anuncios.length),
   };
+}
+
+const MAXIMO_DESTACADOS = 8;
+
+/** Prioriza los huecos: servicio que la clínica ya vende (tiene creativos) y ángulo que el mercado usa en otros servicios. */
+export function destacarEspacios(vacios: ReadonlyArray<EspacioVacio>, anuncios: ReadonlyArray<AnuncioCompetidor>, creativosPropios: ReadonlyArray<Creativo>): EspacioVacio[] {
+  if (!anuncios.length) return [];
+  const serviciosPropios = new Set(creativosPropios.map((c) => c.servicio).filter((x): x is string => x !== null));
+  const angulosDelMercado = new Map<string, number>();
+  for (const a of anuncios) angulosDelMercado.set(a.anguloDetectado, (angulosDelMercado.get(a.anguloDetectado) ?? 0) + 1);
+  const puntaje = (e: EspacioVacio) => (serviciosPropios.has(e.servicio) ? 100 : 0) + (angulosDelMercado.get(e.angulo) ?? 0);
+  return [...vacios].sort((x, y) => puntaje(y) - puntaje(x)).slice(0, MAXIMO_DESTACADOS);
 }

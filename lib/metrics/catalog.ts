@@ -53,8 +53,37 @@ type Def = [
   maestra?: true,
 ];
 
+/**
+ * Las cifras que mandan en el Centro de mando, en el orden en que se muestran: primero lo que se
+ * paga y lo que se consigue, después la calidad del anuncio, al final el negocio. Las que no tienen
+ * dato (la clínica aún no anota resultados) no se pintan: aparecen solas cuando llegan los datos.
+ */
+export const ORDEN_MAESTRAS = [
+  "inversion",
+  "conversaciones_iniciadas",
+  "costo_conversacion",
+  "cpc_enlace",
+  "cpa",
+  "cac",
+  "costo_cita_asistida",
+  "alcance",
+  "ctr_enlace",
+  "cpm",
+  "frecuencia",
+  "hook_rate",
+  "hold_rate",
+  "tasa_respuesta_equipo",
+  "show_rate",
+  "cierre_consultorio",
+  "fuga_pesos",
+  "roas_real",
+  "poas",
+  "plata_en_riesgo",
+] as const;
+const MAESTRAS = new Set<string>(ORDEN_MAESTRAS);
+
 function familia(f: Familia, defs: Def[]): MetricaCatalogo[] {
-  return defs.map(([id, nombre, unidad, formula, porQueImporta, mejorEs, derivada, fuentes, maestra]) => ({
+  return defs.map(([id, nombre, unidad, formula, porQueImporta, mejorEs, derivada, fuentes, _maestra]) => ({
     id,
     nombre,
     familia: f,
@@ -64,7 +93,7 @@ function familia(f: Familia, defs: Def[]): MetricaCatalogo[] {
     mejorEs,
     derivada,
     fuentes,
-    ...(maestra ? { maestra: true as const } : {}),
+    ...(MAESTRAS.has(id) ? { maestra: true as const } : {}),
   }));
 }
 
@@ -318,7 +347,7 @@ export function metricasPorFamilia(f: Familia): MetricaCatalogo[] {
 }
 
 export function metricasMaestras(): MetricaCatalogo[] {
-  return CATALOGO.filter((m) => m.maestra);
+  return ORDEN_MAESTRAS.map((id) => metricaPorId(id)).filter((m): m is MetricaCatalogo => m !== undefined);
 }
 
 export const NOMBRE_FAMILIA: Record<Familia, string> = {

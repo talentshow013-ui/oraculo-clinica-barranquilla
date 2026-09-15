@@ -217,17 +217,43 @@ export interface RadarUIMapeado {
   competidores: Competidor[];
   anunciosCompetencia: AnuncioCompetidor[];
   descartados: number;
+  /** Tarjetas de la propia clínica o de rubros ajenos, dejadas fuera a propósito. */
+  excluidos: number;
 }
 
-/** Agrupa las tarjetas por página → competidores, y descarta las que no traen identificador. */
-export function mapearRadarUI(tarjetas: ReadonlyArray<TarjetaCruda>, hoy: string, ciudadPorPagina: Record<string, string> = {}, ciudadDefecto = "Barranquilla"): RadarUIMapeado {
+export interface FiltroRadar {
+  /** Ids/vanities de las páginas de la propia clínica: nunca son competencia. */
+  paginasPropias?: ReadonlyArray<string>;
+  /** Palabras (sin acentos, minúsculas) que delatan un rubro ajeno en el nombre o el id de la página. */
+  excluirNombres?: ReadonlyArray<string>;
+}
+
+function normalizar(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+/** ¿Esta página es la clínica misma o un rubro ajeno (odontología, cursos, prensa…)? */
+function excluida(a: AnuncioCompetidor, filtro: FiltroRadar): boolean {
+  const id = normalizar(a.competidorId);
+  if (filtro.paginasPropias?.some((p) => normalizar(p) === id)) return true;
+  const texto = `${id} ${normalizar(a.nombreAnunciante)}`;
+  return filtro.excluirNombres?.some((palabra) => texto.includes(normalizar(palabra))) ?? false;
+}
+
+/** Agrupa las tarjetas por página → competidores; descarta las que no traen identificador y excluye la clínica y rubros ajenos. */
+export function mapearRadarUI(tarjetas: ReadonlyArray<TarjetaCruda>, hoy: string, ciudadPorPagina: Record<string, string> = {}, ciudadDefecto = "Barranquilla", filtro: FiltroRadar = {}): RadarUIMapeado {
   const anuncios: AnuncioCompetidor[] = [];
   const paginas = new Map<string, { nombre: string; url: string | null; servicios: Set<string> }>();
   let descartados = 0;
+  let excluidos = 0;
   for (const t of tarjetas) {
     const a = mapearTarjetaUI(t, hoy);
     if (!a.anuncioId) {
       descartados++;
+      continue;
+    }
+    if (excluida(a, filtro)) {
+      excluidos++;
       continue;
     }
     anuncios.push(a);
@@ -244,5 +270,5 @@ export function mapearRadarUI(tarjetas: ReadonlyArray<TarjetaCruda>, hoy: string
     urlPagina: p.url,
     seguidoresPagina: null,
   }));
-  return { competidores, anunciosCompetencia: anuncios, descartados };
+  return { competidores, anunciosCompetencia: anuncios, descartados, excluidos };
 }

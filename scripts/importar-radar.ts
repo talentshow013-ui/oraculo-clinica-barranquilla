@@ -16,6 +16,7 @@ import { LoteDatosSchema, type LoteDatos } from "@/lib/adapters/types";
 import { mapearRadarApify, type ItemApify } from "@/lib/adapters/radar.apify";
 import { mapearRadarUI, type TarjetaCruda } from "@/lib/adapters/radar.ui";
 import { hoyBogota } from "@/lib/format/fechas";
+import { cliente } from "@/config/cliente";
 import { validarSinPII } from "@/lib/privacy";
 
 function arg(nombre: string): string | undefined {
@@ -48,7 +49,7 @@ if (rutaCiudades && existsSync(resolve(process.cwd(), rutaCiudades))) {
   for (const c of lista) if ((c.pageId ?? c.id) && c.ciudad) ciudades[String(c.pageId ?? c.id)] = c.ciudad;
 }
 
-const radar = esApify ? mapearRadarApify(crudo as ItemApify[], hoy, ciudades) : mapearRadarUI((crudo as { tarjetas: TarjetaCruda[] }).tarjetas, hoy, ciudades);
+const radar = esApify ? mapearRadarApify(crudo as ItemApify[], hoy, ciudades) : mapearRadarUI((crudo as { tarjetas: TarjetaCruda[] }).tarjetas, hoy, ciudades, "Barranquilla", cliente.radar);
 
 const base: LoteDatos = existsSync(destino)
   ? (JSON.parse(readFileSync(destino, "utf8")) as LoteDatos)
@@ -85,4 +86,4 @@ if (!r.success) {
   process.exit(1);
 }
 writeFileSync(destino, JSON.stringify(r.data), "utf8");
-console.log(`OK · ${radar.anunciosCompetencia.length} anuncios · ${radar.competidores.length} competidores · ${radar.descartados} descartados · escrito en ${destino}`);
+console.log(`OK · ${radar.anunciosCompetencia.length} anuncios · ${radar.competidores.length} competidores · ${radar.descartados} descartados · ${"excluidos" in radar ? radar.excluidos : 0} excluidos (clínica propia o rubro ajeno) · escrito en ${destino}`);

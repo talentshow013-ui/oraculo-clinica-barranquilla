@@ -124,3 +124,14 @@ export function etiquetaCreativo(c: { titular: string | null; copyPrincipal: str
   const base = (c.titular ?? "").trim() || primeraLinea || `anuncio ${c.anuncioId}`;
   return base.length > maximo ? `${base.slice(0, maximo - 1).trimEnd()}…` : base;
 }
+
+/** La hora del desglose («14») como en un reloj: «2 p. m.». Lo que no es hora queda igual. */
+export function etiquetaHora(valor: string | number): string {
+  const texto = String(valor).trim();
+  if (!/^\d{1,2}$/.test(texto)) return texto;
+  const h = Number.parseInt(texto, 10);
+  if (h < 0 || h > 23) return texto;
+  const sufijo = h < 12 ? "a. m." : "p. m.";
+  const doce = h % 12 === 0 ? 12 : h % 12;
+  return `${doce} ${sufijo}`;
+}

@@ -18,13 +18,13 @@ import { cliente as clientePorDefecto, type ConfigCliente, type CuentaPublicitar
 import { construirContexto, ejecutarReglas, type ContextoDiagnostico, type ErrorRegla, type Hallazgo } from "@/lib/diagnostics/engine";
 import { REGLAS } from "@/lib/diagnostics/rules";
 import { fugaMasCara, type MetricasNegocio, type PasoEmbudo } from "@/lib/metrics/funnel";
-import { evaluarCreativos, type EvaluacionCreativo } from "@/lib/metrics/creative";
+import { evaluarCreativos, ordenarCreativos, type EvaluacionCreativo } from "@/lib/metrics/creative";
 import { analizarRadar, puntuacionLongevidad, type ResultadoRadar } from "@/lib/competitive";
 import { generarOportunidades, type Oportunidad } from "@/lib/opportunities";
 import { aplicarLentes, type ResultadoLente } from "@/lib/frameworks";
 import { CATALOGO, metricasMaestras, type MetricaCatalogo } from "@/lib/metrics/catalog";
 import { AVISO_PANEL, K_MINIMO } from "@/lib/privacy";
-import { hoyBogota, rangoDias, sumarDias } from "@/lib/format/fechas";
+import { hoyBogota, listarHuecos, rangoDias, sumarDias } from "@/lib/format/fechas";
 import { resolverMetrica, type ValorMetrica } from "@/lib/metrics/resolver";
 import * as core from "@/lib/metrics/core";
 import { compararCampanas, resumirCampanas, type ComparacionCampanas, type ResumenCampana } from "@/lib/metrics/campanas";
@@ -142,6 +142,8 @@ export interface ResultadoMotor {
   campanasCuenta: ResumenCampana[];
   /** false cuando hay campaña elegida y la fuente no trae desgloses por campaña (Audiencias avisa). */
   desglosesPorCampana: boolean;
+  /** Periodo analizado: el elegido con el calendario (cookies desde/hasta) o todo el lote; minimo/maximo = lo que hay. */
+  periodo: PeriodoElegido;
   privacidad: { segmentosOcultos: number; k: number; AVISO_PANEL: string };
   fuentes: EstadoFuente[];
   cliente: ConfigCliente;
@@ -189,6 +191,39 @@ export function filtrarPorCampana(lote: LoteDatos, campanaId: string): LoteDatos
   };
 }
 
+export interface PeriodoElegido {
+  desde: string;
+  hasta: string;
+  /** true si vino del calendario; false = todo lo que tiene el lote. */
+  elegido: boolean;
+  minimo: string;
+  maximo: string;
+}
+
+const ES_FECHA = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Recorta un lote a un periodo (calendario de la cabecera). Insights y embudo se filtran por fecha;
+ * los desgloses NO: son los últimos 28 días agregados y no se pueden repartir. Sin fechas válidas
+ * devuelve el mismo objeto.
+ */
+export function filtrarPorRango(lote: LoteDatos, desde: string | undefined, hasta: string | undefined): LoteDatos {
+  if (!desde || !hasta || !ES_FECHA.test(desde) || !ES_FECHA.test(hasta)) return lote;
+  let [d, h] = desde <= hasta ? [desde, hasta] : [hasta, desde];
+  if (d < lote.meta.desde) d = lote.meta.desde;
+  if (h > lote.meta.hasta) h = lote.meta.hasta;
+  if (d === lote.meta.desde && h === lote.meta.hasta) return lote;
+  if (d > h) return lote;
+  const insights = lote.insights.filter((i) => i.fecha >= d && i.fecha <= h);
+  const embudo = lote.embudo.filter((r) => r.fecha >= d && r.fecha <= h);
+  return {
+    ...lote,
+    insights,
+    embudo,
+    meta: { ...lote.meta, desde: d, hasta: h, huecos: listarHuecos(d, h, new Set(insights.map((i) => i.fecha))) },
+  };
+}
+
 function resolverCuentas(lote: LoteDatos, cfg: ConfigCliente, fuentes: EstadoFuente[]): CuentaPublicitaria[] {
   const conPauta = new Set(lote.insights.filter((i) => i.gasto > 0).map((i) => i.cuentaId));
   const ultima = fuentes.find((f) => f.conectado)?.ultimaActualizacion ?? lote.meta.generadoEn ?? null;
@@ -198,11 +233,11 @@ function resolverCuentas(lote: LoteDatos, cfg: ConfigCliente, fuentes: EstadoFue
   return [...configuradas, ...extra];
 }
 
-async function desdeCookies(): Promise<{ cuenta?: string; campana?: string }> {
+async function desdeCookies(): Promise<{ cuenta?: string; campana?: string; desde?: string; hasta?: string }> {
   try {
     const { cookies } = await import("next/headers");
     const c = await cookies();
-    return { cuenta: c.get("cuenta")?.value, campana: c.get("campana")?.value };
+    return { cuenta: c.get("cuenta")?.value, campana: c.get("campana")?.value, desde: c.get("desde")?.value, hasta: c.get("hasta")?.value };
   } catch {
     return {}; // fuera de una petición (scripts, tests, compilación)
   }
@@ -251,6 +286,9 @@ export interface OpcionesMotor {
   resultados?: RegistroPauta[];
   /** Campaña a mirar dentro de la cuenta; desconocida o ausente → todas. */
   campanaId?: string;
+  /** Periodo del calendario (YYYY-MM-DD); ausente o inválido → todo el lote. */
+  desde?: string;
+  hasta?: string;
 }
 
 /** Corre el motor completo sobre UNA cuenta. Puro salvo por la fecha de hoy (para datos reales). */
@@ -271,11 +309,15 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
   // Campaña elegida: todo lo que sigue se calcula solo con ella. La lista completa se conserva para el selector.
   const campanasCuenta = resumirCampanas(datosCuenta.insights, { desde: datosCuenta.meta.desde, hasta: datosCuenta.meta.hasta }, datosCuenta.embudo);
   const campanaActiva = campanasCuenta.find((c) => c.id === opciones.campanaId) ?? null;
-  const datos = campanaActiva ? filtrarPorCampana(datosCuenta, campanaActiva.id) : datosCuenta;
-  const desglosesPorCampana = campanaActiva ? datos.desgloses.length > 0 : true;
+  const datosCampana = campanaActiva ? filtrarPorCampana(datosCuenta, campanaActiva.id) : datosCuenta;
+  const desglosesPorCampana = campanaActiva ? datosCampana.desgloses.length > 0 : true;
+  // Periodo del calendario: se recorta al final, sobre la cuenta o la campaña ya elegida.
+  const datos = filtrarPorRango(datosCampana, opciones.desde, opciones.hasta);
+  const periodoElegido = datos !== datosCampana;
+  const periodo: PeriodoElegido = { desde: datos.meta.desde, hasta: datos.meta.hasta, elegido: periodoElegido, minimo: datosCampana.meta.desde, maximo: datosCampana.meta.hasta };
 
-  // Con demostración, "hoy" es el último día del seed: no se analiza más allá de los datos.
-  const hoy = datos.meta.origen === "seed" ? datos.meta.hasta : hoyBogota();
+  // Con demostración, "hoy" es el último día del seed; con periodo elegido, su último día: no se analiza más allá.
+  const hoy = periodoElegido || datos.meta.origen === "seed" ? datos.meta.hasta : hoyBogota();
 
   // Longevidad de competencia: siempre recalculada aquí, nunca confiada a la fuente.
   const anunciosCompetencia = datos.anunciosCompetencia.map((a) => ({ ...a, puntuacionLongevidad: puntuacionLongevidad(a) }));
@@ -341,7 +383,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     embudo: ctx.embudo,
     fugaMasCara: fugaMasCara(ctx.embudo),
     negocio: ctx.negocio,
-    creativos: ctx.creativos,
+    creativos: ordenarCreativos(ctx.creativos),
     hallazgos: diag.hallazgos,
     erroresReglas: diag.errores,
     plataEnRiesgoTotal: diag.plataEnRiesgoTotal,
@@ -353,7 +395,10 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     cliente: cfg,
     benchmarks: b,
   };
-  const maestras = metricasMaestras().map((m) => resolverMetrica(m, parcial));
+  // Solo las que tienen dato: las de clínica y margen aparecen solas cuando la clínica anota resultados y se calibra.
+  const maestras = metricasMaestras()
+    .map((m) => resolverMetrica(m, parcial))
+    .filter((m) => m.valor !== null && m.valor !== undefined);
 
   return {
     ...parcial,
@@ -371,6 +416,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     campanaActiva,
     campanasCuenta,
     desglosesPorCampana,
+    periodo,
     maestras,
     fuentes,
   };
@@ -402,16 +448,18 @@ export function invalidarCache(): void {
   cache.clear();
 }
 
-export async function motor(cuentaId?: string, campanaId?: string): Promise<ResultadoMotor> {
+export async function motor(cuentaId?: string, campanaId?: string, rango?: { desde?: string; hasta?: string }): Promise<ResultadoMotor> {
   const fuente = fuenteActiva();
   const galletas = await desdeCookies();
   const id = cuentaId ?? galletas.cuenta ?? "";
   const camp = campanaId ?? galletas.campana ?? "";
-  const clave = `${fuente.nombre}|${id}|${camp}`;
+  const desde = rango?.desde ?? galletas.desde ?? "";
+  const hasta = rango?.hasta ?? galletas.hasta ?? "";
+  const clave = `${fuente.nombre}|${id}|${camp}|${desde}|${hasta}`;
   const enCache = cache.get(clave);
   const vigente = enCache && Date.now() - enCache.creadoEn < CACHE_SEG * 1000;
   if (vigente && process.env.NODE_ENV === "production") return enCache.promesa;
-  const promesa = correrMotor(undefined, { fuente, cuentaId: id || undefined, campanaId: camp || undefined });
+  const promesa = correrMotor(undefined, { fuente, cuentaId: id || undefined, campanaId: camp || undefined, desde: desde || undefined, hasta: hasta || undefined });
   cache.set(clave, { promesa, creadoEn: Date.now() });
   return promesa;
 }

@@ -32,6 +32,8 @@ export interface ConfigCliente {
   ciudad: string;
   /** Municipios del radio real de captación. Todo lo demás es inversión fuera de radio. */
   zonasValidas: ReadonlyArray<string>;
+  /** Radar de mercado: páginas de la propia clínica (nunca son competencia) y rubros ajenos que la búsqueda pública arrastra. */
+  radar: { paginasPropias: ReadonlyArray<string>; excluirNombres: ReadonlyArray<string> };
   radioKm: number;
   servicios: ReadonlyArray<Servicio>;
   /**
@@ -60,6 +62,10 @@ export const cliente: ConfigCliente = {
   ],
   ciudad: "Barranquilla",
   zonasValidas: ["Barranquilla", "Soledad", "Malambo", "Puerto Colombia", "Galapa", "Sabanagrande", "Baranoa", "Atlántico"],
+  radar: {
+    paginasPropias: ["Vivantemedicinaestetica", "vivante"],
+    excluirNombres: ["odonto", "dental", "endodonc", "sonrisa", "escuela", "curso", "diplomado", "master", "máster", "training", "diario", "universidad", "ginec", "veterinar", "cucuta", "cúcuta", "ventas online", "latapa"],
+  },
   radioKm: 40,
   servicios: [
     { id: "toxina", nombre: "Toxina botulínica", ticketCOP: 0, costoDirectoCOP: 0, recurrenciaMeses: 6 },

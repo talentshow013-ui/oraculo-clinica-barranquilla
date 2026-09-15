@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { campanasEnPeriodo, comoNosFue, compararSeleccion, correrMotor, filtrarPorCampana, filtrarPorCuenta, fuenteActiva } from "@/lib/datos";
+import { campanasEnPeriodo, comoNosFue, compararSeleccion, correrMotor, filtrarPorCampana, filtrarPorCuenta, filtrarPorRango, fuenteActiva } from "@/lib/datos";
 import { diasEntre, sumarDias } from "@/lib/format/fechas";
 import { CUENTAS_SEED, generarSeed } from "@/scripts/seed";
 
@@ -313,5 +313,54 @@ describe("filtro de campaña — todo el panel se recalcula para UNA pauta", () 
     const r = await correrMotor(generarSeed(), { cuentaId: CUENTAS_SEED[0]!, campanaId: "camp_laser" });
     expect(r.campanaActiva).toBeNull();
     expect(r.total.gasto).toBeGreaterThan(0);
+  });
+});
+
+describe("periodo elegido con calendario (desde/hasta)", () => {
+  const lote = generarSeed();
+  test("filtrarPorRango recorta insights y embudo a las fechas, ajusta meta y conserva los desgloses (son de los últimos 28 días)", () => {
+    const r = filtrarPorRango(lote, "2026-08-01", "2026-08-14");
+    expect(r.meta.desde).toBe("2026-08-01");
+    expect(r.meta.hasta).toBe("2026-08-14");
+    expect(r.insights.every((i) => i.fecha >= "2026-08-01" && i.fecha <= "2026-08-14")).toBe(true);
+    expect(r.embudo.every((i) => i.fecha >= "2026-08-01" && i.fecha <= "2026-08-14")).toBe(true);
+    expect(r.desgloses.length).toBe(lote.desgloses.length);
+  });
+  test("fechas fuera del lote se recortan al lote; desde > hasta se invierte; sin fechas no cambia nada", () => {
+    const r = filtrarPorRango(lote, "2000-01-01", "2999-01-01");
+    expect(r.meta.desde).toBe(lote.meta.desde);
+    expect(r.meta.hasta).toBe(lote.meta.hasta);
+    const inv = filtrarPorRango(lote, "2026-08-14", "2026-08-01");
+    expect(inv.meta.desde).toBe("2026-08-01");
+    expect(filtrarPorRango(lote, undefined, undefined)).toBe(lote);
+  });
+  test("el motor con desde/hasta analiza solo ese periodo: hoy = hasta, ventanas dentro del rango, y lo dice en r.periodo", async () => {
+    const r = await correrMotor(lote, { desde: "2026-08-01", hasta: "2026-08-28" });
+    expect(r.periodo).toEqual({ desde: "2026-08-01", hasta: "2026-08-28", elegido: true, minimo: lote.meta.desde, maximo: lote.meta.hasta });
+    expect(r.hoy).toBe("2026-08-28");
+    expect(r.contexto.ventanas.reciente.hasta).toBe("2026-08-28");
+    expect(r.contexto.ventanas.previa.desde >= "2026-08-01").toBe(true);
+    expect(r.serie[0]?.fecha).toBe("2026-08-01");
+    const todo = await correrMotor(lote);
+    expect(todo.periodo.elegido).toBe(false);
+    expect(todo.total.gasto).toBeGreaterThan(r.total.gasto);
+  });
+});
+
+describe("lo que se pinta arriba y en Creativos", () => {
+  const lote = generarSeed();
+  test("las cifras que mandan salen en orden de importancia y sin las que no tienen dato", async () => {
+    const r = await correrMotor(lote);
+    expect(r.maestras.every((m) => m.valor !== null && m.valor !== undefined)).toBe(true);
+    expect(r.maestras[0]?.id).toBe("inversion");
+    const ids = r.maestras.map((m) => m.id);
+    expect(ids.indexOf("costo_conversacion")).toBeLessThan(ids.indexOf("frecuencia"));
+    expect(ids).not.toContain("poas"); // sin calibrar no hay margen: no se pinta
+  });
+  test("los creativos vienen del mejor al peor con su puesto (1 = el más exitoso)", async () => {
+    const r = await correrMotor(lote);
+    expect(r.creativos.map((c) => c.puesto)).toEqual(r.creativos.map((_, i) => i + 1));
+    const orden = { escalar: 0, arreglar_oferta: 1, arreglar_gancho: 2, sin_senal: 3, matar: 4 } as const;
+    for (let i = 1; i < r.creativos.length; i++) expect(orden[r.creativos[i - 1]!.cuadrante]).toBeLessThanOrEqual(orden[r.creativos[i]!.cuadrante]);
   });
 });
