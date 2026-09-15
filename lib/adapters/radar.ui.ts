@@ -256,6 +256,14 @@ export function mapearRadarUI(tarjetas: ReadonlyArray<TarjetaCruda>, hoy: string
       excluidos++;
       continue;
     }
+    // La misma pieza aparece en varias búsquedas con otro id: se queda una sola, la más antigua.
+    const firma = `${a.competidorId}|${a.copy.slice(0, 120)}`;
+    const repetido = anuncios.findIndex((x) => `${x.competidorId}|${x.copy.slice(0, 120)}` === firma);
+    if (repetido >= 0 && a.copy.trim()) {
+      if (a.primeraVez < anuncios[repetido]!.primeraVez) anuncios[repetido] = a;
+      excluidos++;
+      continue;
+    }
     anuncios.push(a);
     const p = paginas.get(a.competidorId) ?? { nombre: a.nombreAnunciante || a.competidorId, url: t.paginaHref, servicios: new Set<string>() };
     if (a.servicioDetectado) p.servicios.add(a.servicioDetectado);

@@ -319,5 +319,17 @@ export function destacarEspacios(vacios: ReadonlyArray<EspacioVacio>, anuncios: 
   const angulosDelMercado = new Map<string, number>();
   for (const a of anuncios) angulosDelMercado.set(a.anguloDetectado, (angulosDelMercado.get(a.anguloDetectado) ?? 0) + 1);
   const puntaje = (e: EspacioVacio) => (serviciosPropios.has(e.servicio) ? 100 : 0) + (angulosDelMercado.get(e.angulo) ?? 0);
-  return [...vacios].sort((x, y) => puntaje(y) - puntaje(x)).slice(0, MAXIMO_DESTACADOS);
+  // Variedad: un solo nivel por servicio × ángulo y máximo dos huecos por servicio, para no repetir la misma idea.
+  const vistos = new Set<string>();
+  const porServicio = new Map<string, number>();
+  const salida: EspacioVacio[] = [];
+  for (const e of [...vacios].sort((x, y) => puntaje(y) - puntaje(x))) {
+    const clave = `${e.servicio}|${e.angulo}`;
+    if (vistos.has(clave) || (porServicio.get(e.servicio) ?? 0) >= 2) continue;
+    vistos.add(clave);
+    porServicio.set(e.servicio, (porServicio.get(e.servicio) ?? 0) + 1);
+    salida.push(e);
+    if (salida.length >= MAXIMO_DESTACADOS) break;
+  }
+  return salida;
 }

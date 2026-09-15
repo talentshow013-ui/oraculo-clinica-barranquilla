@@ -51,11 +51,11 @@ export default function SelectorCampana({ campanas, actual }: { campanas: Resume
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className={`ml-1 text-texto-3 transition-transform duration-300 ${abierto ? 'rotate-180' : ''}`} aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
       </button>
       {abierto && (
-        <ul role="listbox" aria-label="Campañas" className="absolute left-0 top-[calc(100%+8px)] z-50 min-w-[320px] overflow-hidden rounded-[16px] bg-superficie p-1.5 shadow-[0_24px_50px_-20px_rgba(11,29,58,0.5)] ring-1 ring-borde entra-zoom">
+        <ul role="listbox" aria-label="Campañas" className="absolute left-0 top-[calc(100%+8px)] z-50 max-h-[70vh] min-w-[320px] overflow-y-auto rounded-[16px] bg-superficie p-1.5 shadow-[0_24px_50px_-20px_rgba(11,29,58,0.5)] ring-1 ring-borde entra-zoom">
           {opciones.map((c, i) => {
             const activa = (c?.id ?? '') === (actual?.id ?? '')
             return (
-              <li key={c?.id ?? 'todas'} role="option" aria-selected={activa} onMouseEnter={() => setFoco(i)} onClick={() => elegir(c)} className={`flex cursor-pointer items-center gap-2.5 rounded-[11px] px-2.5 py-2 transition-colors ${i === foco ? 'bg-superficie-2' : ''} ${activa ? 'text-texto' : 'text-texto-2'}`}>
+              <li key={c?.id ?? 'todas'} role="option" aria-selected={activa} onMouseEnter={() => setFoco(i)} onClick={() => elegir(c)} className={`flex cursor-pointer items-center gap-2.5 rounded-[11px] px-2.5 py-2 transition-colors ${c === null ? 'sticky top-0 z-10 bg-superficie' : ''} ${i === foco ? 'bg-superficie-2' : ''} ${activa ? 'text-texto' : 'text-texto-2'}`}>
                 <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${c === null ? 'bg-marino' : c.alAire ? 'bg-bien' : 'bg-borde-fuerte'}`} />
                 <span className="min-w-0 flex-1 leading-tight">
                   <span className="block truncate text-[13px] font-medium text-texto">{c ? c.nombre : 'Todas las campañas'}</span>

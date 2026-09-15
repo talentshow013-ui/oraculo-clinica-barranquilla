@@ -32,7 +32,7 @@ export default function Cuadrantes({ creativos, numeros, umbralGancho = 0.26, um
       <text x={P + 6} y={P / 2 + 14} fontSize="10.5" fontWeight="700" fill="#B45309">{CUADRANTES.arreglar_gancho.nombre.toUpperCase()}</text>
       <text x={W - P / 2 - 6} y={H - P - 6} textAnchor="end" fontSize="10.5" fontWeight="700" fill="#2563EB">{CUADRANTES.arreglar_oferta.nombre.toUpperCase()}</text>
       <text x={P + 6} y={H - P - 6} fontSize="10.5" fontWeight="700" fill="#DC2626">{CUADRANTES.matar.nombre.toUpperCase()}</text>
-      <text x={W / 2} y={H - 8} textAnchor="middle" fontSize="10.5" fill="#526077">Se detienen a los 3 s (gancho; sin video, el CTR de enlace) →</text>
+      <text x={W / 2} y={H - 8} textAnchor="middle" fontSize="10.5" fill="#526077">Se detienen a los 3 s (gancho; sin video, la tasa de clics) →</text>
       <text x={12} y={H / 2} textAnchor="middle" fontSize="10.5" fill="#526077" transform={`rotate(-90 12 ${H / 2})`}>← Costo por resultado (arriba: barato)</text>
       {creativos.map((c, i) => {
         const g = gancho(c)
@@ -43,8 +43,8 @@ export default function Cuadrantes({ creativos, numeros, umbralGancho = 0.26, um
         return (
           <g key={c.creativo.id} className="entra-zoom" style={{ '--retraso': `${200 + i * 60}ms`, transformOrigin: `${cx}px ${cy}px` } as CSSProperties}>
             <circle cx={cx} cy={cy} r={r} fill={sin ? 'transparent' : COLOR[c.cuadrante]} fillOpacity={sin ? 0 : 0.85} stroke={COLOR[c.cuadrante]} strokeWidth={sin ? 1.5 : 0} strokeDasharray={sin ? '3 3' : undefined} />
-            <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={sin ? '#6B7689' : '#fff'} className="num">{numeros?.get(c.creativo.id) ?? c.creativo.id.replace('cr_', '')}</text>
-            <title>{`${etiquetaCreativo(c.creativo)} · ${c.hookRate == null ? `sin video: CTR ${pct(c.ctrEnlace, 2)} como gancho` : `gancho ${pct(c.hookRate)}`} · costo ${cop(c.costoResultado)} · inversión ${cop(c.agregado.gasto)} · ${CUADRANTES[c.cuadrante].nombre}`}</title>
+            <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={sin ? '#6B7689' : '#fff'} className="num">{numeros?.get(c.creativo.id) ?? c.puesto ?? c.creativo.id.replace('cr_', '')}</text>
+            <title>{`${etiquetaCreativo(c.creativo)} · ${c.hookRate == null ? `sin video: tasa de clics ${pct(c.ctrEnlace, 2)} como gancho` : `gancho ${pct(c.hookRate)}`} · costo ${cop(c.costoResultado)} · inversión ${cop(c.agregado.gasto)} · ${CUADRANTES[c.cuadrante].nombre}`}</title>
           </g>
         )
       })}

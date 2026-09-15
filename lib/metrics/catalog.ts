@@ -57,6 +57,7 @@ type Def = [
  * Las cifras que mandan en el Centro de mando, en el orden en que se muestran: primero lo que se
  * paga y lo que se consigue, después la calidad del anuncio, al final el negocio. Las que no tienen
  * dato (la clínica aún no anota resultados) no se pintan: aparecen solas cuando llegan los datos.
+ * La plata en riesgo no va aquí: ya es la cifra grande del centro de mando y de la cabecera.
  */
 export const ORDEN_MAESTRAS = [
   "inversion",
@@ -78,7 +79,6 @@ export const ORDEN_MAESTRAS = [
   "fuga_pesos",
   "roas_real",
   "poas",
-  "plata_en_riesgo",
 ] as const;
 const MAESTRAS = new Set<string>(ORDEN_MAESTRAS);
 

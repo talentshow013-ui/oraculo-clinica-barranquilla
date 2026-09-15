@@ -58,6 +58,7 @@ export default async function CentroDeMando() {
         <Grid cols={6}>
           {r.maestras.map((m, i) => <Kpi key={m.id} nombre={m.nombre} valor={typeof m.valor === 'number' ? m.valor : null} unidad={m.unidad} reciente={m.valorReciente} previo={m.valorReciente !== undefined ? m.valorPrevio : undefined} mejorEs={m.mejorEs} formula={m.formula} porQueImporta={m.porQueImporta} retraso={80 + i * 35} />)}
         </Grid>
+        <p className="mt-2 text-[12px] text-texto-3">Costo por cita, costo por paciente y retorno aparecen aquí cuando se anotan resultados en Campañas.</p>
       </section>
 
       <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-12">

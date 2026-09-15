@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import type { ResultadoMotor } from '@/lib/tipos'
-import { fechaCorta, fechaLarga, fechaHora } from '@/lib/format/fechas'
+import { fechaLarga, fechaHora } from '@/lib/format/fechas'
 import { cop } from '@/lib/format'
 import MenuMovil from './cliente/menu-movil'
 import SelectorCuenta from './cliente/selector-cuenta'
 import SelectorCampana from './cliente/selector-campana'
+import SelectorPeriodo from './cliente/selector-periodo'
 import Ayuda from './cliente/ayuda'
 
 /**
@@ -25,10 +26,7 @@ export default function Cabecera({ r }: { r: ResultadoMotor }) {
         <SelectorCampana campanas={r.campanasCuenta} actual={r.campanaActiva} />
 
         <Ayuda titulo={`Atribución: ${ventana}`} texto={`${m.origen}. Sincronizado ${fechaHora(r.cuenta.ultimaSincronizacion)}. Cambiar la ventana de atribución cambia los números.`} className="hidden md:block">
-          <p className="flex items-center gap-2 rounded-full px-2 py-1 text-[12.5px] text-texto-2 transition-colors hover:bg-superficie-2">
-            <span className="rotulo">Periodo</span>
-            <span className="num text-texto">{fechaCorta(m.desde)} – {fechaCorta(m.hasta)}</span>
-          </p>
+          <SelectorPeriodo periodo={r.periodo} />
         </Ayuda>
 
         <div className="ml-auto flex items-center gap-1.5">

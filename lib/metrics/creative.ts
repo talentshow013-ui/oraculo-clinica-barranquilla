@@ -232,8 +232,12 @@ export function ritmoRenovacion(creativos: ReadonlyArray<Creativo>, desde: strin
   return razon(nuevos, semanas);
 }
 
-/** Orden de las decisiones: primero lo que hay que escalar, al final lo que hay que apagar. */
-const ORDEN_CUADRANTE: Record<Cuadrante, number> = { escalar: 0, arreglar_oferta: 1, arreglar_gancho: 2, sin_senal: 3, matar: 4 };
+/**
+ * Orden de las decisiones: primero lo probado (escalar), luego lo que convierte pero hay que
+ * arreglar (gancho u oferta, juntos: ahí manda el volumen de resultados), después lo que hay que
+ * apagar y al final lo que no tiene señal.
+ */
+const ORDEN_CUADRANTE: Record<Cuadrante, number> = { escalar: 0, arreglar_oferta: 1, arreglar_gancho: 1, matar: 2, sin_senal: 3 };
 
 /**
  * Del más exitoso al menos: por decisión, y dentro de cada decisión por resultados (más primero)

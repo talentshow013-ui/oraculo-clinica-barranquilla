@@ -360,7 +360,7 @@ describe("lo que se pinta arriba y en Creativos", () => {
   test("los creativos vienen del mejor al peor con su puesto (1 = el más exitoso)", async () => {
     const r = await correrMotor(lote);
     expect(r.creativos.map((c) => c.puesto)).toEqual(r.creativos.map((_, i) => i + 1));
-    const orden = { escalar: 0, arreglar_oferta: 1, arreglar_gancho: 2, sin_senal: 3, matar: 4 } as const;
+    const orden = { escalar: 0, arreglar_oferta: 1, arreglar_gancho: 1, matar: 2, sin_senal: 3 } as const;
     for (let i = 1; i < r.creativos.length; i++) expect(orden[r.creativos[i - 1]!.cuadrante]).toBeLessThanOrEqual(orden[r.creativos[i]!.cuadrante]);
   });
 });

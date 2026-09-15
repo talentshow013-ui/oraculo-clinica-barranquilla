@@ -23,7 +23,7 @@ const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: React
   ] },
   { titulo: 'Mercado', rutas: [
     { a: '/competencia', nombre: 'Radar de mercado', icono: I(<><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><path d="M12 12l6-6" /></>) },
-    { a: '/biblioteca', nombre: 'Banco de mensajes', icono: I(<><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" /><path d="M8 8h8M8 12h8M8 16h5" /></>) },
+    { a: '/biblioteca', nombre: 'Copys exitosos', icono: I(<><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" /><path d="M8 8h8M8 12h8M8 16h5" /></>) },
     { a: '/consejo', nombre: 'Mesa de consultores', icono: I(<><path d="M4 20h16M6 20V9l6-5 6 5v11" /><path d="M10 20v-5h4v5" /></>) },
   ] },
   { titulo: 'Confiar', rutas: [

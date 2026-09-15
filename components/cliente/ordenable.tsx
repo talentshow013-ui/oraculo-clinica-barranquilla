@@ -6,8 +6,9 @@ import { useMemo, useState, type ReactNode } from 'react'
  * valores crudos (para ordenar): `null` va siempre al final, nunca se trata como 0.
  */
 export type FilaOrdenable = { clave: string; crudo: Record<string, number | string | null>; celdas: Record<string, ReactNode> }
-export default function Ordenable({ columnas, filas, inicial, minAncho = 640 }: { columnas: { id: string; nombre: string; num?: boolean; ancho?: string }[]; filas: FilaOrdenable[]; inicial?: string; minAncho?: number }) {
-  const [orden, setOrden] = useState<{ id: string; desc: boolean }>({ id: inicial ?? columnas[0]!.id, desc: true })
+export default function Ordenable({ columnas, filas, inicial, desc = true, mostrar, minAncho = 640 }: { columnas: { id: string; nombre: string; num?: boolean; ancho?: string }[]; filas: FilaOrdenable[]; inicial?: string; desc?: boolean; /** enseña las primeras N y un botón «Ver los M» */ mostrar?: number; minAncho?: number }) {
+  const [orden, setOrden] = useState<{ id: string; desc: boolean }>({ id: inicial ?? columnas[0]!.id, desc })
+  const [todas, setTodas] = useState(false)
   const lista = useMemo(() => {
     const l = [...filas]
     l.sort((a, b) => {
@@ -37,13 +38,16 @@ export default function Ordenable({ columnas, filas, inicial, minAncho = 640 }: 
           </tr>
         </thead>
         <tbody>
-          {lista.map((f) => (
+          {(mostrar && !todas ? lista.slice(0, mostrar) : lista).map((f) => (
             <tr key={f.clave} className="transition-colors hover:bg-superficie-2/60">
               {columnas.map((c) => <td key={c.id} className={`border-b border-borde/70 py-2 pr-2 align-middle ${c.num ? 'num text-right' : ''}`}>{f.celdas[c.id] ?? '—'}</td>)}
             </tr>
           ))}
         </tbody>
       </table>
+      {mostrar != null && !todas && lista.length > mostrar && (
+        <div className="mt-3 flex justify-center"><button type="button" onClick={() => setTodas(true)} className="rounded-full bg-superficie-2 px-4 py-2 text-[12.5px] font-medium text-texto ring-1 ring-borde transition-colors hover:bg-hielo">Ver los {lista.length}</button></div>
+      )}
     </div>
   )
 }

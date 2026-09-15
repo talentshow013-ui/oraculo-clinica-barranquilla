@@ -1,6 +1,7 @@
 import { motor } from '@/lib/datos'
 import { cop, num, pct } from '@/lib/format'
-import { Aviso, Celda, Etiqueta, Grid, Kpi, Panel, Tabla, Th, Titulo } from '@/components/ui'
+import { Aviso, Barra, Celda, Etiqueta, Grid, Kpi, Panel, Tabla, Th, Titulo } from '@/components/ui'
+import { etiquetaHora } from '@/lib/format/etiquetas'
 import type { DesgloseVista } from '@/lib/tipos'
 
 /** AUDIENCIAS: fuera de radio, fuera de horario, segmentos que gastan sin producir, y los ocultos por privacidad. */
@@ -14,6 +15,12 @@ export default async function Audiencias() {
   const totalHora = totalDim('hora') || r.total.gasto
   const fueraRadio = d.filter((x) => x.fueraDeRadio).reduce((s, x) => s + x.gasto, 0)
   const fueraHorario = d.filter((x) => x.fueraDeHorario).reduce((s, x) => s + x.gasto, 0)
+  // Las horas van de 12 a. m. a 11 p. m., como un reloj, no por inversión.
+  const horas = d.filter((x) => x.dimension === 'hora').sort((a, b) => Number(a.valor) - Number(b.valor))
+  const horaMax = Math.max(1, ...horas.map((x) => x.gasto))
+  const horasConResultados = horas.some((x) => x.resultados > 0)
+  const { inicio, fin } = r.cliente.horarioAtencion
+  const enHorario = (x: DesgloseVista) => Number(x.valor) >= inicio && Number(x.valor) < fin
   // Dato ausente no es cero: si ningún segmento de edad trae resultados, la fuente no los entrega.
   const hayResultados = (dim: DesgloseVista['dimension']) => d.some((x) => x.dimension === dim && x.resultados > 0)
   const sinProducir = hayResultados('edad') ? d.filter((x) => x.dimension === 'edad' && x.gasto / (totalDim('edad') || 1) >= 0.01 && x.resultados / Math.max(1, x.clicsEnlace) < 0.02) : []
@@ -59,11 +66,31 @@ export default async function Audiencias() {
       <div className="mt-3 flex flex-col gap-2">
         <Aviso tono="neutro">{r.lote.meta.advertencias[0]}. Cada tabla se lee sola.</Aviso>
         <Aviso tono="acento">{r.privacidad.AVISO_PANEL}</Aviso>
+        {r.periodo.elegido && <Aviso tono="neutro">Las audiencias muestran siempre los últimos 28 días; el periodo elegido no las cambia.</Aviso>}
       </div>
       <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-12">
-        <div className="xl:col-span-6"><Bloque titulo="zona" filas={por('ubicacion')} marca={(x) => (x.fueraDeRadio ? 'fuera del radio' : null)} retraso={200} /></div>
-        <div className="xl:col-span-6"><Bloque titulo="edad" filas={por('edad')} marca={(x) => (hayResultados('edad') && x.gasto / (totalDim('edad') || 1) >= 0.01 && x.resultados / Math.max(1, x.clicsEnlace) < 0.02 ? 'gasta y no produce' : null)} retraso={260} /></div>
-        <div className="xl:col-span-12"><Bloque titulo="hora" filas={por('hora')} marca={(x) => (x.fueraDeHorario ? 'fuera de horario' : null)} retraso={320} /></div>
+        <div className="xl:col-span-12"><Bloque titulo="zona" filas={por('ubicacion')} marca={(x) => (x.fueraDeRadio ? 'fuera del radio' : null)} retraso={200} /></div>
+        <div className="xl:col-span-12"><Bloque titulo="edad" filas={por('edad')} marca={(x) => (hayResultados('edad') && x.gasto / (totalDim('edad') || 1) >= 0.01 && x.resultados / Math.max(1, x.clicsEnlace) < 0.02 ? 'gasta y no produce' : null)} retraso={260} /></div>
+        <div className="xl:col-span-12">
+          <Panel rotulo="Por hora · de 12 a. m. a 11 p. m." titulo="¿A qué hora escriben y quién contesta?" retraso={320} extra={<span className="text-[11.5px] text-texto-3">Sombreado: horario de atención ({etiquetaHora(inicio)} – {etiquetaHora(fin)})</span>}>
+            <Tabla minAncho={620}>
+              <thead><tr><Th>Hora</Th><Th>Inversión</Th><Th num>% del total</Th><Th num>Clics</Th><Th num>Resultados</Th><Th num>Costo por resultado</Th><Th>Señal</Th></tr></thead>
+              <tbody>
+                {horas.map((x, i) => (
+                  <tr key={x.valor} className={enHorario(x) ? 'bg-superficie-2' : ''}>
+                    <Celda><span className="num font-medium">{etiquetaHora(x.valor)}</span></Celda>
+                    <Celda className="min-w-[170px]"><Barra pct={x.gasto / horaMax} tono={enHorario(x) ? 'acento' : 'neutro'} valor={cop(x.gasto)} alto={6} retraso={100 + i * 20} /></Celda>
+                    <Celda num>{pct(x.gasto / totalHora, 0)}</Celda>
+                    <Celda num>{num(x.clicsEnlace)}</Celda>
+                    <Celda num tono={horasConResultados && x.resultados === 0 ? 'mal' : undefined}>{horasConResultados ? num(x.resultados) : '—'}</Celda>
+                    <Celda num tono={x.costoResultado != null && x.costoResultado > 120_000 ? 'mal' : undefined}>{horasConResultados ? cop(x.costoResultado) : '—'}</Celda>
+                    <Celda>{x.fueraDeHorario ? <Etiqueta tono="mal">fuera de horario</Etiqueta> : ''}</Celda>
+                  </tr>
+                ))}
+              </tbody>
+            </Tabla>
+          </Panel>
+        </div>
       </div>
     </>
   )

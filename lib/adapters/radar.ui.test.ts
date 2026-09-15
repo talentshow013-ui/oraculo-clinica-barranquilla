@@ -176,4 +176,13 @@ describe("mapearRadarUI — agrupa competidores desde tarjetas de la interfaz", 
     expect(r.anunciosCompetencia).toHaveLength(1);
     expect(r.excluidos).toBe(2);
   });
+
+  test("la misma pieza capturada dos veces (otra búsqueda, otro id) cuenta una sola vez", async () => {
+    const { mapearRadarUI } = await import("@/lib/adapters/radar.ui");
+    const base: TarjetaCruda = { texto: textoActivo, imagenes: [], videosPoster: [], enlaces: [], paginaHref: "https://www.facebook.com/61563977975719/", plataformas: ["facebook"] };
+    const otraVez = { ...base, texto: textoActivo.replace("1229350099285014", "1229350099285015") };
+    const r = mapearRadarUI([base, otraVez], "2026-09-12");
+    expect(r.anunciosCompetencia).toHaveLength(1);
+    expect(r.excluidos).toBe(1);
+  });
 });
