@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { InsightRowSchema, BreakdownRowSchema } from "./types";
-import { mapearDesgloseMeta, mapearFilaMeta, numeroMeta, pesosMeta, resultadoMeta, estadoMeta, parsearRespuesta, type FilaMetaCruda } from "./meta.mcp";
+import { esFruto, mapearDesgloseMeta, mapearFilaMeta, numeroMeta, pesosMeta, resultadoMeta, estadoMeta, parsearRespuesta, type FilaMetaCruda } from "./meta.mcp";
 
 /** Una fila tal cual la entrega el conector (día × campaña). */
 const cruda: FilaMetaCruda = {
@@ -64,6 +64,23 @@ describe("números del conector — texto con separadores y moneda", () => {
     expect(resultadoMeta({ indicator: "actions:onsite_conversion.messaging_conversation_started_7d", values: [{ attribution_windows: ["default"], value: "127" }] })).toEqual({ valor: 127, tipo: "conversacion" });
     expect(resultadoMeta({ indicator: "profile_visit_view", values: [{ value: "161" }] })).toEqual({ valor: 161, tipo: "profile_visit_view" });
     expect(resultadoMeta({ indicator: "actions:leadgen.other", values: [{ value: "6" }] })).toEqual({ valor: 6, tipo: "lead" });
+  });
+
+  test("resultados: solo cuentan los frutos (conversación, lead, compra, chat); clics y visitas al perfil quedan en cero pero conservan su tipo", () => {
+    const trafico = mapearFilaMeta({ ...cruda, results: { indicator: "actions:link_click", values: [{ value: "1046" }] } }, { cuentaId: "act_1", nivel: "campana" });
+    expect(trafico.resultados).toBe(0);
+    expect(trafico.tipoResultado).toBe("link_click");
+    const perfil = mapearFilaMeta({ ...cruda, results: { indicator: "profile_visit_view", values: [{ value: "161" }] } }, { cuentaId: "act_1", nivel: "anuncio" });
+    expect(perfil.resultados).toBe(0);
+    expect(perfil.tipoResultado).toBe("profile_visit_view");
+    const lead = mapearFilaMeta({ ...cruda, results: { indicator: "actions:leadgen.other", values: [{ value: "6" }] } }, { cuentaId: "act_1", nivel: "campana" });
+    expect(lead.resultados).toBe(6);
+    const chat = mapearFilaMeta({ ...cruda, results: { indicator: "actions:offsite_conversion.fb_pixel_custom.JoinChat", values: [{ value: "12" }] } }, { cuentaId: "act_1", nivel: "campana" });
+    expect(chat.resultados).toBe(12);
+    expect(chat.tipoResultado).toBe("fb_pixel_custom.JoinChat");
+    expect(esFruto("conversacion")).toBe(true);
+    expect(esFruto("total_profile_visits")).toBe(false);
+    expect(esFruto(null)).toBe(false);
   });
 
   test("estado: el configurado manda; revisión y rechazo vienen del efectivo", () => {

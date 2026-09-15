@@ -56,6 +56,17 @@ function tipoDesdeIndicador(indicator: string | null | undefined): string | null
   return cola.replace(/^onsite_conversion\./, "").replace(/^offsite_conversion\./, "");
 }
 
+/**
+ * Un resultado es fruto cuando es algo que la clínica puede atender: conversación, lead, compra o
+ * un clic al chat. Clics, visitas al perfil, interacciones o reproducciones son pasos, no frutos:
+ * se conservan en sus columnas propias y `resultados` queda en cero para no mezclarlos.
+ */
+export function esFruto(tipo: string | null | undefined): boolean {
+  if (!tipo) return false;
+  if (tipo === "conversacion" || tipo === "lead" || tipo === "compra") return true;
+  return /chat|whatsapp|messag|contact|schedule|lead|purchase/i.test(tipo);
+}
+
 export function resultadoMeta(r: ResultadoCrudo | ValorCrudo): { valor: number | null; tipo: string | null } {
   if (r === null || r === undefined) return { valor: null, tipo: null };
   if (typeof r !== "object") return { valor: entero(r), tipo: null };
@@ -131,7 +142,7 @@ export function mapearFilaMeta(f: FilaMetaCruda, ctx: ContextoFila): InsightRow 
     duracionCreativoSeg: null,
     conversacionesIniciadas: resultado.tipo === "conversacion" ? resultado.valor : null,
     conversacionesRespondidas: null,
-    resultados: resultado.valor ?? 0,
+    resultados: esFruto(resultado.tipo) ? (resultado.valor ?? 0) : 0,
     tipoResultado: resultado.tipo,
     valorConversion: valorResultado,
     ventanaAtribucion: VENTANA_POR_DEFECTO,

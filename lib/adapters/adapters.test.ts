@@ -28,7 +28,7 @@ describe("FuenteMock", () => {
     const estado = await f.estado();
     expect(estado[0]?.conectado).toBe(true);
     expect(estado.map((e) => e.etiquetaPublica).join(" ")).not.toMatch(/\b(API|MCP|Zod)\b/);
-  });
+  }, 30_000); // genera y valida 6 meses de seed (12 MB): en equipos lentos pasa de los 5 s
 
   test("si el seed no existe, el error dice qué comando correr", async () => {
     const f = new FuenteMock(join(tmp(), "no-existe.json"));
