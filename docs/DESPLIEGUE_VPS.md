@@ -26,6 +26,37 @@ perfil del usuario `oraculo` de la VPS (OAuth), nunca en el repositorio ni en `.
 
 Sin dominio propio también funciona (ver «Alternativa sin dominio»).
 
+## Estado real (2026-09-16): la VPS de Vivante YA está instalada
+
+- Hostinger KVM 2 · id 1985468 · `srv1985468.hstgr.cloud` · IP **2.25.226.245** · Ubuntu 24.04 LTS limpio.
+  Se compró con «Easypanel» y se **recreó por la API de Hostinger** con la plantilla 1077 (Ubuntu 24.04
+  LTS) y un script post-instalación que deja la llave del instalador en `/root/.ssh/authorized_keys`.
+- Instalada con `bash deploy/instalar-desde-aqui.sh 2.25.226.245` desde el PC de la agencia: usuario
+  `oraculo`, Node 22, Claude Code 2.1, cloudflared, repo clonado con llave de solo lectura, panel como
+  servicio `oraculo-panel` (127.0.0.1:3000, candado usuario `clinica`), cron 06:30 (`oraculo-diario.sh`).
+- Datos reales cargados a mano la primera vez (`datos/lote.json`, `datos/referencias/`, `public/radar/`).
+- Mientras la clínica no haga su `cloudflared tunnel login`, el panel sale por un **túnel temporal de
+  Cloudflare sin cuenta** (`oraculo-tunel-temporal.service`, URL `*.trycloudflare.com`; cambia si el
+  servicio se reinicia: `journalctl -u oraculo-tunel-temporal | grep trycloudflare`). El día que se
+  configure el túnel con dominio, deshabilitar ese servicio.
+- Claves (root de la VPS, candado del panel, token de la API de Hostinger): en el `.env` del PC de la
+  agencia, nunca en el repo.
+- Faltan los 3 inicios de sesión de la clínica en la VPS (`sudo -iu oraculo`): `claude`, `/mcp`
+  (Facebook) y `cloudflared tunnel login`. Hasta entonces la sincronización diaria no corre.
+
+### Cómo se hizo por la API de Hostinger (para repetirlo con otro cliente)
+
+Base: `https://developers.hostinger.com/api/vps/v1` con `Authorization: Bearer <token>` (el token se
+crea en hPanel → API). Cloudflare bloquea el user-agent de Python: usar `curl`.
+1. `GET /virtual-machines` → id e IP.
+2. `POST /public-keys` `{name, key}` → id de la llave (la de `deploy/LLAVE-INSTALADOR.md`).
+3. `POST /post-install-scripts` `{name, content}` con un script que agrega esa llave a
+   `/root/.ssh/authorized_keys` (adjuntar la llave con `/public-keys/attach/{id}` NO bastó en una VM ya creada).
+4. `POST /virtual-machines/{id}/recreate` `{template_id: 1077, password: <con símbolo>, post_install_script_id}`;
+   esperar `GET /virtual-machines/{id}/actions/{actionId}` = `success` (~2 min) y `ssh-keygen -R <IP>`
+   porque cambia la huella del host.
+5. `bash deploy/instalar-desde-aqui.sh <IP>`.
+
 ## Instalación (30 minutos, una vez)
 
 1. Comprar la VPS. En el panel de Hostinger: Ubuntu 24.04, anotar IP y clave de root.
