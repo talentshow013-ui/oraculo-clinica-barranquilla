@@ -55,7 +55,8 @@ fi
 cloudflared --version
 
 paso 7 "Panel: dependencias, configuración y construcción"
-CLAVE="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 16)"
+# openssl y no «tr </dev/urandom | head»: con pipefail, head cierra la tubería y tr muere con SIGPIPE (exit 141).
+CLAVE="$(openssl rand -hex 8)"
 sudo -u oraculo env CLAVE="$CLAVE" bash -c 'cd ~/oraculo && npm ci --no-audit --no-fund >/dev/null && if [ ! -f .env ]; then cp .env.example .env; sed -i "s/^ORACULO_FUENTE=.*/ORACULO_FUENTE=archivo/" .env; sed -i "s/^ORACULO_USUARIO=.*/ORACULO_USUARIO=clinica/" .env; sed -i "s/^ORACULO_CLAVE=.*/ORACULO_CLAVE=$CLAVE/" .env; fi; npm run seed >/dev/null; npm run build >/dev/null; mkdir -p reportes datos'
 
 paso 8 "Servicio del panel y reloj diario"
