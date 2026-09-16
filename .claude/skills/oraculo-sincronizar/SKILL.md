@@ -19,6 +19,9 @@ estimado. **El contrato (`lib/adapters/types.ts`) no se toca para acomodar la fu
 
 ## Paso 0 — Conector, cuentas y rango
 
+0. **Actualízate primero**: `git pull --ff-only` (trae código, skills y reglas nuevas desde GitHub).
+   Si cambió algo: `npm ci --no-audit --no-fund`. Si el pull falla (cambios locales o sin red),
+   dilo en una línea y sigue con lo que hay; nunca `git reset --hard` ni `git stash` sin avisar.
 1. Verifica que existan las herramientas `ads_get_ad_accounts`, `ads_get_ad_entities` y
    `ads_get_creatives`. Si no aparecen: "El conector de Campañas no está autorizado en este
    equipo" y remite a `docs/CONEXION_MCP.md`.
