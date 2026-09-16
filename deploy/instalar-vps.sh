@@ -44,6 +44,8 @@ fi
 
 paso 5 "Código"
 sudo -u oraculo bash -c "cd ~ && if [ -d oraculo/.git ]; then cd oraculo && git pull --ff-only; else git clone '$REPO_URL' oraculo; fi"
+# El chmod +x de los .sh cambia el modo del archivo y git lo ve como cambio local: sin esto, el pull diario falla en silencio.
+sudo -u oraculo git -C /home/oraculo/oraculo config core.fileMode false
 
 paso 6 "Claude Code (el analista) y cloudflared (la puerta)"
 sudo -u oraculo bash -c 'mkdir -p ~/.npm-global && npm config set prefix ~/.npm-global; grep -q npm-global ~/.profile || echo "export PATH=\$HOME/.npm-global/bin:\$PATH" >> ~/.profile; export PATH=$HOME/.npm-global/bin:$PATH; npm install -g @anthropic-ai/claude-code >/dev/null 2>&1; claude --version'
