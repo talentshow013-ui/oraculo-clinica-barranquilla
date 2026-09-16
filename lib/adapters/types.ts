@@ -353,6 +353,63 @@ export const CambioCuentaSchema = z.object({
 });
 export type CambioCuenta = z.infer<typeof CambioCuentaSchema>;
 
+// ---------------------------------------------------------------------------
+// Públicos: a quién se le muestra cada conjunto y qué rindió
+// ---------------------------------------------------------------------------
+
+export const TIPOS_PUBLICO = ["advantage", "similar", "remarketing", "intereses", "amplio"] as const;
+export type TipoPublico = (typeof TIPOS_PUBLICO)[number];
+
+export const SegmentacionSchema = z.object({
+  edadMin: z.number().int().nullable(),
+  edadMax: z.number().int().nullable(),
+  genero: z.enum(["todos", "mujeres", "hombres"]),
+  /** Lugares incluidos en palabras («Vivante Medicina Estética (10 km)», «Barranquilla»). */
+  lugares: z.array(z.string()),
+  radioKm: z.number().nullable(),
+  /** Zonas excluidas (regiones/ciudades). */
+  excluidos: z.array(z.string()),
+  /** Intereses, comportamientos, cargos… que Meta usa para segmentar. */
+  intereses: z.array(z.string()),
+  /** Públicos personalizados (remarketing: interacción, visitantes, listas). */
+  personalizados: z.array(z.string()),
+  /** Públicos similares (lookalike). */
+  similares: z.array(z.string()),
+  publicosExcluidos: z.array(z.string()),
+  /** Público Advantage+ activado (Meta decide a quién). */
+  advantage: z.boolean(),
+  plataformas: z.array(z.string()),
+  tipo: z.enum(TIPOS_PUBLICO),
+});
+export type Segmentacion = z.infer<typeof SegmentacionSchema>;
+
+/** Un conjunto de anuncios visto como público: su segmentación y lo que rindió en el rango. Nada de personas. */
+export const PublicoSchema = z.object({
+  fuente: z.literal("meta"),
+  cuentaId: z.string().min(1),
+  conjuntoId: z.string().min(1),
+  nombre: z.string(),
+  campanaId: textoNullable,
+  campanaNombre: textoNullable,
+  estado: z.enum(ESTADOS),
+  /** Objetivo de optimización del conjunto (CONVERSATIONS, LEAD_GENERATION…). */
+  objetivo: textoNullable,
+  destino: textoNullable,
+  presupuestoDiario: noNegativoNullable,
+  creado: textoNullable,
+  aprendizaje: textoNullable,
+  segmentacion: SegmentacionSchema,
+  desde: FechaSchema,
+  hasta: FechaSchema,
+  gasto: noNegativo,
+  impresiones: noNegativo,
+  alcance: noNegativoNullable,
+  clicsEnlace: noNegativo,
+  resultados: noNegativo,
+  tipoResultado: textoNullable,
+});
+export type Publico = z.infer<typeof PublicoSchema>;
+
 export const LoteDatosSchema = z.object({
   insights: z.array(InsightRowSchema),
   desgloses: z.array(BreakdownRowSchema),
@@ -365,6 +422,8 @@ export const LoteDatosSchema = z.object({
   rankings: z.array(RankingAnuncioSchema).optional(),
   /** Opcional: bitácora de cambios de la cuenta (quién prendió/apagó qué). */
   bitacora: z.array(CambioCuentaSchema).optional(),
+  /** Opcional: públicos (segmentación y rendimiento por conjunto en el rango). */
+  publicos: z.array(PublicoSchema).optional(),
   meta: MetaLoteSchema,
 });
 export type LoteDatos = z.infer<typeof LoteDatosSchema>;

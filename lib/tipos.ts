@@ -21,3 +21,6 @@ export type { Comparativa, ColumnaPropia, MercadoMeta } from "@/lib/metrics/comp
 export type { RankingAnuncio, NivelRanking } from "@/lib/adapters/types";
 export type { ResumenBitacora, Interruptor, ActorBitacora } from "@/lib/metrics/bitacora";
 export type { CambioCuenta } from "@/lib/adapters/types";
+export type { ResultadoPublicos, PublicoEvaluado, GrupoPublico, SegmentacionSugerida, CuadrantePublico } from "@/lib/audiences";
+export type { EstudioReferencias, EstudioCiudad, AnuncioReferencia, SenalPublico } from "@/lib/audiences/referencias";
+export type { Publico, Segmentacion, TipoPublico } from "@/lib/adapters/types";

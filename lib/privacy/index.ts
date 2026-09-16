@@ -70,6 +70,7 @@ const RUTAS_PERMITIDAS: ReadonlyArray<RegExp> = [
   /^competidores\[\d+\]\.nombre$/,
   /^rankings\[\d+\]\.nombre$/,
   /^bitacora\[\d+\]\.(objetoNombre|actor)$/,
+  /^publicos\[\d+\]\.(nombre|campanaNombre)$/,
 ];
 
 /**

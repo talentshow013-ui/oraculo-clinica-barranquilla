@@ -134,6 +134,25 @@ pueden solaparse: el importador quita duplicados. Si el conector responde «This
 being gradually rolled out», esa cuenta queda sin bitácora y el panel lo dice.
 Alimenta la regla R28 y el bloque «Quién cambió qué» de Campañas.
 
+## Paso 3d — Públicos (segmentación de cada conjunto)
+
+Por cada cuenta: `ads_get_ad_entities` con `level: "adset"`, `time_range` = todo el periodo del lote
+(90 días), **sin** `time_increment`, `limit: 1000`, filtro `amount_spent > 0` y
+`fields: ["id","name","campaign_id","campaign_name","status","effective_status","optimization_goal",
+"destination_type","targeting","learning_stage_info","daily_budget","created_time","amount_spent",
+"impressions","reach","frequency","clicks","link_click","results","cost_per_result"]`.
+Devuelve una fila por conjunto con su `targeting` (edad, género, radio, intereses, públicos
+personalizados/similares, Advantage+) y las métricas agregadas del rango. Guarda la respuesta en
+`datos/crudo/act_<cuenta>__publico__1.json` **agregando** `"capturado"`, `"desde"` y `"hasta"`
+(YYYY-MM-DD) al JSON. Alimenta la pestaña Públicos (ganadores, grupos y sugerencias).
+
+## Paso 6b — Referencias de otras ciudades (opcional, mensual)
+
+Capturas de la Biblioteca de anuncios de otros mercados, a `datos/referencias/` (no al radar):
+`npm run radar:capturar -- --q "clínica estética Cartagena" --pais CO --estado all --max 60 --sin-imagenes --salida datos/referencias/cartagena-1.json`
+y lo mismo para `santamarta-1`, `medellin-1`, `miami-1` (`--pais US`)… El prefijo del archivo
+decide la ciudad (tabla en `lib/adapters/referencias.adapter.ts`). El panel los estudia solo.
+
 ## Paso 4 — Resultados de la clínica
 
 **No se sincronizan aquí.** Se anotan por campaña en la pantalla Campañas del panel

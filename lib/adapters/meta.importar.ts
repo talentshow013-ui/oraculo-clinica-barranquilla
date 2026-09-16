@@ -8,18 +8,20 @@
  *   <cuentaId>__creativo__<n>.json  (respuesta de `ads_get_creatives`; se cruza con los anuncios)
  *   <cuentaId>__ranking__<n>.json   (respuesta de `ads_insights_auction_ranking_benchmarks`, {capturado, result})
  *   <cuentaId>__bitacora-<categoria>__<n>.json (respuestas de `ads_account_get_activity_logs`, {ventanas:[{eventos}]})
+ *   <cuentaId>__publico__<n>.json   (conjuntos con `targeting` y métricas del rango, {ad_entities, capturado, desde, hasta})
  * Cada uno es la respuesta de `ads_get_ad_entities` tal cual (o el arreglo de filas).
  * Las páginas se pueden solapar: se quitan duplicados por (nivel, id, fecha) y por segmento.
  * Los creativos salen del cruce creativo × anuncio (un Creativo por anuncio que lo usa). Lo que el
  * conector no trae (embudo, competidores, experimentos) se conserva del lote base si lo hay.
  */
-import type { BreakdownRow, CambioCuenta, Dimension, InsightRow, LoteDatos, RankingAnuncio } from "./types";
+import type { BreakdownRow, CambioCuenta, Dimension, InsightRow, LoteDatos, Publico, RankingAnuncio } from "./types";
 import { LoteDatosSchema } from "./types";
 import { listarHuecos } from "@/lib/format/fechas";
 import { mapearDesgloseMeta, mapearFilaMeta, parsearRespuesta, type FilaMetaCruda } from "./meta.mcp";
 import { mapearCreativosMeta, parsearCreativos, type AnuncioParaCreativo, type CreativoMetaCrudo } from "./meta.creativos";
 import { parsearRankingsMeta } from "./meta.rankings";
 import { parsearBitacoraMeta } from "./meta.bitacora";
+import { parsearPublicosMeta } from "./meta.publicos";
 
 export interface ArchivoCrudo {
   nombre: string;
@@ -73,7 +75,7 @@ function interpretarNombre(nombre: string): { cuentaId: string; tipo: string; po
 }
 
 export interface ResultadoImportacion extends LoteDatos {
-  resumen: { archivos: number; filasLeidas: number; insights: number; desgloses: number; creativos: number; rankings: number; bitacora: number; cuentas: string[]; ignorados: string[] };
+  resumen: { archivos: number; filasLeidas: number; insights: number; desgloses: number; creativos: number; rankings: number; bitacora: number; publicos: number; cuentas: string[]; ignorados: string[] };
 }
 
 export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, base?: LoteDatos, generadoEn: string = new Date().toISOString()): ResultadoImportacion {
@@ -86,6 +88,7 @@ export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, 
   const ignorados: string[] = [];
   const rankings = new Map<string, RankingAnuncio>();
   const bitacora = new Map<string, CambioCuenta>();
+  const publicos = new Map<string, Publico>();
   let filasLeidas = 0;
 
   for (const a of archivos) {
@@ -99,6 +102,12 @@ export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, 
       const lista = parsearCreativos(a.contenido);
       filasLeidas += lista.length;
       for (const c of lista) if (c?.id) creativosCrudos.set(String(c.id), c);
+      continue;
+    }
+    if (meta.tipo === "publico") {
+      const lista = parsearPublicosMeta(a.contenido, meta.cuentaId);
+      filasLeidas += lista.length;
+      for (const p of lista) publicos.set(`${p.cuentaId}|${p.conjuntoId}`, p);
       continue;
     }
     if (meta.tipo.startsWith("bitacora")) {
@@ -161,6 +170,7 @@ export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, 
     anunciosCompetencia: base?.anunciosCompetencia ?? [],
     experimentos: base?.experimentos ?? [],
     rankings: rankings.size ? [...rankings.values()] : (base?.rankings ?? []),
+    publicos: publicos.size ? [...publicos.values()] : (base?.publicos ?? []),
     bitacora: bitacora.size ? [...bitacora.values()].sort((x, y) => `${x.fecha} ${x.hora}`.localeCompare(`${y.fecha} ${y.hora}`)) : (base?.bitacora ?? []),
     meta: {
       generadoEn,
@@ -175,7 +185,7 @@ export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, 
     },
   };
   const validado = LoteDatosSchema.parse(lote);
-  return { ...validado, resumen: { archivos: archivos.length, filasLeidas, insights: filas.length, desgloses: lote.desgloses.length, creativos: creativos.length, rankings: lote.rankings?.length ?? 0, bitacora: lote.bitacora?.length ?? 0, cuentas: [...cuentas], ignorados } };
+  return { ...validado, resumen: { archivos: archivos.length, filasLeidas, insights: filas.length, desgloses: lote.desgloses.length, creativos: creativos.length, rankings: lote.rankings?.length ?? 0, bitacora: lote.bitacora?.length ?? 0, publicos: lote.publicos?.length ?? 0, cuentas: [...cuentas], ignorados } };
 }
 
 /** Fecha de captura declarada en el archivo crudo ({capturado: "YYYY-MM-DD"}), si la trae. */
