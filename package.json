@@ -18,7 +18,8 @@
     "radar:capturar": "tsx scripts/radar-capturar.ts",
     "doctor": "tsx scripts/doctor.ts",
     "organico:conectar": "tsx scripts/organico-conectar.ts",
-    "organico:sincronizar": "tsx scripts/organico-sincronizar.ts"
+    "organico:sincronizar": "tsx scripts/organico-sincronizar.ts",
+    "notificar": "tsx scripts/notificar.ts"
   },
   "dependencies": {
     "date-fns": "4.4.0",

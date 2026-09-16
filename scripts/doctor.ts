@@ -50,6 +50,10 @@ if (/^META_ORGANICO_TOKEN=.+$/m.test(envTexto)) {
   opcional("Orgánico (Instagram y Facebook) sin conectar", "npm run organico:conectar -- <token>  (docs/CONEXION_ORGANICO.md)");
 }
 
+// Telegram
+if (/^TELEGRAM_BOT_TOKEN=.+$/m.test(envTexto) && /^TELEGRAM_CHAT_ID=.+$/m.test(envTexto)) ok("Avisos por Telegram configurados");
+else opcional("Avisos por Telegram sin configurar", "bot con @BotFather → TELEGRAM_BOT_TOKEN en .env → npm run notificar -- --chats → TELEGRAM_CHAT_ID");
+
 // Radar
 let chromium = false;
 try {

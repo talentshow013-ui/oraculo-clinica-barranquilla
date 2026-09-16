@@ -23,19 +23,20 @@ if [ "$ANTES" != "$(git rev-parse HEAD)" ]; then
 fi
 
 # 2) Datos (Claude Code sin interfaz; los conectores ya están autorizados en este perfil)
+ESTADO=""
 if command -v claude >/dev/null 2>&1; then
   if claude -p "/oraculo-sincronizar" --permission-mode bypassPermissions --max-turns 60 >"reportes/sincronizacion-$HOY.md" 2>&1; then
-    echo "sincronización: ok"
+    echo "sincronización: ok"; ESTADO="Campañas: sincronizadas"
   else
-    echo "sincronización: FALLÓ (ver reportes/sincronizacion-$HOY.md)"
+    echo "sincronización: FALLÓ (ver reportes/sincronizacion-$HOY.md)"; ESTADO="Campañas: NO se pudieron sincronizar (se muestra lo de ayer)"
   fi
 else
-  echo "aviso: Claude Code no está instalado en esta máquina; no se sincronizó"
+  echo "aviso: Claude Code no está instalado en esta máquina; no se sincronizó"; ESTADO="Campañas: sin sincronizar (falta Claude Code)"
 fi
 
 # 2b) Orgánico (Instagram y Facebook sin pauta): directo a Meta con el token de página del .env
 if grep -q '^META_ORGANICO_TOKEN=.\+' .env 2>/dev/null; then
-  if npm run -s organico:sincronizar >"reportes/organico-$HOY.log" 2>&1; then echo "orgánico: ok"; else echo "orgánico: FALLÓ (ver reportes/organico-$HOY.log)"; fi
+  if npm run -s organico:sincronizar >"reportes/organico-$HOY.log" 2>&1; then echo "orgánico: ok"; ESTADO="$ESTADO · Orgánico: al día"; else echo "orgánico: FALLÓ (ver reportes/organico-$HOY.log)"; ESTADO="$ESTADO · Orgánico: falló"; fi
 else
   echo "orgánico: sin conectar (npm run organico:conectar -- <token>)"
 fi
@@ -53,7 +54,18 @@ if [ "$(date +%u)" = "1" ] && command -v claude >/dev/null 2>&1; then
   fi
 fi
 
+# 5) Avisos por Telegram (si está configurado): resumen de la mañana y, los lunes, el informe
+if grep -q '^TELEGRAM_BOT_TOKEN=.\+' .env 2>/dev/null && grep -q '^TELEGRAM_CHAT_ID=.\+' .env 2>/dev/null; then
+  if npm run -s notificar -- --estado "$ESTADO" >/dev/null 2>"reportes/telegram-$HOY.log"; then echo "telegram: resumen enviado"; else echo "telegram: FALLÓ (ver reportes/telegram-$HOY.log)"; fi
+  if [ "$(date +%u)" = "1" ] && [ -s "reportes/semana-$HOY.md" ]; then
+    npm run -s notificar -- --archivo "reportes/semana-$HOY.md" >/dev/null 2>>"reportes/telegram-$HOY.log" && echo "telegram: informe semanal enviado"
+  fi
+else
+  echo "telegram: sin configurar (TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID en .env)"
+fi
+
 # Limpieza: conservar 60 días de registros
 find reportes -name 'sincronizacion-*.md' -mtime +60 -delete 2>/dev/null
 find reportes -name 'organico-*.log' -mtime +60 -delete 2>/dev/null
+find reportes -name 'telegram-*.log' -mtime +60 -delete 2>/dev/null
 echo "=== $(date '+%F %T') · fin"
