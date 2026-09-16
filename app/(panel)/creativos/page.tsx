@@ -31,7 +31,13 @@ export default async function Creativos({ searchParams }: { searchParams: Promis
         <span className="block max-w-[300px]">
           <span className="block truncate font-medium">{etiquetaCreativo(c.creativo)}</span>
           <span className="num block truncate text-[11.5px] text-texto-2">retiene {pct(c.holdRate, 0)} · clics {pct(c.ctrEnlace)} · fatiga {indice(c.fatiga.indice)} · {num(c.diasActivo)} d al aire</span>
-          {c.rankingMeta && <span className={`block truncate text-[11.5px] ${ES_INFERIOR(c.rankingMeta.interaccion) || ES_INFERIOR(c.rankingMeta.conversion) ? 'text-mal' : 'text-texto-2'}`} title="Cómo lo ve Meta frente a los anuncios que compiten por el mismo público">Meta vs. competencia: interés {rankingEnPalabras(c.rankingMeta.interaccion)} · conversión {rankingEnPalabras(c.rankingMeta.conversion)}</span>}
+          {c.rankingMeta && (
+            <span className={`flex items-center gap-1.5 text-[11.5px] ${ES_INFERIOR(c.rankingMeta.interaccion) || ES_INFERIOR(c.rankingMeta.conversion) ? 'text-mal' : 'text-texto-2'}`} title="Cómo lo ve Meta frente a los anuncios que compiten por el mismo público">
+              {/* el distintivo dice que ese dato lo afirma Meta, no el panel */}
+              <span className="shrink-0 rounded-[4px] bg-marino px-1 py-px text-[9.5px] font-semibold uppercase tracking-[0.08em] text-white">Meta</span>
+              <span className="truncate">Meta vs. competencia: interés {rankingEnPalabras(c.rankingMeta.interaccion)} · conversión {rankingEnPalabras(c.rankingMeta.conversion)}</span>
+            </span>
+          )}
         </span>
       ),
       cuadrante: <Etiqueta tono={TONO[c.cuadrante]}>{CUADRANTES[c.cuadrante].nombre}</Etiqueta>,

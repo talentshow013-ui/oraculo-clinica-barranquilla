@@ -1,6 +1,7 @@
 import { motor } from '@/lib/datos'
 import Sidebar from '@/components/sidebar'
 import Cabecera from '@/components/cabecera'
+import Aterrizaje from '@/components/cliente/aterrizaje'
 
 // La cuenta elegida viaja en cookie: cada petición se renderiza con la suya.
 export const dynamic = 'force-dynamic'
@@ -14,6 +15,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       <div className="flex min-w-0 flex-1 flex-col">
         <Cabecera r={r} />
         <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-16 pt-4 sm:px-6">{children}</main>
+        <Aterrizaje />
       </div>
     </div>
   )

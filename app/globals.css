@@ -115,6 +115,12 @@ tbody tr:hover { background-color: rgba(234, 242, 255, 0.7); }
 }
 @keyframes marquesina { to { transform: translateX(-50%); } }
 
+/* el aterrizaje de un enlace con #ancla: anillo de acento 2 s que se desvanece (lo pone y quita `Aterrizaje`).
+   Va por TRANSICIÓN y no por animación: una animación aquí pisaría la de entrada (`.entra`) y, al quitarla,
+   la pieza volvería a entrar desde opacidad 0. Con movimiento reducido la transición dura 0 y el anillo solo se quita. */
+.aterriza { outline: 3px solid var(--color-acento); outline-offset: 3px; transition: outline-color 0.9s ease-out, transform 0.45s var(--ease-casa), box-shadow 0.45s var(--ease-casa); }
+.aterriza.aterriza-va { outline-color: transparent; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .crece, .crece-y { transform: none; }

@@ -34,10 +34,13 @@ export default async function Diagnostico() {
                   <p className="rotulo">Qué pasa</p>
                   <p className="mt-1 text-[13.5px] leading-snug">{h.explicacion}</p>
                   <p className="rotulo mt-3">Cómo lo sabemos · cada dato lleva a su tabla</p>
-                  <ul className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-3 lg:grid-cols-1">
-                    {h.evidencia.map((e) => <TarjetaEvidencia key={e.etiqueta} e={e} />)}
-                  </ul>
-                  <div className="mt-3"><FuenteDelHallazgo fuente={h.fuente} /></div>
+                  {/* una sola historia: primero los datos (tarjetas clicables), debajo la ficha técnica en hielo */}
+                  <div className="mt-1.5 rounded-[14px] bg-superficie-2/60 p-2">
+                    <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-3 lg:grid-cols-1">
+                      {h.evidencia.map((e) => <TarjetaEvidencia key={e.etiqueta} e={e} />)}
+                    </ul>
+                    <div className="mt-2"><FuenteDelHallazgo fuente={h.fuente} /></div>
+                  </div>
                 </div>
                 <div className="lg:col-span-7">
                   <p className="rotulo">Qué hago</p>

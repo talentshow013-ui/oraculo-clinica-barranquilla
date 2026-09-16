@@ -24,7 +24,7 @@ export default async function Oportunidades() {
       <section aria-labelledby="propias">
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
           <div>
-            <p className="rotulo">Bloque 1 · sale de tus propios datos</p>
+            <p className="rotulo text-acento">Bloque 1 · sale de tus propios datos</p>
             <h2 id="propias" className="text-[18px]">Lo que tus números piden probar</h2>
           </div>
           <p className="max-w-[52ch] text-[12.5px] text-texto-2">Cada una nace de un hallazgo del Diagnóstico. «Ver el dato» abre la tabla exacta en la que se basa.</p>
@@ -38,10 +38,12 @@ export default async function Oportunidades() {
         )}
       </section>
 
-      <section aria-labelledby="mercado" className="mt-8">
+      {/* separador fuerte: los dos bloques no se mezclan */}
+      <hr className="mb-8 mt-10 border-0 border-t-2 border-borde-fuerte" aria-hidden="true" />
+      <section aria-labelledby="mercado">
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
           <div>
-            <p className="rotulo">Bloque 2 · sale del mercado, no de tus datos</p>
+            <p className="rotulo text-marino">Bloque 2 · sale del mercado, no de tus datos</p>
             <h2 id="mercado" className="text-[18px]">Lo que hace la competencia y tú no</h2>
           </div>
           <p className="max-w-[52ch] text-[12.5px] text-texto-2">Viene del Radar (Biblioteca de anuncios de Meta, pública). Cada tarjeta tiene su enlace para verificar afuera lo que aquí se afirma.</p>
@@ -66,7 +68,7 @@ function Tarjeta({ o, i, destacada, maxIce }: { o: Oportunidad; i: number; desta
     <li className={`${o.yaProbada ? 'pieza opacity-80' : oscuro ? 'pieza-marina lg:col-span-2' : 'pieza'} entra-zoom flex flex-col p-4 sm:p-5`} style={{ '--retraso': `${60 + i * 80}ms` } as CSSProperties}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className={`rotulo ${oscuro ? 'text-celeste' : ''}`}>{ORIGEN[o.origen]} · {o.tipoPrueba}</p>
+          <p className={`rotulo ${oscuro ? 'text-celeste' : o.ambito === 'propio' ? 'text-acento' : 'text-marino'}`}>{ORIGEN[o.origen]} · {o.tipoPrueba}</p>
           <h3 className={`mt-1 text-[clamp(1.05rem,1.5vw,1.25rem)] leading-tight ${oscuro ? 'text-white' : ''}`}>{o.titulo}</h3>
         </div>
         <span className="flex shrink-0 flex-col items-end"><span className={`cifra num text-[26px] ${oscuro ? 'text-white' : ''}`}>{o.ice}</span><span className={`text-[10.5px] uppercase tracking-[0.12em] ${oscuro ? 'text-celeste' : 'text-texto-2'}`}>prioridad</span></span>
@@ -77,9 +79,10 @@ function Tarjeta({ o, i, destacada, maxIce }: { o: Oportunidad; i: number; desta
         {o.angulo && <Etiqueta tono="acento">{ANGULOS[o.angulo]}</Etiqueta>}
         {o.yaProbada && <Etiqueta tono="ojo">Ya se probó</Etiqueta>}
       </div>
-      <div className={`mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] font-medium ${oscuro ? 'text-celeste' : 'text-acento'}`}>
-        <Link href={o.verEn}>{o.ambito === 'propio' ? 'Ver el dato en el panel →' : 'Ver en el Radar →'}</Link>
-        {o.verificar && <a href={o.verificar} target="_blank" rel="noopener noreferrer">Verificar en la Biblioteca de anuncios de Meta ↗</a>}
+      {/* los dos enlaces, siempre aquí (bajo «basada en»), como botones chicos de texto */}
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <Link href={o.verEn} className={`inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-medium ring-1 transition ${oscuro ? 'bg-white/[0.07] text-celeste ring-white/15 hover:bg-white/[0.14]' : 'bg-acento/[0.06] text-acento ring-acento/20 hover:bg-acento/[0.12]'}`}>Ver el dato en el panel →</Link>
+        {o.verificar && <a href={o.verificar} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-medium ring-1 transition ${oscuro ? 'bg-white/[0.07] text-celeste ring-white/15 hover:bg-white/[0.14]' : 'bg-marino/[0.05] text-marino ring-marino/15 hover:bg-marino/[0.1]'}`}>Verificar en la Biblioteca de anuncios de Meta ↗</a>}
       </div>
       <div className={`mt-3 grid grid-cols-2 gap-2 rounded-[14px] p-3 sm:grid-cols-4 ${oscuro ? 'bg-white/[0.07] ring-1 ring-white/10' : 'bg-superficie-2'}`}>
         <Dato oscuro={oscuro} n={o.prueba.presupuestoCOP ? cop(o.prueba.presupuestoCOP) : 'Sin costo'} t="presupuesto" />

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { ResumenBitacora } from '@/lib/tipos'
 import { num } from '@/lib/format'
 import { fechaCorta } from '@/lib/format/fechas'
-import { Aviso, Barra, Celda, Panel, Tabla, Th } from '@/components/ui'
+import { Aviso, Barra, Celda, Etiqueta, Panel, Tabla, Th } from '@/components/ui'
 
 /**
  * QUIÉN CAMBIÓ QUÉ. El historial de cambios de Meta, resumido: personas que operan, campañas que se
@@ -26,8 +26,8 @@ export default function BloqueBitacora({ b, retraso = 0 }: { b: { reciente: Resu
           <p className="rotulo">Por persona</p>
           <ul className="mt-2 flex flex-col gap-1.5">
             {r.porActor.slice(0, 8).map((a, i) => (
-              <li key={a.actor} className="grid grid-cols-[minmax(0,1fr)_120px] items-center gap-2 text-[13px]">
-                <span className="truncate font-medium">{a.actor}</span>
+              <li key={a.actor} className="grid grid-cols-[160px_minmax(0,1fr)] items-center gap-2 text-[13px]">
+                <span className="truncate font-medium" title={a.actor}>{a.actor}</span>
                 <Barra pct={a.cambios / maxActor} tono={a.actor === 'Meta' ? 'neutro' : 'acento'} valor={`${num(a.cambios)} · ${num(a.apagados)} apagó · ${num(a.prendidos)} prendió`} alto={8} retraso={80 + i * 40} />
               </li>
             ))}
@@ -53,7 +53,10 @@ export default function BloqueBitacora({ b, retraso = 0 }: { b: { reciente: Resu
                 {r.interruptores.slice(0, 10).map((i) => (
                   <tr key={`${i.objetoTipo}-${i.objetoId}`} className={i.apagados + i.prendidos >= 3 ? 'bg-mal/[0.04]' : ''}>
                     <Celda>
-                      {i.campanaId ? <Link href={`/campanas#campana-${i.campanaId}`} className="font-medium text-acento">{i.nombre.slice(0, 70)}</Link> : <span className="font-medium">{i.nombre.slice(0, 70)}</span>}
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        {i.campanaId ? <Link href={`/campanas#campana-${i.campanaId}`} className="font-medium text-acento decoration-acento underline-offset-2 hover:underline">{i.nombre.slice(0, 70)}</Link> : <span className="font-medium">{i.nombre.slice(0, 70)}</span>}
+                        {i.apagados + i.prendidos >= 3 && <Etiqueta tono="mal" titulo="Tres o más cambios de estado en 14 días: cada uno reinicia el aprendizaje de la campaña">reinicia aprendizaje</Etiqueta>}
+                      </span>
                       <span className="block text-[11px] text-texto-3">{i.objetoTipo === 'campana' ? 'campaña' : 'conjunto'}</span>
                     </Celda>
                     <Celda num tono={i.apagados >= 2 ? 'mal' : undefined}>{num(i.apagados)}</Celda>

@@ -70,7 +70,7 @@ export default async function Competencia() {
                 <p className="text-[14px] text-white">{nombreServicio(e.servicio)}</p>
                 <p className="mt-0.5 text-[11.5px] text-celeste">{ANGULOS[e.angulo]} · nivel {e.nivelConsciencia}: {NIVELES[e.nivelConsciencia]}</p>
                 <p className="mt-1.5 text-[12.5px] leading-snug text-[#EAF2FF]">{e.porQue}</p>
-                <a href={e.verificar} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-[12px] font-medium text-celeste">Verificar en la Biblioteca de anuncios ↗</a>
+                <a href={e.verificar} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-[12px] font-medium text-celeste decoration-celeste underline-offset-2 hover:underline">Verificar en la Biblioteca de anuncios ↗</a>
               </li>
             ))}
           </ol>
@@ -102,7 +102,8 @@ function Galeria({ lista, className = '' }: { lista: AnuncioCompetidor[]; classN
           <div className="flex flex-1 flex-col gap-1 p-3">
             <p className="truncate text-[12.5px] font-medium">{a.nombreAnunciante}</p>
             <p className="line-clamp-2 text-[12px] leading-snug text-texto-2">{a.copy}</p>
-            <div className="mt-auto flex items-center justify-between gap-2 pt-1"><Etiqueta tono="acento">{ANGULOS[a.anguloDetectado]}</Etiqueta><a href={urlAnuncioBiblioteca(a.anuncioId)} target="_blank" rel="noopener noreferrer" className="text-[11.5px] font-medium text-acento" title="Abrir este anuncio en la Biblioteca de anuncios de Meta">Verificar ↗</a></div>
+            {/* el enlace se ve sin pasar el mouse; si no cabe junto al ángulo, baja a una segunda línea */}
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-1"><Etiqueta tono="acento">{ANGULOS[a.anguloDetectado]}</Etiqueta><a href={urlAnuncioBiblioteca(a.anuncioId)} target="_blank" rel="noopener noreferrer" className="shrink-0 whitespace-nowrap rounded-full bg-acento/[0.08] px-2 py-0.5 text-[11.5px] font-medium text-acento ring-1 ring-acento/20 transition hover:bg-acento/[0.14]" title="Abrir este anuncio en la Biblioteca de anuncios de Meta">Verificar ↗</a></div>
           </div>
         </article>
       ))}
@@ -113,7 +114,7 @@ function Galeria({ lista, className = '' }: { lista: AnuncioCompetidor[]; classN
 function Perfiles({ lista, sinCabecera = false }: { lista: PerfilCompetidor[]; sinCabecera?: boolean }) {
   return (
     <Tabla minAncho={560} className={sinCabecera ? '-mt-px' : ''}>
-      {!sinCabecera && <thead><tr><Th>Competidor</Th><Th num>Anuncios activos</Th><Th num>De 60+ días</Th><Th>Ángulo principal</Th><Th>Usa precio</Th><Th>Comprobar</Th></tr></thead>}
+      {!sinCabecera && <thead><tr><Th>Competidor</Th><Th num>Anuncios activos</Th><Th num>De 60+ días</Th><Th>Ángulo principal</Th><Th>Usa precio</Th><Th className="text-right">Comprobar</Th></tr></thead>}
       <tbody>
         {lista.map((p) => (
           <tr key={p.id}>
@@ -122,7 +123,7 @@ function Perfiles({ lista, sinCabecera = false }: { lista: PerfilCompetidor[]; s
             <Celda num tono={p.anuncios60 ? 'acento' : undefined}>{num(p.anuncios60)}</Celda>
             <Celda>{p.angulos[0] ? ANGULOS[p.angulos[0]] : '—'}</Celda>
             <Celda>{p.usaPrecio > 0 ? <Etiqueta tono="ojo">sí</Etiqueta> : <span className="text-texto-3">no</span>}</Celda>
-            <Celda><a href={p.verificar} target="_blank" rel="noopener noreferrer" className="text-[12px] font-medium text-acento">Sus anuncios ↗</a>{p.urlPagina && <> · <a href={p.urlPagina} target="_blank" rel="noopener noreferrer" className="text-[12px] text-texto-2">página</a></>}</Celda>
+            <Celda className="whitespace-nowrap text-right"><a href={p.verificar} target="_blank" rel="noopener noreferrer" className="text-[12px] font-medium text-acento decoration-acento underline-offset-2 hover:underline">Sus anuncios ↗</a>{p.urlPagina && <> · <a href={p.urlPagina} target="_blank" rel="noopener noreferrer" className="text-[12px] text-texto-2 underline-offset-2 hover:underline">página</a></>}</Celda>
           </tr>
         ))}
       </tbody>
