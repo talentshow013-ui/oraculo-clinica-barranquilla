@@ -28,7 +28,6 @@ const MAX_CHIPS = 6
 const recortar = (t: string, n: number) => { const c = Array.from(t); return c.length > n ? c.slice(0, n).join('') + '…' : t }
 /* un texto que el motor ya recortó puede traer media letra al final (un surrogate suelto): se quita antes de pintar, o el servidor y el navegador no coinciden */
 const sinMediaLetra = (t: string) => t.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '')
-const BANDERA: Record<string, string> = { CO: '🇨🇴', US: '🇺🇸' }
 const AVISO_SIN_PUBLICOS = 'Todavía no se ha traído la segmentación de los conjuntos. Se hace en la sincronización (paso «públicos»).'
 
 /**
@@ -113,7 +112,7 @@ export default async function Publicos() {
               {ref.ciudades.map((c, i) => (
                 <article key={c.ciudad} className="pieza entra-zoom flex h-full flex-col p-4" style={{ '--retraso': `${100 + i * 80}ms` } as CSSProperties}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h3 className="text-[17px]"><span aria-hidden="true" className="mr-1.5">{BANDERA[c.pais] ?? ''}</span>{c.ciudad} <span className="text-[12px] font-normal text-texto-3">{c.pais === 'CO' ? 'Colombia' : c.pais === 'US' ? 'Estados Unidos' : c.pais}</span></h3>
+                    <h3 className="flex items-center gap-2 text-[17px]"><Bandera pais={c.pais} />{c.ciudad} <span className="text-[12px] font-normal text-texto-3">{c.pais === 'CO' ? 'Colombia' : c.pais === 'US' ? 'Estados Unidos' : c.pais}</span></h3>
                     <p className="num text-[12px] text-texto-2">{num(c.anunciantes)} anunciantes · {num(c.anuncios)} anuncios · capturado el {fechaCorta(c.capturadoEn)}</p>
                   </div>
                   <ul className="mt-2 flex flex-col gap-1">{c.aprendizajes.map((a) => <li key={a} className="flex gap-2 text-[13px] leading-snug"><span aria-hidden="true" className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full bg-acento" />{a}</li>)}</ul>
@@ -122,7 +121,7 @@ export default async function Publicos() {
                     <Senales titulo="Ángulos" lista={c.angulos} total={c.anuncios} />
                   </div>
                   {c.ganadores.length > 0 && (
-                    <div className="mt-auto pt-3">
+                    <div className="mt-3">
                       <p className="rotulo">Lo que lleva 60+ días al aire</p>
                       <ul className="mt-1.5 flex flex-col gap-1.5">
                         {c.ganadores.slice(0, 4).map((g) => (
@@ -250,8 +249,32 @@ function Segmentacion({ tipo, resumen }: { tipo: TipoPublico; resumen: string })
   return (
     <span className="mt-1 flex flex-wrap gap-1" title={resumen}>
       <span className={`inline-flex max-w-full items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-semibold ring-1 ${CHIP_TIPO[tipo]}`}>{nombreTipo}</span>
-      {visibles.map((x) => <span key={x} className="inline-flex max-w-[220px] items-center truncate rounded-full bg-superficie-2 px-2 py-0.5 text-[10.5px] font-medium text-texto-2 ring-1 ring-borde">{x}</span>)}
+      {visibles.map((x) => <span key={x} className="inline-flex max-w-[220px] items-center rounded-full bg-superficie-2 px-2 py-0.5 text-[10.5px] font-medium text-texto-2 ring-1 ring-borde"><span className="truncate">{x}</span></span>)}
       {ocultas > 0 && <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10.5px] font-medium text-texto-3">+{ocultas}</span>}
     </span>
   )
+}
+
+/**
+ * La bandera junto al nombre de la ciudad. Va en SVG y no como emoji (🇨🇴 / 🇺🇸) porque Windows no
+ * dibuja las banderas: muestra «CO» / «US» en letras chicas. El emoji queda como nombre accesible.
+ */
+function Bandera({ pais }: { pais: string }) {
+  if (pais === 'CO') {
+    return (
+      <svg width="22" height="15" viewBox="0 0 22 15" role="img" aria-label="Colombia 🇨🇴" className="shrink-0 rounded-[3px] ring-1 ring-borde">
+        <rect width="22" height="7.5" fill="#FCD116" /><rect y="7.5" width="22" height="3.75" fill="#003893" /><rect y="11.25" width="22" height="3.75" fill="#CE1126" />
+      </svg>
+    )
+  }
+  if (pais === 'US') {
+    return (
+      <svg width="22" height="15" viewBox="0 0 22 15" role="img" aria-label="Estados Unidos 🇺🇸" className="shrink-0 rounded-[3px] ring-1 ring-borde">
+        <rect width="22" height="15" fill="#fff" />
+        {[0, 2, 4, 6, 8, 10, 12].map((y) => <rect key={y} y={y * 15 / 13} width="22" height={15 / 13} fill="#B22234" />)}
+        <rect width="9" height="8" fill="#3C3B6E" />
+      </svg>
+    )
+  }
+  return <span className="text-[11px] text-texto-3">{pais}</span>
 }
