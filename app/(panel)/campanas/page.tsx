@@ -9,6 +9,8 @@ import { Aviso, Barra, Etiqueta, Miniatura, Panel, Titulo, Vacio, type Tono } fr
 import Ordenable, { type FilaOrdenable } from '@/components/cliente/ordenable'
 import { IrAResultados, SelectorComparar, SelectorPeriodo } from '@/components/cliente/campanas-url'
 import BloqueBitacora from '@/components/bitacora'
+import Link from 'next/link'
+import { rutaAnuncio } from '@/lib/format/rutas'
 
 /**
  * CAMPAÑAS: cada pauta con su cara (al aire, pausada, archivada) en vez de la cuenta sumada, y dos
@@ -184,7 +186,7 @@ function ComoNosFue({ como }: { como: { veredicto: VeredictoCampana; creativos: 
               <li key={k.anuncioId} className="pieza flex gap-3 p-3">
                 <Miniatura url={k.urlMiniatura} tipo={k.formato} alt={`Miniatura de «${k.nombre}»`} className="h-24 w-20 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13.5px] font-medium leading-tight text-texto">{k.nombre}</p>
+                  <p className="text-[13.5px] font-medium leading-tight"><Link href={rutaAnuncio(k.anuncioId)} className="text-acento decoration-acento underline-offset-2 hover:underline" title="Abrir la ficha de este anuncio">{k.nombre}</Link></p>
                   <p className={`mt-1 text-[12.5px] leading-snug ${TEXTO[t]}`}>{k.lectura}</p>
                   <dl className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-texto-2">
                     <div><dt className="inline">Inversión </dt><dd className="num inline text-texto">{cop(k.gasto)}</dd></div>

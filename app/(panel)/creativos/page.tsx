@@ -6,6 +6,8 @@ import { Aviso, Etiqueta, Miniatura, Panel, Titulo, type Tono } from '@/componen
 import Ordenable from '@/components/cliente/ordenable'
 import Cuadrantes from '@/components/graficas/cuadrantes'
 import { ES_INFERIOR, rankingEnPalabras } from '@/lib/adapters/meta.rankings'
+import Link from 'next/link'
+import { rutaAnuncio, urlAnuncioEnMeta } from '@/lib/format/rutas'
 
 const TONO: Record<string, Tono> = { escalar: 'bien', arreglar_gancho: 'ojo', arreglar_oferta: 'acento', matar: 'mal', sin_senal: 'neutro' }
 const PRIMERAS = 20
@@ -29,7 +31,7 @@ export default async function Creativos({ searchParams }: { searchParams: Promis
       puesto: <span className="num font-semibold">{c.puesto}</span>,
       titular: (
         <span className="block max-w-[300px]">
-          <span className="block truncate font-medium">{etiquetaCreativo(c.creativo)}</span>
+          <Link href={rutaAnuncio(c.creativo.anuncioId)} className="block truncate font-medium text-acento decoration-acento underline-offset-2 hover:underline" title="Abrir la ficha de este anuncio">{etiquetaCreativo(c.creativo)}</Link>
           <span className="num block truncate text-[11.5px] text-texto-2">retiene {pct(c.holdRate, 0)} · clics {pct(c.ctrEnlace)} · fatiga {indice(c.fatiga.indice)} · {num(c.diasActivo)} d al aire</span>
           {c.rankingMeta && (
             <span className={`flex items-center gap-1.5 text-[11.5px] ${ES_INFERIOR(c.rankingMeta.interaccion) || ES_INFERIOR(c.rankingMeta.conversion) ? 'text-mal' : 'text-texto-2'}`} title="Cómo lo ve Meta frente a los anuncios que compiten por el mismo público">
@@ -56,7 +58,10 @@ export default async function Creativos({ searchParams }: { searchParams: Promis
               <h2 className="mt-0.5 text-[19px] leading-tight">{etiquetaCreativo(senalado.creativo, 120)}</h2>
               <p className="mt-1 text-[12.5px] text-texto-2">{ANGULOS[senalado.creativo.anguloDetectado]} · {senalado.creativo.formato} · {num(senalado.diasActivo)} días al aire desde {senalado.creativo.fechaPrimerGasto}</p>
             </div>
-            <Etiqueta tono={TONO[senalado.cuadrante]}>{CUADRANTES[senalado.cuadrante].nombre}</Etiqueta>
+            <div className="flex flex-col items-end gap-1.5">
+              <Etiqueta tono={TONO[senalado.cuadrante]}>{CUADRANTES[senalado.cuadrante].nombre}</Etiqueta>
+              <a href={urlAnuncioEnMeta(r.cuenta.id, senalado.creativo.anuncioId)} target="_blank" rel="noopener noreferrer" className="rounded-full bg-marino/[0.06] px-2.5 py-1 text-[12px] font-medium text-marino ring-1 ring-marino/15 transition hover:bg-marino/[0.12]" title="Abrir este anuncio en el administrador de anuncios de Meta">Abrir en Meta ↗</a>
+            </div>
           </div>
           <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
             {[
@@ -82,7 +87,7 @@ export default async function Creativos({ searchParams }: { searchParams: Promis
                   <span className={`num absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full text-[13px] font-semibold ${i === 0 ? 'bg-acento text-white' : 'bg-marino text-white'}`}>{c.puesto}</span>
                 </div>
                 <div className="flex flex-1 flex-col gap-1.5 p-3.5">
-                  <p className={`text-[15px] font-medium leading-tight ${i === 0 ? 'text-white' : ''}`}>{etiquetaCreativo(c.creativo)}</p>
+                  <Link href={rutaAnuncio(c.creativo.anuncioId)} className={`text-[15px] font-medium leading-tight underline-offset-2 hover:underline ${i === 0 ? 'text-white decoration-celeste' : 'text-acento decoration-acento'}`} title="Abrir la ficha de este anuncio">{etiquetaCreativo(c.creativo)}</Link>
                   <Etiqueta tono={TONO[c.cuadrante]}>{CUADRANTES[c.cuadrante].nombre}</Etiqueta>
                   <p className={`num text-[13px] ${i === 0 ? 'text-[#EAF2FF]' : 'text-texto'}`}>{num(c.agregado.resultados)} resultados a {cop(c.costoResultado)}</p>
                   <p className={`num text-[12px] ${i === 0 ? 'text-celeste' : 'text-texto-2'}`}>Inversión {cop(c.agregado.gasto)} · {ANGULOS[c.creativo.anguloDetectado]}</p>
@@ -96,7 +101,7 @@ export default async function Creativos({ searchParams }: { searchParams: Promis
       <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-12">
         <Panel tono="marina" rotulo="Fatiga · fórmula visible" titulo="Cómo se calcula" className="lg:col-span-7">
           <p className="text-[13px] leading-snug text-[#EAF2FF]">{r.creativos[0]?.fatiga.formulaVisible}. Una caída de clics con frecuencia estable es ruido; con la frecuencia subiendo es agotamiento real. De 0 a 1.</p>
-          {[...r.creativos].filter((c) => (c.fatiga.indice ?? 0) >= 0.6).sort((a, b) => b.agregado.gasto - a.agregado.gasto).slice(0, 6).map((c) => <p key={c.creativo.id} className="mt-2 rounded-[12px] bg-mal/20 px-3 py-2 text-[13px] text-white ring-1 ring-mal/40">«{etiquetaCreativo(c.creativo)}» va en {indice(c.fatiga.indice)}: le quedan ~{num(c.vidaUtilDias)} días. Ten el siguiente listo.</p>)}
+          {[...r.creativos].filter((c) => (c.fatiga.indice ?? 0) >= 0.6).sort((a, b) => b.agregado.gasto - a.agregado.gasto).slice(0, 6).map((c) => <p key={c.creativo.id} className="mt-2 rounded-[12px] bg-mal/20 px-3 py-2 text-[13px] text-white ring-1 ring-mal/40">«<Link href={rutaAnuncio(c.creativo.anuncioId)} className="font-medium underline decoration-celeste underline-offset-2">{etiquetaCreativo(c.creativo)}</Link>» va en {indice(c.fatiga.indice)}: le quedan ~{num(c.vidaUtilDias)} días. Ten el siguiente listo.</p>)}
         </Panel>
         <Aviso tono="neutro" className="lg:col-span-5">«Esperar señal» no es un caso borde: con menos de 40.000 impresiones o 12 resultados no se decide. Matar un creativo bueno por ruido cuesta más que esperar tres días.</Aviso>
       </div>

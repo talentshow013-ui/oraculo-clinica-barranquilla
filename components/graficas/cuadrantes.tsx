@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import type { EvaluacionCreativo } from '@/lib/tipos'
 import { CUADRANTES, etiquetaCreativo } from '@/lib/format/etiquetas'
 import { cop, pct } from '@/lib/format'
+import { rutaAnuncio } from '@/lib/format/rutas'
 
 /**
  * MATRIZ DE CUADRANTES: gancho (se detienen) en X, costo por resultado en Y (invertido: arriba
@@ -41,11 +42,11 @@ export default function Cuadrantes({ creativos, numeros, umbralGancho = 0.26, um
         const r = 7 + Math.sqrt(c.agregado.gasto / gMax) * 20
         const sin = c.cuadrante === 'sin_senal'
         return (
-          <g key={c.creativo.id} className="entra-zoom" style={{ '--retraso': `${200 + i * 60}ms`, transformOrigin: `${cx}px ${cy}px` } as CSSProperties}>
+          <a key={c.creativo.id} href={rutaAnuncio(c.creativo.anuncioId)} className="entra-zoom cursor-pointer" style={{ '--retraso': `${200 + i * 60}ms`, transformOrigin: `${cx}px ${cy}px` } as CSSProperties}>
             <circle cx={cx} cy={cy} r={r} fill={sin ? 'transparent' : COLOR[c.cuadrante]} fillOpacity={sin ? 0 : 0.85} stroke={COLOR[c.cuadrante]} strokeWidth={sin ? 1.5 : 0} strokeDasharray={sin ? '3 3' : undefined} />
             <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={sin ? '#6B7689' : '#fff'} className="num">{numeros?.get(c.creativo.id) ?? c.puesto ?? c.creativo.id.replace('cr_', '')}</text>
             <title>{`${etiquetaCreativo(c.creativo)} · ${c.hookRate == null ? `sin video: tasa de clics ${pct(c.ctrEnlace, 2)} como gancho` : `gancho ${pct(c.hookRate)}`} · costo ${cop(c.costoResultado)} · inversión ${cop(c.agregado.gasto)} · ${CUADRANTES[c.cuadrante].nombre}`}</title>
-          </g>
+          </a>
         )
       })}
     </svg>

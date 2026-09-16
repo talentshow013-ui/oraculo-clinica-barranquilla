@@ -5,6 +5,7 @@ import type { Umbral } from "@/config/benchmarks";
 import type { Rango } from "@/lib/adapters/types";
 import type { Evidencia, FuenteHallazgo } from "@/lib/diagnostics/engine";
 import { cop, num, pct, ratio, VACIO } from "@/lib/format";
+import { rutaAnuncio } from "@/lib/format/rutas";
 
 export const ev = (etiqueta: string, valor: string, enlace?: string): Evidencia => (enlace ? { etiqueta, valor, enlace } : { etiqueta, valor });
 export const evPct = (etiqueta: string, v: number | null, enlace?: string) => ev(etiqueta, pct(v), enlace);
@@ -63,7 +64,7 @@ export function rangoDesglose(filas: ReadonlyArray<{ fecha: string }>, respaldo:
 
 /** Rutas del panel a las que apunta la evidencia. Cambiarlas aquí cambia todos los hallazgos. */
 export const RUTA = {
-  anuncio: (anuncioId: string) => `/creativos?anuncio=${encodeURIComponent(anuncioId)}#anuncio-${anuncioId}`,
+  anuncio: rutaAnuncio,
   creativos: "/creativos",
   campana: (campanaId: string) => `/campanas#campana-${campanaId}`,
   campanas: "/campanas",

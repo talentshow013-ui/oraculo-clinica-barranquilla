@@ -6,6 +6,8 @@ import type { Angulo } from '@/lib/tipos'
 import { Etiqueta, Miniatura, Panel, Titulo } from '@/components/ui'
 import Plegable from '@/components/cliente/plegable'
 import { urlAnuncioBiblioteca } from '@/lib/competitive/enlaces'
+import Link from 'next/link'
+import { rutaAnuncio } from '@/lib/format/rutas'
 
 const TONO = { escalar: 'bien', arreglar_gancho: 'ojo', arreglar_oferta: 'acento', matar: 'mal', sin_senal: 'neutro' } as const
 
@@ -31,7 +33,7 @@ export default async function Biblioteca() {
                   <p className={`rotulo ${marina ? 'text-celeste' : ''}`}><span className="num">#{c.puesto}</span> · {ANGULOS[c.creativo.anguloDetectado]}</p>
                   <Etiqueta tono={TONO[c.cuadrante]}>{CUADRANTES[c.cuadrante].nombre}</Etiqueta>
                 </div>
-                <h3 className={`mt-1.5 text-[17px] ${marina ? 'text-white' : ''}`}>{etiquetaCreativo(c.creativo)}</h3>
+                <h3 className={`mt-1.5 text-[17px] ${marina ? 'text-white' : ''}`}><Link href={rutaAnuncio(c.creativo.anuncioId)} className={`underline-offset-2 hover:underline ${marina ? 'decoration-celeste' : 'text-acento decoration-acento'}`} title="Abrir la ficha de este anuncio">{etiquetaCreativo(c.creativo)}</Link></h3>
                 {largo ? (
                   <Plegable className="mt-1.5" cabecera={<p className={`line-clamp-4 text-[13.5px] leading-snug ${marina ? 'text-[#EAF2FF]' : ''}`}>«{c.creativo.copyPrincipal}»</p>}>
                     <p className={`mt-1 text-[13.5px] leading-snug ${marina ? 'text-[#EAF2FF]' : ''}`}>«{c.creativo.copyPrincipal}»</p>
