@@ -20,6 +20,7 @@ no está, se dice que no está (`null` → «—»). Cero jerga técnica en text
 - `/oraculo-sincronizar` — trae campañas (Meta), agenda y radar a `datos/lote.json`.
 - `/oraculo-semana` — informe semanal de dirección desde `npm run verificar -- --json`.
 - `/oraculo-pregunta <pregunta>` — responde con dato, regla y alternativa; discrepa con evidencia.
+- `npm run organico:sincronizar` — trae Instagram y Facebook orgánico a `datos/organico.json` (lo corre el reloj diario).
 
 ## Comandos npm
 `npm run seed` (demo) · `npm run verificar` (motor sin interfaz) · `npm run validar-lote` ·
@@ -37,7 +38,11 @@ calibrar y las cuentas publicitarias. Docs en `docs/` (`CONEXION_MCP.md` es inte
 - TDD en `lib/`: test primero, rojo, verde. 286 tests deben seguir verdes.
 - Ventanas iguales al comparar periodos; fechas siempre `America/Bogota` (`lib/format/fechas.ts`).
 - Privacidad por esquema: jamás un campo de paciente; k-anonimato k = 5.
-- Producción: VPS Ubuntu siempre encendida con Claude Code + reloj diario (`deploy/oraculo-diario.sh`) + panel con candado (`middleware.ts`, `ORACULO_USUARIO/CLAVE`). Constitución 1.1.0.
+- Producción: VPS Ubuntu siempre encendida con Claude Code + reloj diario (`deploy/oraculo-diario.sh`) + panel con candado (`middleware.ts`, `ORACULO_USUARIO/CLAVE`). Constitución 1.2.0.
 - Conexiones: solo MCP oficiales desde Claude Code (Meta `https://mcp.facebook.com/ads`, Apify
-  `https://mcp.apify.com`). Sin API propia, sin tokens en archivos. Ver `docs/CONEXION_MCP.md`.
+  `https://mcp.apify.com`). Sin API propia, sin tokens en el repositorio. Ver `docs/CONEXION_MCP.md`.
+  Excepción: el **orgánico** (Instagram y Facebook sin pauta) va directo a la Graph API de Meta con
+  un token de página que vive solo en `.env` (`npm run organico:conectar`, luego
+  `npm run organico:sincronizar`; ver `docs/CONEXION_ORGANICO.md`). Pantalla `/organico`, motor en
+  `lib/organico/`, archivo `datos/organico.json` (gitignored). Constitución 1.2.0.
 - Al terminar cualquier cambio: `npm run typecheck && npm test && npm run build`.

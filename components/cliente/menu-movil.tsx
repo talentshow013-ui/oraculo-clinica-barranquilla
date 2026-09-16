@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 
-const RUTAS = [['/panel', 'Centro de mando'], ['/diagnostico', 'Diagnóstico'], ['/oportunidades', 'Oportunidades'], ['/embudo', 'Embudo'], ['/rendimiento', 'Rendimiento'], ['/campanas', 'Campañas'], ['/creativos', 'Creativos'], ['/audiencias', 'Audiencias'], ['/publicos', 'Públicos'], ['/competencia', 'Radar de mercado'], ['/biblioteca', 'Copys exitosos'], ['/consejo', 'Mesa de consultores'], ['/metricas', 'Catálogo de métricas'], ['/informe', 'Informe'], ['/fuentes', 'Fuentes']]
+const RUTAS = [['/panel', 'Centro de mando'], ['/diagnostico', 'Diagnóstico'], ['/oportunidades', 'Oportunidades'], ['/embudo', 'Embudo'], ['/rendimiento', 'Rendimiento'], ['/campanas', 'Campañas'], ['/creativos', 'Creativos'], ['/audiencias', 'Audiencias'], ['/publicos', 'Públicos'], ['/organico', 'Orgánico'], ['/competencia', 'Radar de mercado'], ['/biblioteca', 'Copys exitosos'], ['/consejo', 'Mesa de consultores'], ['/metricas', 'Catálogo de métricas'], ['/informe', 'Informe'], ['/fuentes', 'Fuentes']]
 
 /** En pantallas sin riel (tablet, celular), el menú vive en un botón. */
 export default function MenuMovil() {

@@ -452,3 +452,78 @@ export interface FuenteDatos {
   obtener(rango: Rango): Promise<LoteDatos>;
   estado(): Promise<EstadoFuente[]>;
 }
+
+// ---------------------------------------------------------------------------
+// Orgánico — lo que la clínica publica sin pagar en Instagram y Facebook
+// (archivo aparte: datos/organico.json; la pauta no se toca)
+// ---------------------------------------------------------------------------
+
+export const REDES_ORGANICO = ["instagram", "facebook"] as const;
+export type RedOrganico = (typeof REDES_ORGANICO)[number];
+export const FORMATOS_ORGANICO = ["reel", "video", "imagen", "carrusel", "historia", "texto", "enlace"] as const;
+export type FormatoOrganico = (typeof FORMATOS_ORGANICO)[number];
+
+/** Una publicación con lo que Meta entrega de ella. `null` = la métrica no existe para ese formato o Meta la retiró. */
+export const PublicacionOrganicaSchema = z.object({
+  id: z.string().min(1),
+  red: z.enum(REDES_ORGANICO),
+  formato: z.enum(FORMATOS_ORGANICO),
+  /** Fecha y hora de publicación en Bogotá (YYYY-MM-DDTHH:mm). */
+  publicadoEn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "fecha YYYY-MM-DDTHH:mm"),
+  /** Primeras líneas del texto de la publicación (público). */
+  texto: z.string(),
+  enlace: z.string(),
+  urlMiniatura: textoNullable,
+  alcance: noNegativoNullable,
+  vistas: noNegativoNullable,
+  meGusta: noNegativoNullable,
+  comentarios: noNegativoNullable,
+  compartidos: noNegativoNullable,
+  guardados: noNegativoNullable,
+  interacciones: noNegativoNullable,
+  visitasPerfil: noNegativoNullable,
+  seguidoresGanados: noNegativoNullable,
+  clics: noNegativoNullable,
+  /** Reels: segundos promedio de reproducción. */
+  segundosPromedio: noNegativoNullable,
+  /** Historias: respuestas. */
+  respuestas: noNegativoNullable,
+});
+export type PublicacionOrganica = z.infer<typeof PublicacionOrganicaSchema>;
+
+export const CuentaOrganicaSchema = z.object({
+  red: z.enum(REDES_ORGANICO),
+  id: z.string().min(1),
+  /** Usuario de Instagram o nombre de la página (entidad pública, no persona). */
+  alias: z.string(),
+  seguidores: noNegativoNullable,
+  publicaciones: noNegativoNullable,
+});
+export type CuentaOrganica = z.infer<typeof CuentaOrganicaSchema>;
+
+/** Un día de una cuenta: lo que Meta da por día (seguidores nuevos, alcance, vistas, interacciones). */
+export const DiaOrganicoSchema = z.object({
+  red: z.enum(REDES_ORGANICO),
+  fecha: FechaSchema,
+  seguidoresNuevos: noNegativoNullable,
+  seguidoresTotal: noNegativoNullable,
+  alcance: noNegativoNullable,
+  vistas: noNegativoNullable,
+  interacciones: noNegativoNullable,
+});
+export type DiaOrganico = z.infer<typeof DiaOrganicoSchema>;
+
+export const LoteOrganicoSchema = z.object({
+  cuentas: z.array(CuentaOrganicaSchema),
+  publicaciones: z.array(PublicacionOrganicaSchema),
+  dias: z.array(DiaOrganicoSchema),
+  meta: z.object({
+    capturadoEn: z.string(),
+    desde: FechaSchema,
+    hasta: FechaSchema,
+    origen: z.literal("graph"),
+    /** Métricas que Meta no entregó (retiradas o sin permiso), en lenguaje de cliente. */
+    avisos: z.array(z.string()),
+  }),
+});
+export type LoteOrganico = z.infer<typeof LoteOrganicoSchema>;

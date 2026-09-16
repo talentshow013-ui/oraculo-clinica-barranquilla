@@ -17,3 +17,5 @@ datos/resultados.json
 datos/crudo/
 entregables/
 datos/referencias/
+# orgánico (Instagram/Facebook) de la clínica: datos reales, fuera del repositorio
+datos/organico.json

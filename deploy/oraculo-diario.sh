@@ -33,6 +33,13 @@ else
   echo "aviso: Claude Code no está instalado en esta máquina; no se sincronizó"
 fi
 
+# 2b) Orgánico (Instagram y Facebook sin pauta): directo a Meta con el token de página del .env
+if grep -q '^META_ORGANICO_TOKEN=.\+' .env 2>/dev/null; then
+  if npm run -s organico:sincronizar >"reportes/organico-$HOY.log" 2>&1; then echo "orgánico: ok"; else echo "orgánico: FALLÓ (ver reportes/organico-$HOY.log)"; fi
+else
+  echo "orgánico: sin conectar (npm run organico:conectar -- <token>)"
+fi
+
 # 3) Validar y correr el motor
 if npm run -s validar-lote; then echo "lote: válido"; else echo "lote: INVÁLIDO — el panel sigue con el anterior"; fi
 if npm run -s verificar -- --json >"reportes/ultimo.json" 2>/dev/null; then echo "motor: ok"; else echo "motor: FALLÓ"; fi
@@ -48,4 +55,5 @@ fi
 
 # Limpieza: conservar 60 días de registros
 find reportes -name 'sincronizacion-*.md' -mtime +60 -delete 2>/dev/null
+find reportes -name 'organico-*.log' -mtime +60 -delete 2>/dev/null
 echo "=== $(date '+%F %T') · fin"

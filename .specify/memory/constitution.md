@@ -1,5 +1,6 @@
 <!--
 Sync Impact Report
+- Version change: 1.1.0 → 1.2.0 (2026-09-16): Principio II admite el token de página del orgánico en `.env`
 - Version change: (template) → 1.0.0
 - Modified principles: n/a (initial ratification)
 - Added sections: Core Principles (I–X), Restricciones de Stack y Despliegue, Flujo de Desarrollo y Puertas de Calidad, Governance
@@ -23,10 +24,14 @@ Zod que usará la fuente real. Conectar la fuente real NO DEBE tocar ningún com
 Un campo obligatorio no se vuelve opcional para "arreglar" un seed: se arregla el seed.
 
 ### II. Cero API propia
-No se desarrollan wrappers de plataformas ni se pasan revisiones de app. Los datos reales entran
+No se desarrollan wrappers de plataformas ni se pasan revisiones de app. Los datos de pauta entran
 por conectores MCP oficiales (Meta, TikTok, Apify) invocados desde Claude Code, que escribe un
-lote validado en `datos/lote.json`. No se guardan credenciales de largo plazo en el repositorio;
-`.env` está en `.gitignore` y `.env.example` documenta lo configurable.
+lote validado en `datos/lote.json`. **Excepción acotada (enmienda 1.2.0):** el orgánico (Instagram y
+Facebook sin pauta) no existe en el conector de anuncios, así que se lee directo de la Graph API de
+Meta con un token DE PÁGINA de la app propia de la clínica, en modo desarrollo (sin revisión de app,
+solo páginas propias). Ese token vive únicamente en el `.env` de la máquina (VPS o PC), nunca en el
+repositorio, y se escribe con `npm run organico:conectar`. No se guardan credenciales de largo plazo
+en el repositorio; `.env` está en `.gitignore` y `.env.example` documenta lo configurable.
 
 ### III. `null` no es `0`
 Si una fuente no entrega un dato, el valor es `null` y la UI muestra `—`. "No hubo" y "no
@@ -83,7 +88,8 @@ encontrar los patrones plantados en el seed.
   Windows para desarrollo y demostración (`instalar.ps1`). El análisis narrativo lo ejecuta Claude
   Code con la suscripción del cliente. Sin backend propio, sin base de datos, sin API propia.
 - Las credenciales de los conectores las guarda Claude Code en su propio perfil de la máquina
-  (OAuth), nunca el repositorio ni un archivo del proyecto. En internet el panel exige usuario y
+  (OAuth), nunca el repositorio ni un archivo del proyecto. La única credencial en archivo es el
+  token de página del orgánico, en `.env` (Principio II). En internet el panel exige usuario y
   clave (`ORACULO_USUARIO`/`ORACULO_CLAVE`) y, delante, Cloudflare Access; los datos del lote no
   contienen pacientes (Principio VI) y aun así nunca se sirven sin candado.
 - Idioma de todo lo visible: español (Colombia). Pesos sin decimales, formato `es-CO`,
@@ -109,7 +115,7 @@ principios; MINOR: principio o sección nueva; PATCH: aclaraciones) y fecha. Tod
 código y cada `/speckit-plan` verifican cumplimiento; la complejidad adicional debe
 justificarse por escrito en el plan.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
+**Version**: 1.2.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-16
 
 Enmienda 1.1.0 (2026-09-13): despliegue en VPS siempre encendida con Claude Code y reloj diario
 (sección "Restricciones de Stack y Despliegue"); candado del panel en internet. Los principios I–X

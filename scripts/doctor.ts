@@ -41,6 +41,15 @@ if (fuente === "archivo") {
 if (hay("datos/experimentos.json")) ok("Memoria de experimentos: datos/experimentos.json");
 else opcional("Sin datos/experimentos.json", 'crea el archivo con "[]" (instalar.ps1 lo hace)');
 
+// Orgánico (Instagram y Facebook sin pauta)
+const envTexto = hay(".env") ? readFileSync(resolve(raiz, ".env"), "utf8") : "";
+if (/^META_ORGANICO_TOKEN=.+$/m.test(envTexto)) {
+  if (hay("datos/organico.json")) ok("Orgánico conectado y con datos: datos/organico.json");
+  else opcional("Orgánico conectado pero sin datos todavía", "npm run organico:sincronizar -- --dias 90");
+} else {
+  opcional("Orgánico (Instagram y Facebook) sin conectar", "npm run organico:conectar -- <token>  (docs/CONEXION_ORGANICO.md)");
+}
+
 // Radar
 let chromium = false;
 try {

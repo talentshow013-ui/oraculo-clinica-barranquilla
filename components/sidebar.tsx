@@ -2,11 +2,24 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
+import SelectorModo, { modoDeRuta } from './cliente/selector-modo'
 
 const t = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 const I = (d: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24" {...t} aria-hidden="true">{d}</svg>
 
 /** Cuatro grupos, como pide el prompt: decidir · entender · mercado · confiar. */
+/** En modo Orgánico el riel muestra solo sus bloques (anclas de /organico). */
+const GRUPOS_ORGANICO: { titulo: string; rutas: { a: string; nombre: string; icono: ReactNode }[] }[] = [
+  { titulo: 'Orgánico', rutas: [
+    { a: '/organico', nombre: 'Resumen', icono: I(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /></>) },
+    { a: '/organico#para-pauta', nombre: 'Qué merece pauta', icono: I(<><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /></>) },
+    { a: '/organico#mejores', nombre: 'Mejores publicaciones', icono: I(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M10 9l5 3-5 3z" /></>) },
+    { a: '/organico#formatos', nombre: 'Formatos y horarios', icono: I(<><path d="M4 19V10M10 19V5M16 19v-8M22 19H2" /></>) },
+    { a: '/organico#seguidores', nombre: 'Seguidores', icono: I(<><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.4" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 18a4 4 0 0 1 7 0" /></>) },
+    { a: '/organico#fuente', nombre: 'Fuente', icono: I(<><ellipse cx="12" cy="6" rx="8" ry="3" /><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6" /></>) },
+  ] },
+]
+
 const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: ReactNode }[] }[] = [
   { titulo: 'Decidir', rutas: [
     { a: '/panel', nombre: 'Centro de mando', icono: I(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /><path d="M12 4v3M12 17v3M4 12h3M17 12h3" /></>) },
@@ -35,6 +48,7 @@ const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: React
 
 export default function Sidebar({ cliente, sede }: { cliente: string; sede: string }) {
   const ruta = usePathname()
+  const grupos = modoDeRuta(ruta) === 'organico' ? GRUPOS_ORGANICO : GRUPOS
   return (
     <aside className="no-imprimir sticky top-0 hidden h-[100svh] w-[232px] shrink-0 flex-col bg-marino text-[#EAF2FF] lg:flex" aria-label="Secciones">
       <div className="flex items-center gap-2.5 px-4 pb-4 pt-5">
@@ -46,12 +60,13 @@ export default function Sidebar({ cliente, sede }: { cliente: string; sede: stri
           <span className="block text-[11.5px] text-celeste">{cliente} · {sede.split(',')[0]}</span>
         </span>
       </div>
+      <div className="px-4 pb-3"><SelectorModo /></div>
       <nav className="sin-barra flex-1 overflow-y-auto px-2.5 pb-4">
-        {GRUPOS.map((g) => (
+        {grupos.map((g) => (
           <div key={g.titulo} className="mb-3">
             <p className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-celeste/70">{g.titulo}</p>
             {g.rutas.map((x) => {
-              const activo = ruta === x.a || ruta.startsWith(x.a + '/')
+              const activo = x.a.includes('#') ? false : ruta === x.a || ruta.startsWith(x.a + '/')
               return (
                 <Link key={x.a} href={x.a} aria-current={activo ? 'page' : undefined} className={`group relative mb-0.5 flex items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-[13px] transition-colors ${activo ? 'bg-white text-marino' : 'text-[#EAF2FF]/85 hover:bg-white/10 hover:text-white'}`}>
                   <span className={`absolute -left-2.5 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-acento transition-transform ${activo ? 'scale-y-100' : 'scale-y-0'}`} aria-hidden="true" />

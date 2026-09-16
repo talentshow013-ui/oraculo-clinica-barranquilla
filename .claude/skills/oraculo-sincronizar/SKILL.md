@@ -146,6 +146,17 @@ personalizados/similares, Advantage+) y las métricas agregadas del rango. Guard
 `datos/crudo/act_<cuenta>__publico__1.json` **agregando** `"capturado"`, `"desde"` y `"hasta"`
 (YYYY-MM-DD) al JSON. Alimenta la pestaña Públicos (ganadores, grupos y sugerencias).
 
+## Paso 3e — Orgánico (Instagram y Facebook sin pauta)
+
+No pasa por el conector de anuncios: va directo a Meta con el token de página del `.env`
+(`META_ORGANICO_TOKEN`, `META_PAGINA_ID`, `META_INSTAGRAM_ID`; los deja `npm run organico:conectar`).
+
+1. Si el `.env` tiene `META_ORGANICO_TOKEN`: `npm run organico:sincronizar` (últimos 30 días,
+   incremental; la primera vez `-- --dias 90`). Escribe `datos/organico.json`.
+2. Si no lo tiene: no inventes nada; reporta «orgánico sin conectar» y sigue. La guía para
+   conectarlo está en `docs/CONEXION_ORGANICO.md`.
+3. Lee los avisos que imprime (métricas que Meta no entregó) y repítelos en el reporte final.
+
 ## Paso 6b — Referencias de otras ciudades (opcional, mensual)
 
 Capturas de la Biblioteca de anuncios de otros mercados, a `datos/referencias/` (no al radar):

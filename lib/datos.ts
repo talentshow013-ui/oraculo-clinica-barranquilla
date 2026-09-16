@@ -33,6 +33,8 @@ import { compararVarias, creativosDeCampana, veredictoCampana, type ComparacionV
 import { construirComparativa, type Comparativa } from "@/lib/metrics/comparativa";
 import { resumirBitacora, type ResumenBitacora } from "@/lib/metrics/bitacora";
 import { cargarReferencias } from "@/lib/adapters/referencias.adapter";
+import { cargarOrganico } from "@/lib/adapters/organico.archivo";
+import { analizarOrganico, type ResultadoOrganico } from "@/lib/organico";
 import { estudiarReferencias, type EstudioReferencias } from "@/lib/audiences/referencias";
 import { analizarPublicos, type ResultadoPublicos } from "@/lib/audiences";
 
@@ -155,6 +157,8 @@ export interface ResultadoMotor {
   publicos: ResultadoPublicos;
   /** Referencias de otros mercados (Cartagena, Santa Marta, Medellín, Miami…) desde la Biblioteca de anuncios. */
   referencias: EstudioReferencias;
+  /** Orgánico: lo que la clínica publica sin pagar en Instagram y Facebook, recortado al periodo. */
+  organico: ResultadoOrganico;
   /** Periodo analizado: el elegido con el calendario (cookies desde/hasta) o todo el lote; minimo/maximo = lo que hay. */
   periodo: PeriodoElegido;
   privacidad: { segmentosOcultos: number; k: number; AVISO_PANEL: string };
@@ -438,6 +442,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     periodo,
     publicos: analizarPublicos(loteMotor.publicos ?? [], b),
     referencias: estudiarReferencias(cargarReferencias(), hoy, cfg.radar),
+    organico: analizarOrganico(lote ? null : cargarOrganico(), { desde: periodo.desde, hasta: periodo.hasta }, hoy),
     bitacora: loteMotor.bitacora?.length ? { reciente: resumirBitacora(loteMotor.bitacora, ctx.ventanas.reciente), periodo: resumirBitacora(loteMotor.bitacora, ctx.rango) } : null,
     comparativa: construirComparativa(ctx.nivelBase === "anuncio" ? ctx.filasAnuncio : ctx.nivelBase === "conjunto" ? ctx.filasConjunto : ctx.filasCampana, ctx.ventanas, loteMotor.rankings ?? []),
     maestras,
