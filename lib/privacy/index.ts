@@ -68,6 +68,8 @@ const PROHIBIDOS_NORMALIZADOS = new Set(CAMPOS_PROHIBIDOS.map(normalizar));
 const RUTAS_PERMITIDAS: ReadonlyArray<RegExp> = [
   /^(insights|desgloses)\[\d+\]\.nombre$/,
   /^competidores\[\d+\]\.nombre$/,
+  /^rankings\[\d+\]\.nombre$/,
+  /^bitacora\[\d+\]\.(objetoNombre|actor)$/,
 ];
 
 /**

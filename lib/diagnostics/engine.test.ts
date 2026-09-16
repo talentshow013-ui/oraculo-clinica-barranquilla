@@ -26,6 +26,7 @@ function hallazgo(id: string, plata: number | null): Hallazgo {
     acciones: ["hacer algo"],
     plataEnRiesgo: plata,
     metricas: [],
+    fuente: { origen: "prueba", desde: "2026-08-01", hasta: "2026-09-12", registros: 1, metodo: "fijado a mano para la prueba", enlace: "/rendimiento" },
   };
 }
 

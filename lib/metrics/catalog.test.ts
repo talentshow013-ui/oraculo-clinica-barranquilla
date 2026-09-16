@@ -9,16 +9,16 @@ const CONTEOS: Record<string, number> = {
   mensajeria: 7,
   conversion: 15,
   negocio: 17,
-  creativo: 12,
+  creativo: 15,
   audiencia: 11,
   competencia: 13,
   salud_cuenta: 9,
-  operacion: 7,
+  operacion: 9,
 };
 
 describe("catálogo de métricas", () => {
-  test("hay exactamente 145 métricas", () => {
-    expect(CATALOGO).toHaveLength(145);
+  test("hay exactamente 150 métricas (145 del diseño + 3 rankings de Meta + 2 de bitácora)", () => {
+    expect(CATALOGO).toHaveLength(150);
   });
 
   test("12 familias con el conteo objetivo", () => {

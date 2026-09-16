@@ -10,7 +10,7 @@ describe("correrMotor sobre el seed — encuentra los patrones plantados", () =>
     const r = await correrMotor(lote);
     expect(r.erroresReglas).toEqual([]);
     expect(r.embudo).toHaveLength(8);
-    expect(r.catalogo).toHaveLength(145);
+    expect(r.catalogo).toHaveLength(150);
     expect(r.lentes).toHaveLength(7);
     expect(r.creativos.length).toBeGreaterThanOrEqual(3); // solo los de la cuenta principal
     expect(r.oportunidades.length).toBeGreaterThan(3);

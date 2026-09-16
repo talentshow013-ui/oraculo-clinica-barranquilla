@@ -5,6 +5,7 @@ import { ANGULOS, CUADRANTES, etiquetaCreativo } from '@/lib/format/etiquetas'
 import type { Angulo } from '@/lib/tipos'
 import { Etiqueta, Miniatura, Panel, Titulo } from '@/components/ui'
 import Plegable from '@/components/cliente/plegable'
+import { urlAnuncioBiblioteca } from '@/lib/competitive/enlaces'
 
 const TONO = { escalar: 'bien', arreglar_gancho: 'ojo', arreglar_oferta: 'acento', matar: 'mal', sin_senal: 'neutro' } as const
 
@@ -55,7 +56,7 @@ export default async function Biblioteca() {
                     <li key={a.anuncioId} className="grid grid-cols-[56px_1fr] gap-3 rounded-[14px] bg-superficie-2/70 p-2.5">
                       <Miniatura url={a.urlMedia} tipo={a.tipoMedia} alt={`Anuncio de ${a.nombreAnunciante}`} className="aspect-square" />
                       <div className="min-w-0">
-                        <p className="flex flex-wrap items-center gap-x-2 text-[12.5px]"><span className="font-medium">{a.nombreAnunciante}</span><span className="num text-texto-2">{a.diasCorriendo} días · ×{a.variantesDelConcepto}</span></p>
+                        <p className="flex flex-wrap items-center gap-x-2 text-[12.5px]"><span className="font-medium">{a.nombreAnunciante}</span><span className="num text-texto-2">{a.diasCorriendo} días · ×{a.variantesDelConcepto}</span><a href={urlAnuncioBiblioteca(a.anuncioId)} target="_blank" rel="noopener noreferrer" className="font-medium text-acento" title="Abrir en la Biblioteca de anuncios de Meta">Verificar ↗</a></p>
                         <p className="mt-0.5 line-clamp-4 text-[12.5px] leading-snug text-texto-2">«{a.copy}»</p>
                         <p className="mt-0.5 text-[12px] leading-snug text-texto-3">Estructura: {[a.usaProfesional && 'médico visible', a.usaTestimonio && 'testimonio', a.usaPrecio && 'precio a la vista', a.usaUrgencia && 'urgencia', a.usaGarantia && 'garantía'].filter(Boolean).join(' + ') || 'mensaje directo'} → botón «{a.cta ?? 'sin botón'}»</p>
                       </div>

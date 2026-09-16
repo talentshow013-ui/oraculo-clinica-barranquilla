@@ -6,7 +6,7 @@ import { useMemo, useState, type ReactNode } from 'react'
  * valores crudos (para ordenar): `null` va siempre al final, nunca se trata como 0.
  */
 export type FilaOrdenable = { clave: string; crudo: Record<string, number | string | null>; celdas: Record<string, ReactNode> }
-export default function Ordenable({ columnas, filas, inicial, desc = true, mostrar, minAncho = 640 }: { columnas: { id: string; nombre: string; num?: boolean; ancho?: string }[]; filas: FilaOrdenable[]; inicial?: string; desc?: boolean; /** enseña las primeras N y un botón «Ver los M» */ mostrar?: number; minAncho?: number }) {
+export default function Ordenable({ columnas, filas, inicial, desc = true, mostrar, minAncho = 640, prefijoId }: { columnas: { id: string; nombre: string; num?: boolean; ancho?: string }[]; filas: FilaOrdenable[]; inicial?: string; desc?: boolean; /** enseña las primeras N y un botón «Ver los M» */ mostrar?: number; minAncho?: number; /** cada fila recibe id=`${prefijoId}-${clave}` para que un hallazgo pueda enlazarla */ prefijoId?: string }) {
   const [orden, setOrden] = useState<{ id: string; desc: boolean }>({ id: inicial ?? columnas[0]!.id, desc })
   const [todas, setTodas] = useState(false)
   const lista = useMemo(() => {
@@ -39,7 +39,7 @@ export default function Ordenable({ columnas, filas, inicial, desc = true, mostr
         </thead>
         <tbody>
           {(mostrar && !todas ? lista.slice(0, mostrar) : lista).map((f) => (
-            <tr key={f.clave} className="transition-colors hover:bg-superficie-2/60">
+            <tr key={f.clave} id={prefijoId ? `${prefijoId}-${f.clave}` : undefined} className="scroll-mt-4 transition-colors hover:bg-superficie-2/60 target:bg-acento/10 target:ring-2 target:ring-acento">
               {columnas.map((c) => <td key={c.id} className={`border-b border-borde/70 py-2 pr-2 align-middle ${c.num ? 'num text-right' : ''}`}>{f.celdas[c.id] ?? '—'}</td>)}
             </tr>
           ))}

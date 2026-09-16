@@ -38,8 +38,9 @@ claude mcp add --transport http meta_ads https://mcp.facebook.com/ads
 | `ads_get_ad_entities` | campañas/conjuntos/anuncios con gasto, impresiones, clics, resultados; filtros, desgloses y rangos → `InsightRow`, `BreakdownRow` |
 | `ads_insights_performance_trend` | evolución de costo por clic, por mil, por resultado, retorno, tasa de clics → contraste con `serie` |
 | `ads_insights_anomaly_signal` | patrones inusuales → señal complementaria, **nunca sustituto del motor** |
-| `ads_insights_auction_ranking_benchmarks` | posición en subasta → contexto para R02 |
-| `ads_insights_industry_benchmark` | comparación con anunciantes similares → calibrar umbrales iniciales (declarando origen) |
+| `ads_insights_auction_ranking_benchmarks` | ranking de cada anuncio frente a la competencia por el mismo público (calidad, interés, conversión) → `RankingAnuncio`, regla R27, «Frente a quién te comparas». Verificado 2026-09-15: texto por cohorte; solo anuncios con señal; en 2 de 4 cuentas «no data» |
+| `ads_account_get_activity_logs` | historial de cambios (quién prendió/apagó qué, personas agregadas) → `CambioCuenta`, regla R28, «Quién cambió qué». Verificado: tope 1000 eventos por llamada sin aviso → ventanas de 15 días; en una cuenta «gradually rolled out» |
+| `ads_insights_industry_benchmark` | comparación con anunciantes similares → calibrar umbrales iniciales (declarando origen). Verificado 2026-09-15: «No industry benchmark data available» para las 4 cuentas (probado con y sin objetivo) |
 | `ads_get_opportunity_score` | puntaje 0-100 → métrica `puntaje_optimizacion` |
 | `ads_insights_advertiser_context` | contexto de negocio y embudo |
 

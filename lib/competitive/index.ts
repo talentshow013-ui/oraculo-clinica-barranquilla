@@ -12,6 +12,7 @@ import type { ConfigCliente } from "@/config/cliente";
 import type { Benchmarks } from "@/config/benchmarks";
 import { sumarDias } from "@/lib/format/fechas";
 import { razon } from "@/lib/metrics/core";
+import { urlAnunciosDePagina, urlBusquedaBiblioteca } from "@/lib/competitive/enlaces";
 
 // ---------------------------------------------------------------------------
 // Longevidad
@@ -91,6 +92,8 @@ export interface EspacioVacio {
   competidoresQueLoAtacan: number;
   /** Explicación en lenguaje de dueño para la interfaz. */
   porQue: string;
+  /** Búsqueda en la Biblioteca de anuncios para comprobar que nadie pauta eso. */
+  verificar: string;
 }
 
 /** Ángulos que nunca se proponen: riesgo de política. */
@@ -138,6 +141,7 @@ export function espaciosVacios(anuncios: ReadonlyArray<AnuncioCompetidor>, clien
             nivelConsciencia: nivel,
             competidoresQueLoAtacan: 0,
             porQue: `Ningún competidor observado habla de ${s.nombre.toLowerCase()} con este ángulo a este nivel de consciencia: la subasta es más barata y el mensaje, nuevo.`,
+            verificar: urlBusquedaBiblioteca(`${s.nombre} ${cliente.ciudad}`),
           });
         }
       }
@@ -173,6 +177,8 @@ export interface PerfilCompetidor {
   usaTestimonio: number;
   longevidadPromedio: number | null;
   diasMaximo: number;
+  /** Todos sus anuncios en la Biblioteca de anuncios de Meta, para verificar lo que aquí se dice. */
+  verificar: string;
 }
 
 export function perfilar(competidorId: string, anuncios: ReadonlyArray<AnuncioCompetidor>, b: Benchmarks, ficha?: Competidor): PerfilCompetidor {
@@ -195,6 +201,7 @@ export function perfilar(competidorId: string, anuncios: ReadonlyArray<AnuncioCo
     usaTestimonio: propios.filter((a) => a.usaTestimonio).length,
     longevidadPromedio: propios.length ? propios.reduce((s, a) => s + puntuacionLongevidad(a), 0) / propios.length : null,
     diasMaximo: propios.reduce((m, a) => Math.max(m, a.diasCorriendo), 0),
+    verificar: urlAnunciosDePagina(ficha?.nombre ?? propios[0]?.nombreAnunciante ?? competidorId, ficha?.urlPagina ?? null),
   };
 }
 

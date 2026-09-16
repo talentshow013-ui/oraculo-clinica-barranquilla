@@ -6,7 +6,7 @@ import type { BreakdownRow } from "@/lib/adapters/types";
 import type { Regla } from "@/lib/diagnostics/engine";
 import { filtrarRango } from "@/lib/metrics/core";
 import { pct } from "@/lib/format";
-import { ev, evCop, evNum, notaUmbral, pesos } from "./util";
+import { ev, evCop, evNum, fuenteDe, notaUmbral, ORIGEN, pesos, rangoDesglose, RUTA } from "./util";
 
 function normalizar(s: string): string {
   return s
@@ -65,9 +65,9 @@ export const R10: Regla = {
       explicacion:
         `Nadie viaja desde ${zonasFuera[0]?.[0] ?? "otra ciudad"} por una sesión. El radio útil es el área metropolitana (${ctx.cliente.zonasValidas.join(", ")}). Toda la plata que cae fuera de ese radio es pérdida directa: genera clics y conversaciones que no pueden terminar en una cita.`,
       evidencia: [
-        evCop("Gasto fuera del radio", fuera),
-        evCop("Gasto total con ubicación conocida", total),
-        ...zonasFuera.slice(0, 4).map(([z, g]) => evCop(`Gasto en ${z}`, g)),
+        evCop("Gasto fuera del radio", fuera, RUTA.zona),
+        evCop("Gasto total con ubicación conocida", total, RUTA.zona),
+        ...zonasFuera.slice(0, 4).map(([z, g]) => evCop(`Gasto en ${z}`, g, RUTA.zona)),
       ],
       acciones: [
         "Restringir la segmentación geográfica a los municipios del radio y excluir explícitamente las ciudades que aparecen arriba.",
@@ -76,6 +76,13 @@ export const R10: Regla = {
       plataEnRiesgo: pesos(fuera),
       metricas: ["inversion_fuera_radio", "cpa_zona"],
       nota: notaUmbral(b.fueraRadioMaximo),
+      fuente: fuenteDe(
+        ORIGEN.desglose("ubicación"),
+        rangoDesglose(ubic, ctx.rango),
+        ubic.length,
+        `Se suma el gasto de cada ciudad o departamento y se compara con las zonas válidas de la clínica (${ctx.cliente.zonasValidas.join(", ")}). Lo que cae fuera es «fuera del radio»; las zonas desconocidas no cuentan. Se avisa si supera el ${pct(b.fueraRadioMaximo.valor, 0)}.`,
+        RUTA.zona,
+      ),
     };
   },
 };
@@ -116,11 +123,18 @@ export const R11: Regla = {
       titulo: `El segmento ${culpables.map(([v]) => v).join(", ")} consume ${pct(gasto / total, 0)} del gasto y no produce nada`,
       explicacion:
         "Hay gente que ve el anuncio, a veces hace clic, y nunca llega a escribir ni a agendar. Cada peso que se le muestra es un peso que no se le mostró a quien sí compra. Excluirlo no reduce resultados: los concentra.",
-      evidencia: culpables.slice(0, 4).flatMap(([v, a]) => [evCop(`Gasto en ${v}`, a.gasto), evNum(`Resultados en ${v}`, a.resultados)]),
+      evidencia: culpables.slice(0, 4).flatMap(([v, a]) => [evCop(`Gasto en ${v}`, a.gasto, RUTA.edad), evNum(`Resultados en ${v}`, a.resultados, 0, RUTA.edad)]),
       acciones: ["Excluir el segmento en los conjuntos activos o crear un conjunto aparte con presupuesto mínimo si se quiere seguir probando.", "Revisar si el mensaje del anuncio habla a ese segmento sin querer."],
       plataEnRiesgo: pesos(gasto),
       metricas: ["cpa_edad", "cpa_genero", "segmentos_sin_resultado"],
       nota: notaUmbral(b.segmentoConsumoSinResultado),
+      fuente: fuenteDe(
+        ORIGEN.desglose("edad y género"),
+        rangoDesglose(porDimension(ctx.desglosesVisibles, ["edad", "genero", "edad_genero"]), ctx.rango),
+        porDimension(ctx.desglosesVisibles, ["edad", "genero", "edad_genero"]).length,
+        `Por cada segmento se suman gasto y resultados. Un segmento «consume sin producir» cuando tiene cero resultados y se lleva al menos el ${pct(b.segmentoConsumoSinResultado.valor, 0)} del gasto de su dimensión. Se mira cada dimensión por separado; la plata reportada es la de la dimensión donde más se pierde.`,
+        RUTA.edad,
+      ),
     };
   },
 };
@@ -151,7 +165,7 @@ export const R12: Regla = {
       titulo: `${pct(fraccion, 0)} de la pauta corre cuando no hay nadie que conteste`,
       explicacion:
         `La clínica atiende de ${inicio}:00 a ${fin}:00, pero buena parte de la inversión se muestra fuera de ese horario. Quien escribe a las 11 de la noche y recibe respuesta a las 9 de la mañana ya escribió a otra clínica. La velocidad de respuesta define quién se queda con el paciente.`,
-      evidencia: [evCop("Gasto fuera de horario", fuera), evCop("Gasto total con hora conocida", total), ev("Horario de atención", `${inicio}:00 – ${fin}:00`)],
+      evidencia: [evCop("Gasto fuera de horario", fuera, RUTA.hora), evCop("Gasto total con hora conocida", total, RUTA.hora), ev("Horario de atención", `${inicio}:00 – ${fin}:00`)],
       acciones: [
         "Programar la pauta para el horario de atención, o dejar un 20 % fuera de horario con respuesta automática que agende.",
         "Configurar un mensaje automático de bienvenida que capture servicio y horario preferido.",
@@ -159,6 +173,13 @@ export const R12: Regla = {
       plataEnRiesgo: pesos(fuera),
       metricas: ["inversion_fuera_horario", "conversaciones_fuera_horario", "tiempo_primera_respuesta"],
       nota: notaUmbral(b.fueraHorarioMaximo),
+      fuente: fuenteDe(
+        ORIGEN.desglose("hora del día"),
+        rangoDesglose(horas, ctx.rango),
+        horas.length,
+        `Se suma el gasto de las horas fuera de ${inicio}:00–${fin}:00 y se divide entre el gasto con hora conocida. Se avisa si pasa del ${pct(b.fueraHorarioMaximo.valor, 0)}. El horario de atención está en la configuración de la clínica.`,
+        RUTA.hora,
+      ),
     };
   },
 };
@@ -172,7 +193,9 @@ export const R13: Regla = {
     // Conjuntos de la misma campaña cuyo nombre, sin números ni sufijos, coincide: misma audiencia.
     const grupos = new Map<string, Set<string>>();
     const nombres = new Map<string, string>();
+    const campanaDe = new Map<string, string | null>();
     for (const f of conjuntos) {
+      campanaDe.set(f.id, f.padreId);
       const clave = `${f.padreId ?? ""}|${normalizar(f.nombre).replace(/[\d_\-·|#().]+/g, " ").replace(/\b(v|var|test|copia|copy)\b/g, "").replace(/\s+/g, " ").trim()}`;
       (grupos.get(clave) ?? grupos.set(clave, new Set()).get(clave)!).add(f.id);
       nombres.set(f.id, f.nombre);
@@ -187,10 +210,17 @@ export const R13: Regla = {
       titulo: `${ids.length} conjuntos le están comprando la misma gente a la misma subasta`,
       explicacion:
         "Cuando dos conjuntos apuntan a la misma audiencia, compiten entre sí y suben el costo por mil de la propia cuenta. Se paga más por las mismas personas y la plataforma reparte el aprendizaje entre dos en vez de concentrarlo en uno.",
-      evidencia: ids.slice(0, 6).map((id) => ev("Conjunto", nombres.get(id) ?? id)),
+      evidencia: ids.slice(0, 6).map((id) => ev("Conjunto", nombres.get(id) ?? id, campanaDe.get(id) ? RUTA.campana(campanaDe.get(id)!) : RUTA.campanas)),
       acciones: ["Fusionar los conjuntos duplicados y dejar la diferencia solo a nivel de anuncio.", "Si son pruebas de audiencia, separarlas con exclusiones mutuas."],
       plataEnRiesgo: null,
       metricas: ["solapamiento_conjuntos", "cpm"],
+      fuente: fuenteDe(
+        ORIGEN.conjuntos,
+        ctx.ventanas.reciente,
+        conjuntos.length,
+        "Se toman los conjuntos activos con gasto en los últimos 14 días. Dos conjuntos de la misma campaña cuyo nombre coincide al quitar números y sufijos («copia», «v2») se consideran la misma audiencia comprada dos veces.",
+        RUTA.campanas,
+      ),
     };
   },
 };

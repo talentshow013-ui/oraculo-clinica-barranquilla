@@ -1,17 +1,17 @@
 /**
- * Las 26 reglas de diagnóstico. Orden por id; el motor ordena la salida por plata.
+ * Las 28 reglas de diagnóstico. Orden por id; el motor ordena la salida por plata.
  */
 import type { Regla } from "@/lib/diagnostics/engine";
 import { R01, R02, R03, R21 } from "./entrega";
-import { R04, R05, R06, R07, R08, R09, R25 } from "./creativo";
+import { R04, R05, R06, R07, R08, R09, R25, R27 } from "./creativo";
 import { R10, R11, R12, R13 } from "./audiencia";
 import { R14, R15, R16, R18 } from "./embudo";
-import { R17, R19, R20, R26 } from "./operacion";
+import { R17, R19, R20, R26, R28 } from "./operacion";
 import { R22, R23, R24 } from "./datos";
 
 export const REGLAS: ReadonlyArray<Regla> = [
   R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11, R12, R13,
-  R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26,
+  R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28,
 ];
 
 const POR_ID = new Map(REGLAS.map((r) => [r.id, r]));
@@ -49,4 +49,6 @@ export const NOMBRE_REGLA: Record<string, string> = {
   R24: "El mercado prueba más rápido",
   R25: "Clics que no llevan a ninguna parte",
   R26: "La página no alcanza a cargar",
+  R27: "Por debajo de la competencia en subasta (según Meta)",
+  R28: "Campañas que se prenden y apagan a cada rato",
 };

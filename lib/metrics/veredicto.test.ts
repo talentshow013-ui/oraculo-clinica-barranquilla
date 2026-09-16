@@ -107,7 +107,7 @@ describe("creativosDeCampana — qué funcionó de lo que se subió", () => {
     const ev = (anuncioId: string, cuadrante: EvaluacionCreativo["cuadrante"], gasto: number): EvaluacionCreativo => ({
       creativo: creativo({ anuncioId, id: `cr_${anuncioId}` }),
       agregado: { gasto } as EvaluacionCreativo["agregado"],
-      hookRate: 0.3, holdRate: 0.1, ctrEnlace: 0.01, costoResultado: 4_000, cuadrante, accion: "x", fatiga: { indice: null, ctrMejorVentana: null, ctrReciente: null, frecuenciaReciente: null } as EvaluacionCreativo["fatiga"], vidaUtilDias: null, diasActivo: 10,
+      hookRate: 0.3, holdRate: 0.1, ctrEnlace: 0.01, costoResultado: 4_000, cuadrante, accion: "x", fatiga: { indice: null, ctrMejorVentana: null, ctrReciente: null, frecuenciaReciente: null } as EvaluacionCreativo["fatiga"], vidaUtilDias: null, diasActivo: 10, rankingMeta: null,
     });
     const r = creativosDeCampana("campA", insights, [ev("ad1", "escalar", 100), ev("ad2", "matar", 300), ev("ad9", "escalar", 999)]);
     expect(r.map((c) => c.anuncioId)).toEqual(["ad2", "ad1"]);

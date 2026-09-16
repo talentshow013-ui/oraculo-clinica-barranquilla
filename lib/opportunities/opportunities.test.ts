@@ -16,9 +16,10 @@ const hallazgoR15: Hallazgo = {
   acciones: ["Confirmación 24h antes"],
   plataEnRiesgo: 3_000_000,
   metricas: ["show_rate"],
+  fuente: { origen: "prueba", desde: "2026-08-01", hasta: "2026-09-12", registros: 1, metodo: "fijado a mano para la prueba", enlace: "/embudo" },
 };
 
-const espacio: EspacioVacio = { servicio: "toxina", angulo: "educativo", nivelConsciencia: 2, competidoresQueLoAtacan: 0, porQue: "nadie lo ataca" };
+const espacio: EspacioVacio = { servicio: "toxina", angulo: "educativo", nivelConsciencia: 2, competidoresQueLoAtacan: 0, porQue: "nadie lo ataca", verificar: "https://www.facebook.com/ads/library/?country=CO&q=toxina" };
 
 describe("oportunidades — una idea sin criterio de corte es una corazonada", () => {
   test("desdeHallazgos crea hipótesis si→entonces→porque con prueba completa", () => {
@@ -85,6 +86,28 @@ describe("oportunidades — una idea sin criterio de corte es una corazonada", (
     const [r] = filtrarYaProbadas([o], [ganado]);
     expect(r!.yaProbada).toBe(false);
     expect(r!.confianza).toBe(o.confianza);
+  });
+
+  test("cada oportunidad dice si nace de los datos propios o del mercado, dónde verlo en el panel y, si es del mercado, dónde verificarlo afuera", () => {
+    const propias = desdeHallazgos([hallazgoR15], cliente);
+    expect(propias[0]!.ambito).toBe("propio");
+    expect(propias[0]!.verEn).toBe("/embudo");
+    expect(propias[0]!.verificar).toBeNull();
+    const vacios = desdeEspaciosVacios([espacio], cliente);
+    expect(vacios[0]!.ambito).toBe("mercado");
+    expect(vacios[0]!.verEn).toBe("/competencia#espacios");
+    expect(vacios[0]!.verificar).toMatch(/^https:\/\/www\.facebook\.com\/ads\/library\/\?.*country=CO/);
+    const ganadores = desdeGanadoresMercado([anuncioCompetidor({ anuncioId: "1588066176391836" })], cliente);
+    expect(ganadores[0]!.ambito).toBe("mercado");
+    expect(ganadores[0]!.verificar).toBe("https://www.facebook.com/ads/library/?id=1588066176391836");
+    expect(ganadores[0]!.verEn).toBe("/competencia#ganadores");
+  });
+
+  test("generarOportunidades no deja que el mercado desplace a lo propio: máximo 6 del mercado", () => {
+    const muchos = Array.from({ length: 10 }, (_, i) => ({ ...espacio, servicio: `s${i}` }));
+    const r = generarOportunidades({ hallazgos: [hallazgoR15], espaciosVacios: muchos, ganadores: [anuncioCompetidor()], experimentos: [], cliente, maximo: 20 });
+    expect(r.filter((o) => o.ambito === "mercado").length).toBeLessThanOrEqual(6);
+    expect(r.some((o) => o.ambito === "propio")).toBe(true);
   });
 
   test("generarOportunidades combina orígenes, prioriza y limita", () => {

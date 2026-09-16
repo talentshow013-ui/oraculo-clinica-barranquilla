@@ -15,6 +15,7 @@ import {
   serieAnuncio,
 } from "@/lib/diagnostics/fixtures";
 import { sumarDias } from "@/lib/format/fechas";
+import { generarSeed } from "@/scripts/seed";
 
 const calibrado: ConfigCliente = {
   ...cliente,
@@ -28,6 +29,13 @@ function correr(id: string, l = lote(), cfg = cliente): Hallazgo | null {
 
 function esperarHallazgoCompleto(h: Hallazgo | null) {
   expect(h).not.toBeNull();
+  // Trazabilidad: de dónde salió el dato, con qué método y a dónde ir a verlo.
+  expect(h!.fuente.origen.length).toBeGreaterThan(8);
+  expect(h!.fuente.metodo.length).toBeGreaterThan(20);
+  expect(h!.fuente.enlace).toMatch(/^\//);
+  expect(h!.fuente.desde <= h!.fuente.hasta).toBe(true);
+  for (const e of h!.evidencia) if (e.enlace !== undefined) expect(e.enlace).toMatch(/^\//);
+  expect(h).not.toBeNull();
   expect(h!.titulo.length).toBeGreaterThan(10);
   expect(h!.explicacion.length).toBeGreaterThan(30);
   expect(h!.evidencia.length).toBeGreaterThan(0);
@@ -39,11 +47,60 @@ const recienteDesde = sumarDias(HASTA, -13);
 const esReciente = (fecha: string) => fecha >= recienteDesde;
 
 describe("registro de reglas", () => {
-  test("hay 26 reglas con ids únicos R01..R26", () => {
-    expect(REGLAS).toHaveLength(26);
+  test("hay 28 reglas con ids únicos R01..R28", () => {
+    expect(REGLAS).toHaveLength(28);
     const ids = REGLAS.map((r) => r.id);
-    expect(new Set(ids).size).toBe(26);
-    for (let i = 1; i <= 26; i++) expect(ids).toContain(`R${String(i).padStart(2, "0")}`);
+    expect(new Set(ids).size).toBe(28);
+    for (let i = 1; i <= 28; i++) expect(ids).toContain(`R${String(i).padStart(2, "0")}`);
+  });
+});
+
+describe("R28 campañas que se prenden y apagan a cada rato", () => {
+  const cambio = (fecha: string, accion: "prender" | "apagar", actor: string, objetoId = "c1") => ({
+    fuente: "meta" as const, cuentaId: "act", fecha, hora: "10:00", actor, tipo: "Estado de la campaña actualizado", objetoTipo: "campana" as const, objetoId, objetoNombre: `Campaña ${objetoId}`, campanaId: objetoId, accion, de: null, a: null,
+  });
+  test("dispara con 3+ cambios de estado de la misma campaña en 14 días; evidencia enlaza a la campaña y nombra a quienes lo hicieron", () => {
+    const l = lote({
+      insights: [...serieAnuncio("ad_1"), ...serieAnuncio("c1", () => ({ nivel: "campana", gasto: 100_000 }))],
+      bitacora: [cambio(sumarDias(HASTA, -10), "apagar", "Ana"), cambio(sumarDias(HASTA, -8), "prender", "Beto"), cambio(sumarDias(HASTA, -2), "apagar", "Ana"), cambio(sumarDias(HASTA, -1), "apagar", "Ana", "c2")],
+    });
+    const h = correr("R28", l);
+    esperarHallazgoCompleto(h);
+    expect(h!.titulo).toMatch(/1 campaña/);
+    expect(h!.evidencia[0]!.enlace).toBe("/campanas#campana-c1");
+    expect(h!.evidencia[0]!.valor).toMatch(/Ana/);
+    expect(h!.fuente.enlace).toBe("/campanas#bitacora");
+    expect(h!.plataEnRiesgo).toBe(100_000 * 14);
+  });
+  test("sin bitácora no dispara", () => {
+    expect(correr("R28", lote({ insights: serieAnuncio("ad_1") }))).toBeNull();
+  });
+});
+
+describe("R27 por debajo de la competencia en subasta, según Meta", () => {
+  const ranking = (anuncioId: string, interaccion: "promedio" | "inferior_35" | "inferior_20" | "sin_dato", conversion: "promedio" | "inferior_35" | "inferior_20" | "sin_dato") => ({
+    fuente: "meta" as const, cuentaId: "act", anuncioId, nombre: anuncioId, fecha: HASTA, cohorte: "mensajes · públicos nuevos", calidad: "promedio" as const, interaccion, conversion, lecturaMeta: "x",
+  });
+  test("dispara con anuncios activos en tramo inferior; la evidencia enlaza a cada anuncio y la fuente es el ranking de Meta", () => {
+    const l = lote({
+      insights: [...serieAnuncio("ad_1", () => ({ gasto: 50_000 })), ...serieAnuncio("ad_2", () => ({ gasto: 30_000 }))],
+      creativos: [creativo({ anuncioId: "ad_1", id: "c1" }), creativo({ anuncioId: "ad_2", id: "c2" })],
+      rankings: [ranking("ad_1", "inferior_35", "inferior_20"), ranking("ad_2", "promedio", "promedio")],
+    });
+    const h = correr("R27", l);
+    esperarHallazgoCompleto(h);
+    expect(h!.titulo).toMatch(/1 anuncio/);
+    expect(h!.evidencia[0]!.enlace).toBe("/creativos?anuncio=ad_1#anuncio-ad_1");
+    expect(h!.fuente.origen).toMatch(/Meta/);
+    expect(h!.plataEnRiesgo).toBe(50_000 * 14);
+  });
+  test("sin rankings (Meta no los entregó) no dispara: dato ausente, no cero", () => {
+    const l = lote({ insights: serieAnuncio("ad_1"), creativos: [creativo({ anuncioId: "ad_1" })] });
+    expect(correr("R27", l)).toBeNull();
+  });
+  test("anuncios sin dato todavía o al promedio no cuentan", () => {
+    const l = lote({ insights: serieAnuncio("ad_1"), creativos: [creativo({ anuncioId: "ad_1" })], rankings: [ranking("ad_1", "sin_dato", "sin_dato")] });
+    expect(correr("R27", l)).toBeNull();
   });
 });
 
@@ -341,6 +398,30 @@ describe("R24 el mercado prueba más rápido", () => {
     );
     const l = lote({ insights: serieAnuncio("ad_1"), creativos: [creativo()], anunciosCompetencia: nuevos });
     esperarHallazgoCompleto(correr("R24", l));
+  });
+});
+
+describe("trazabilidad: cada hallazgo dice de dónde sale y la evidencia lleva al dato", () => {
+  test("R12 apunta a la tabla de horas de Audiencias y su evidencia es clicable", () => {
+    const l = lote({ insights: serieAnuncio("ad_1"), desgloses: Array.from({ length: 24 }, (_, h) => desglose({ dimension: "hora", valor: String(h), gasto: 10_000 })) });
+    const h = correr("R12", l)!;
+    expect(h.fuente.enlace).toBe("/audiencias#hora");
+    expect(h.fuente.origen).toMatch(/Meta/);
+    expect(h.evidencia[0]!.enlace).toBe("/audiencias#hora");
+  });
+  test("R05 enlaza cada video a su fila en Creativos", () => {
+    const l = lote({ insights: serieAnuncio("ad_1", () => ({ impresiones: 20_000, gasto: 200_000, clicsEnlace: 100, resultados: 12, reproducciones3s: 400, reproducciones: 20_000 })), creativos: [creativo({ anuncioId: "ad_1", formato: "video" })] });
+    const h = correr("R05", l);
+    expect(h).not.toBeNull();
+    expect(h!.evidencia[0]!.enlace).toBe("/creativos?anuncio=ad_1#anuncio-ad_1");
+    expect(h!.fuente.enlace).toBe("/creativos");
+  });
+  test("todas las reglas que disparan sobre el seed traen fuente y enlaces válidos", () => {
+    const ctx = construirContexto(generarSeed(), cliente, benchmarks, "2026-09-12");
+    const r = ejecutarReglas(ctx, REGLAS);
+    expect(r.errores).toHaveLength(0);
+    expect(r.hallazgos.length).toBeGreaterThan(5);
+    for (const h of r.hallazgos) esperarHallazgoCompleto(h);
   });
 });
 

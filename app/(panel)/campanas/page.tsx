@@ -8,6 +8,7 @@ import { fechaCorta, fechaHora } from '@/lib/format/fechas'
 import { Aviso, Barra, Etiqueta, Miniatura, Panel, Titulo, Vacio, type Tono } from '@/components/ui'
 import Ordenable, { type FilaOrdenable } from '@/components/cliente/ordenable'
 import { IrAResultados, SelectorComparar, SelectorPeriodo } from '@/components/cliente/campanas-url'
+import BloqueBitacora from '@/components/bitacora'
 
 /**
  * CAMPAÑAS: cada pauta con su cara (al aire, pausada, archivada) en vez de la cuenta sumada, y dos
@@ -66,11 +67,13 @@ export default async function Campanas({ searchParams }: { searchParams: Promise
         <Vacio titulo="Ninguna campaña gastó en este periodo" texto="Amplía el periodo con las pastillas de arriba: una pauta pausada o archivada sigue apareciendo con su historia en los días en que sí gastó." />
       ) : (
         <Panel rotulo="Las pautas" titulo={<>{vista.campanas.length} {vista.campanas.length === 1 ? 'campaña gastó' : 'campañas gastaron'} en el periodo · {alAire} al aire</>} extra={<div className="flex flex-wrap items-center gap-3"><p className="max-w-[40ch] text-[12.5px] leading-snug text-texto-2">Las pausadas y archivadas se ven igual de claras: solo cambia la etiqueta.</p><Suspense><SelectorComparar campanas={vista.campanas.map((c) => ({ id: c.id, nombre: c.nombre, estado: ESTADO[c.estado], alAire: c.alAire }))} elegidas={ids} /></Suspense></div>}>
-          <Ordenable columnas={columnas} filas={filas} inicial="gasto" minAncho={960} />
+          <Ordenable columnas={columnas} filas={filas} inicial="gasto" minAncho={960} prefijoId="campana" />
         </Panel>
       )}
 
       {cReg && <Resultados c={cReg} registro={registro} guardada={guardada === cReg.id} error={error} como={como} />}
+
+      <div className="mt-4"><BloqueBitacora b={r.bitacora} retraso={100} /></div>
 
       <div className="mt-4 grid grid-cols-1 items-start gap-3 lg:grid-cols-12">
         <div className="min-w-0 lg:col-span-8">

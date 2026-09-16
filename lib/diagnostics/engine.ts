@@ -30,6 +30,22 @@ export type Severidad = "alta" | "media" | "baja";
 export interface Evidencia {
   etiqueta: string;
   valor: string;
+  /** Ruta dentro del panel donde se ve ese dato (p. ej. "/audiencias#hora"). Sin enlace = cifra derivada. */
+  enlace?: string;
+}
+
+/** De dónde salió el hallazgo: quien lo lea puede ir a la tabla y comprobarlo. */
+export interface FuenteHallazgo {
+  /** En palabras: "Meta · desglose por hora de cada campaña". */
+  origen: string;
+  desde: string;
+  hasta: string;
+  /** Cuántas filas se miraron para decidir. */
+  registros: number;
+  /** Cómo se calculó, en una frase que un gerente entiende. */
+  metodo: string;
+  /** Ruta del panel con la tabla completa. */
+  enlace: string;
 }
 
 export interface Hallazgo {
@@ -49,6 +65,8 @@ export interface Hallazgo {
   metricas: string[];
   /** Nota cuando el umbral usado no está calibrado. */
   nota?: string;
+  /** De dónde sale, con qué método y dónde verlo. Obligatoria: sin fuente no hay hallazgo. */
+  fuente: FuenteHallazgo;
 }
 
 export interface ContextoDiagnostico {
@@ -58,6 +76,8 @@ export interface ContextoDiagnostico {
   hoy: string;
   rango: Rango;
   ventanas: { reciente: Rango; previa: Rango };
+  /** Nivel con el que se sumaron total/reciente/previa (el que cubre más días). */
+  nivelBase: InsightRow["nivel"];
   /** Solo anuncios (nivel = anuncio) para no contar doble. */
   filasAnuncio: InsightRow[];
   filasConjunto: InsightRow[];
@@ -149,6 +169,7 @@ export function construirContexto(
     hoy,
     rango,
     ventanas: { reciente, previa },
+    nivelBase: base[0]?.nivel ?? "campana",
     filasAnuncio: filasAnuncio.length ? filasAnuncio : base,
     filasConjunto,
     filasCampana,
@@ -160,7 +181,7 @@ export function construirContexto(
     embudoReciente: construirEmbudo(registrosEnRango(lote.embudo, reciente), recienteAgg.gasto, cliente),
     embudoPrevio: construirEmbudo(registrosEnRango(lote.embudo, previa), previaAgg.gasto, cliente),
     negocio: metricasNegocio(lote.embudo, total.gasto, cliente),
-    creativos: evaluarCreativos(creativos, filasAnuncio.length ? filasAnuncio : base, benchmarks),
+    creativos: evaluarCreativos(creativos, filasAnuncio.length ? filasAnuncio : base, benchmarks, lote.rankings ?? []),
     desglosesVisibles: visibles,
     desglosesOcultos: ocultas.length,
     huecos,

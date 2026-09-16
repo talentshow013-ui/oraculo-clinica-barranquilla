@@ -5,6 +5,7 @@ import { ANGULOS, CUADRANTES, etiquetaCreativo } from '@/lib/format/etiquetas'
 import { Aviso, Etiqueta, Miniatura, Panel, Titulo, type Tono } from '@/components/ui'
 import Ordenable from '@/components/cliente/ordenable'
 import Cuadrantes from '@/components/graficas/cuadrantes'
+import { ES_INFERIOR, rankingEnPalabras } from '@/lib/adapters/meta.rankings'
 
 const TONO: Record<string, Tono> = { escalar: 'bien', arreglar_gancho: 'ojo', arreglar_oferta: 'acento', matar: 'mal', sin_senal: 'neutro' }
 const PRIMERAS = 20
@@ -14,9 +15,12 @@ const PRIMERAS = 20
  * matriz; abajo una tabla de 7 columnas —las demás cifras van en un renglón chico bajo el
  * nombre— con las primeras 20 filas y «Ver los N». Antes eran 11 columnas y 95 filas.
  */
-export default async function Creativos() {
+export default async function Creativos({ searchParams }: { searchParams: Promise<{ anuncio?: string }> }) {
+  const { anuncio } = await searchParams
   const r = await motor()
   const lista = [...r.creativos].sort((a, b) => (a.puesto ?? Infinity) - (b.puesto ?? Infinity))
+  // Un hallazgo puede señalar un anuncio concreto (?anuncio=id): se muestra arriba, con todo su detalle, para que el enlace aterrice en él.
+  const senalado = anuncio ? lista.find((c) => c.creativo.anuncioId === anuncio) : undefined
   const cuenta = (c: string) => lista.filter((x) => x.cuadrante === c).length
   const filas = lista.map((c) => ({
     clave: c.creativo.id,
@@ -27,6 +31,7 @@ export default async function Creativos() {
         <span className="block max-w-[300px]">
           <span className="block truncate font-medium">{etiquetaCreativo(c.creativo)}</span>
           <span className="num block truncate text-[11.5px] text-texto-2">retiene {pct(c.holdRate, 0)} · clics {pct(c.ctrEnlace)} · fatiga {indice(c.fatiga.indice)} · {num(c.diasActivo)} d al aire</span>
+          {c.rankingMeta && <span className={`block truncate text-[11.5px] ${ES_INFERIOR(c.rankingMeta.interaccion) || ES_INFERIOR(c.rankingMeta.conversion) ? 'text-mal' : 'text-texto-2'}`} title="Cómo lo ve Meta frente a los anuncios que compiten por el mismo público">Meta vs. competencia: interés {rankingEnPalabras(c.rankingMeta.interaccion)} · conversión {rankingEnPalabras(c.rankingMeta.conversion)}</span>}
         </span>
       ),
       cuadrante: <Etiqueta tono={TONO[c.cuadrante]}>{CUADRANTES[c.cuadrante].nombre}</Etiqueta>,
@@ -36,6 +41,30 @@ export default async function Creativos() {
   return (
     <>
       <Titulo rotulo="Laboratorio creativo · matriz de decisión" extra={<div className="flex flex-wrap gap-1">{(['escalar', 'arreglar_gancho', 'arreglar_oferta', 'matar', 'sin_senal'] as const).map((c) => <Etiqueta key={c} tono={TONO[c]}>{cuenta(c)} {CUADRANTES[c].nombre.toLowerCase()}</Etiqueta>)}</div>}>Qué anuncio escalar y cuál apagar</Titulo>
+      {anuncio && !senalado && <Aviso tono="ojo" className="mb-3">El anuncio señalado ya no está en el periodo elegido.</Aviso>}
+      {senalado && (
+        <section id={`anuncio-${senalado.creativo.anuncioId}`} className="pieza mb-3 p-4 ring-2 ring-acento sm:p-5" aria-label="Anuncio señalado por un hallazgo">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="rotulo">Anuncio señalado · puesto {senalado.puesto ?? '—'} de {lista.length}</p>
+              <h2 className="mt-0.5 text-[19px] leading-tight">{etiquetaCreativo(senalado.creativo, 120)}</h2>
+              <p className="mt-1 text-[12.5px] text-texto-2">{ANGULOS[senalado.creativo.anguloDetectado]} · {senalado.creativo.formato} · {num(senalado.diasActivo)} días al aire desde {senalado.creativo.fechaPrimerGasto}</p>
+            </div>
+            <Etiqueta tono={TONO[senalado.cuadrante]}>{CUADRANTES[senalado.cuadrante].nombre}</Etiqueta>
+          </div>
+          <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+            {[
+              ['Inversión', cop(senalado.agregado.gasto)], ['Impresiones', num(senalado.agregado.impresiones)], ['Clics de enlace', num(senalado.agregado.clicsEnlace)], ['Resultados', num(senalado.agregado.resultados)],
+              ['Costo por resultado', cop(senalado.costoResultado)], ['Gancho', pct(senalado.hookRate)], ['Retención', pct(senalado.holdRate)], ['Fatiga', indice(senalado.fatiga.indice)],
+            ].map(([k, v]) => <div key={k} className="rounded-[12px] bg-superficie-2 px-3 py-2"><dt className="text-[11px] text-texto-2">{k}</dt><dd className="num text-[15px] font-semibold">{v}</dd></div>)}
+          </dl>
+          <p className="mt-3 text-[13px] leading-snug"><span className="font-semibold">Qué hacer:</span> {senalado.accion}</p>
+          {senalado.rankingMeta && (
+            <p className="mt-2 rounded-[12px] bg-superficie-2 px-3 py-2 text-[12.5px] leading-snug"><span className="font-semibold">Según Meta, frente a la competencia que pelea el mismo público ({senalado.rankingMeta.cohorte}):</span> calidad {rankingEnPalabras(senalado.rankingMeta.calidad)} · interés {rankingEnPalabras(senalado.rankingMeta.interaccion)} · conversión {rankingEnPalabras(senalado.rankingMeta.conversion)}. <span className="text-texto-2">Capturado el {senalado.rankingMeta.fecha}.</span></p>
+          )}
+          {senalado.creativo.copyPrincipal && <p className="mt-2 whitespace-pre-line rounded-[12px] bg-superficie-2 px-3 py-2 text-[12.5px] leading-snug text-texto-2">{senalado.creativo.copyPrincipal.slice(0, 600)}</p>}
+        </section>
+      )}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <section aria-label="Los 3 que más rindieron">
           <div className="mb-2"><p className="rotulo">Podio</p><h2 className="mt-0.5 text-[19px]">Los 3 que más rindieron</h2></div>

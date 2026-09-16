@@ -30,6 +30,8 @@ import * as core from "@/lib/metrics/core";
 import { compararCampanas, resumirCampanas, type ComparacionCampanas, type ResumenCampana } from "@/lib/metrics/campanas";
 import { fusionarResultados, leerResultados, type RegistroPauta } from "@/lib/resultados";
 import { compararVarias, creativosDeCampana, veredictoCampana, type ComparacionVarias, type CreativoDeCampana, type VeredictoCampana } from "@/lib/metrics/veredicto";
+import { construirComparativa, type Comparativa } from "@/lib/metrics/comparativa";
+import { resumirBitacora, type ResumenBitacora } from "@/lib/metrics/bitacora";
 
 export { resolverMetrica, compararCampanas, compararVarias };
 export type { ResumenCampana, ComparacionCampanas, ComparacionVarias, RegistroPauta, VeredictoCampana, CreativoDeCampana };
@@ -142,6 +144,10 @@ export interface ResultadoMotor {
   campanasCuenta: ResumenCampana[];
   /** false cuando hay campaña elegida y la fuente no trae desgloses por campaña (Audiencias avisa). */
   desglosesPorCampana: boolean;
+  /** Frente a quién te comparas: tú (14 d), 14 d anteriores, tu mejor mes cargado y el mercado (ranking de Meta). */
+  comparativa: Comparativa;
+  /** Quién cambió qué: últimos 14 días y todo el periodo. null si la fuente no trae historial. */
+  bitacora: { reciente: ResumenBitacora; periodo: ResumenBitacora } | null;
   /** Periodo analizado: el elegido con el calendario (cookies desde/hasta) o todo el lote; minimo/maximo = lo que hay. */
   periodo: PeriodoElegido;
   privacidad: { segmentosOcultos: number; k: number; AVISO_PANEL: string };
@@ -171,6 +177,8 @@ export function filtrarPorCuenta(lote: LoteDatos, cuentaId: string): LoteDatos {
     desgloses: lote.desgloses.filter((d) => d.cuentaId === cuentaId),
     creativos: lote.creativos.filter((c) => anuncios.has(c.anuncioId)),
     embudo: lote.embudo.filter((r) => r.campanaId === null || campanas.has(r.campanaId)),
+    rankings: (lote.rankings ?? []).filter((r) => r.cuentaId === cuentaId),
+    bitacora: (lote.bitacora ?? []).filter((c) => c.cuentaId === cuentaId),
   };
 }
 
@@ -188,6 +196,8 @@ export function filtrarPorCampana(lote: LoteDatos, campanaId: string): LoteDatos
     desgloses: lote.desgloses.filter((d) => d.nivel === "campana" && d.id === campanaId),
     creativos: lote.creativos.filter((c) => anuncios.has(c.anuncioId)),
     embudo: lote.embudo.filter((r) => r.campanaId === campanaId),
+    rankings: (lote.rankings ?? []).filter((r) => anuncios.has(r.anuncioId)),
+    bitacora: (lote.bitacora ?? []).filter((c) => c.campanaId === campanaId || (c.objetoTipo === "campana" && c.objetoId === campanaId) || conjuntos.has(c.objetoId) || anuncios.has(c.objetoId)),
   };
 }
 
@@ -417,6 +427,8 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     campanasCuenta,
     desglosesPorCampana,
     periodo,
+    bitacora: loteMotor.bitacora?.length ? { reciente: resumirBitacora(loteMotor.bitacora, ctx.ventanas.reciente), periodo: resumirBitacora(loteMotor.bitacora, ctx.rango) } : null,
+    comparativa: construirComparativa(ctx.nivelBase === "anuncio" ? ctx.filasAnuncio : ctx.nivelBase === "conjunto" ? ctx.filasConjunto : ctx.filasCampana, ctx.ventanas, loteMotor.rankings ?? []),
     maestras,
     fuentes,
   };

@@ -7,6 +7,8 @@ import { Etiqueta, Grid, Kpi, Panel, Titulo, tonoSeveridad } from '@/components/
 import Contar from '@/components/cliente/contar'
 import EmbudoBarras from '@/components/graficas/embudo'
 import Serie from '@/components/graficas/serie'
+import { ChipEvidencia, FuenteDelHallazgo } from '@/components/hallazgo-fuente'
+import BloqueComparativa from '@/components/comparativa'
 
 /** CENTRO DE MANDO: en cinco segundos, plata en riesgo, 3–5 hallazgos con acción, la fuga más cara y el próximo experimento. */
 export default async function CentroDeMando() {
@@ -61,6 +63,10 @@ export default async function CentroDeMando() {
         <p className="mt-2 text-[12px] text-texto-3">Costo por cita, costo por paciente y retorno aparecen aquí cuando se anotan resultados en Campañas.</p>
       </section>
 
+      <div className="mt-5">
+        <BloqueComparativa c={r.comparativa} radar={{ competidores: r.radar.perfiles.length, cadenciaMercado: r.radar.cadencia.total, cadenciaPropia: r.radar.cadenciaPropia, ganadores: r.radar.ganadores.length, sinDatos: r.radar.sinDatos }} retraso={180} />
+      </div>
+
       <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-12">
         <Panel rotulo="Hallazgos · ordenados por plata" titulo="Qué está pasando y qué hacer" className="lg:col-span-7" retraso={200} extra={<Link href="/diagnostico" className="text-[13px] font-medium text-acento">Con toda la evidencia →</Link>}>
           <ol className="flex flex-col gap-2">
@@ -73,7 +79,8 @@ export default async function CentroDeMando() {
                     <span className={`num shrink-0 text-[15px] font-semibold ${h.plataEnRiesgo ? 'text-mal' : 'text-texto-3'}`}>{h.plataEnRiesgo ? cop(h.plataEnRiesgo) : 'sin plata directa'}</span>
                   </div>
                   <p className="mt-1 text-[12.5px] text-texto-2"><span className="font-semibold text-texto">Hacer:</span> {h.acciones[0]}</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1"><Etiqueta tono={tonoSeveridad(h.severidad)}>{SEVERIDADES[h.severidad]}</Etiqueta>{h.evidencia.slice(0, 2).map((e) => <Etiqueta key={e.etiqueta} tono="neutro">{e.etiqueta}: {e.valor}</Etiqueta>)}</div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1"><Etiqueta tono={tonoSeveridad(h.severidad)}>{SEVERIDADES[h.severidad]}</Etiqueta>{h.evidencia.slice(0, 3).map((e) => <ChipEvidencia key={e.etiqueta} e={e} />)}</div>
+                  <FuenteDelHallazgo fuente={h.fuente} compacta />
                 </div>
               </li>
             ))}

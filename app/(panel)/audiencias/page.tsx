@@ -28,7 +28,7 @@ export default async function Audiencias() {
     const total = filas.reduce((s, x) => s + x.gasto, 0) || r.total.gasto
     const conResultados = filas.some((x) => x.resultados > 0)
     return (
-    <Panel rotulo={`Por ${titulo}`} titulo={titulo === 'edad' ? '¿Quién gasta y quién produce?' : titulo === 'zona' ? '¿Desde dónde pueden venir?' : '¿A qué hora escriben y quién contesta?'} retraso={retraso}>
+    <Panel id={titulo} rotulo={`Por ${titulo}`} titulo={titulo === 'edad' ? '¿Quién gasta y quién produce?' : titulo === 'zona' ? '¿Desde dónde pueden venir?' : '¿A qué hora escriben y quién contesta?'} retraso={retraso}>
       <Tabla minAncho={480}>
         <thead><tr><Th>{titulo}</Th><Th num>Inversión</Th><Th num>% del total</Th><Th num>Clics</Th><Th num>Resultados</Th><Th num>Costo por resultado</Th><Th>Señal</Th></tr></thead>
         <tbody>
@@ -72,7 +72,7 @@ export default async function Audiencias() {
         <div className="xl:col-span-12"><Bloque titulo="zona" filas={por('ubicacion')} marca={(x) => (x.fueraDeRadio ? 'fuera del radio' : null)} retraso={200} /></div>
         <div className="xl:col-span-12"><Bloque titulo="edad" filas={por('edad')} marca={(x) => (hayResultados('edad') && x.gasto / (totalDim('edad') || 1) >= 0.01 && x.resultados / Math.max(1, x.clicsEnlace) < 0.02 ? 'gasta y no produce' : null)} retraso={260} /></div>
         <div className="xl:col-span-12">
-          <Panel rotulo="Por hora · de 12 a. m. a 11 p. m." titulo="¿A qué hora escriben y quién contesta?" retraso={320} extra={<span className="text-[11.5px] text-texto-3">Sombreado: horario de atención ({etiquetaHora(inicio)} – {etiquetaHora(fin)})</span>}>
+          <Panel id="hora" rotulo="Por hora · de 12 a. m. a 11 p. m." titulo="¿A qué hora escriben y quién contesta?" retraso={320} extra={<span className="text-[11.5px] text-texto-3">Sombreado: horario de atención ({etiquetaHora(inicio)} – {etiquetaHora(fin)})</span>}>
             <Tabla minAncho={620}>
               <thead><tr><Th>Hora</Th><Th>Inversión</Th><Th num>% del total</Th><Th num>Clics</Th><Th num>Resultados</Th><Th num>Costo por resultado</Th><Th>Señal</Th></tr></thead>
               <tbody>

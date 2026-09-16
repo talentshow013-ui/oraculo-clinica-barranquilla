@@ -240,7 +240,7 @@ const negocio = familia("negocio", [
 ]);
 
 // ---------------------------------------------------------------------------
-// CREATIVO — 12
+// CREATIVO — 15 (12 del diseño + 3 rankings de Meta)
 // ---------------------------------------------------------------------------
 const creativo = familia("creativo", [
   ["indice_fatiga", "Índice de fatiga", "indice", "caída del CTR de enlace (ventana reciente vs mejor ventana) × (1 + alza de frecuencia)", "Dice cuándo un creativo se agotó de verdad y no por ruido. Decide cuándo rotar antes de que el costo lo delate.", "menor", true, MO],
@@ -255,6 +255,9 @@ const creativo = familia("creativo", [
   ["mejor_creativo_costo", "Mejor creativo por costo", "texto", "creativo con menor costo por resultado con señal suficiente", "Es la pieza a escalar y de la que se producen variantes.", "informativo", true, MO],
   ["dias_desde_ultimo_nuevo", "Días desde el último creativo nuevo", "dias", "hoy − fecha de primer gasto del creativo más reciente", "Si pasan semanas sin piezas nuevas, la cuenta va a fatigar sin reemplazo listo.", "menor", true, MO],
   ["fatiga_promedio_activos", "Fatiga promedio de activos", "indice", "índice de fatiga ponderado por gasto de creativos activos", "Salud general del portafolio creativo. Alta: toca producir ya.", "menor", true, MO],
+  ["ranking_calidad", "Calidad frente a la competencia (Meta)", "texto", "tramo de calidad que Meta asigna al anuncio frente a los que compiten por el mismo público", "Es la única comparación con el mercado que entrega la plataforma. Abajo en calidad = impresiones más caras.", "informativo", true, MO],
+  ["ranking_interaccion", "Interés frente a la competencia (Meta)", "texto", "tramo de tasa de interacción frente a anuncios que pelean el mismo público", "Si el mercado despierta más interés con la misma gente, el gancho no compite.", "informativo", true, MO],
+  ["ranking_conversion", "Conversión frente a la competencia (Meta)", "texto", "tramo de tasa de conversión frente a anuncios que pelean el mismo público", "Si el mercado convierte más con el mismo público, la oferta o el destino no compiten.", "informativo", true, MO],
 ]);
 
 // ---------------------------------------------------------------------------
@@ -319,6 +322,8 @@ const operacion = familia("operacion", [
   ["tiempo_reaccion", "Tiempo de reacción", "dias", "días entre un hallazgo y su acción registrada", "Un hallazgo sin acción es un reporte. Mide si la cuenta ejecuta.", "menor", true, MO],
   ["indice_madurez", "Índice de madurez", "indice", "promedio de: cobertura de datos, calibración, experimentos, renovación creativa", "Qué tan preparada está la cuenta para escalar con criterio.", "mayor", true, MO],
   ["hallazgos_abiertos", "Hallazgos abiertos", "numero", "hallazgos activos ordenados por plata", "La lista de trabajo de la semana, ordenada por plata. Lo que no se cierra sigue costando.", "informativo", true, MO],
+  ["cambios_estado_campana", "Prendidos y apagados por campaña", "numero", "cambios de estado (activa/inactiva) de una campaña en los últimos 14 días, del historial de Meta", "Cada cambio reinicia el aprendizaje: una campaña que se prende y apaga a diario nunca estabiliza su costo.", "menor", true, M],
+  ["personas_operando", "Personas operando la cuenta", "numero", "personas distintas que hicieron cambios en la cuenta en los últimos 14 días, del historial de Meta", "Con varias manos en el interruptor nadie sabe qué está probando qué.", "menor", true, M],
 ]);
 
 export const CATALOGO: ReadonlyArray<MetricaCatalogo> = [

@@ -298,6 +298,61 @@ export const MetaLoteSchema = z.object({
 });
 export type MetaLote = z.infer<typeof MetaLoteSchema>;
 
+// ---------------------------------------------------------------------------
+// Ranking frente a la competencia en subasta (lo único externo que entrega Meta)
+// ---------------------------------------------------------------------------
+
+export const NIVELES_RANKING = ["superior", "promedio", "inferior_35", "inferior_20", "inferior_10", "sin_dato"] as const;
+export type NivelRanking = (typeof NIVELES_RANKING)[number];
+
+/** Cómo se ve un anuncio frente a los que compiten por el mismo público, según Meta. Se captura por sincronización. */
+export const RankingAnuncioSchema = z.object({
+  fuente: z.literal("meta"),
+  cuentaId: z.string().min(1),
+  anuncioId: z.string().min(1),
+  nombre: z.string(),
+  /** Día de la captura (el ranking es de los últimos 28 días a esa fecha). */
+  fecha: FechaSchema,
+  /** Con quién compara Meta, en palabras: «mensajes · públicos nuevos». */
+  cohorte: z.string(),
+  calidad: z.enum(NIVELES_RANKING),
+  interaccion: z.enum(NIVELES_RANKING),
+  conversion: z.enum(NIVELES_RANKING),
+  /** Lo que dice Meta del anuncio, textual («The ad is not producing conversions»). */
+  lecturaMeta: z.string(),
+});
+export type RankingAnuncio = z.infer<typeof RankingAnuncioSchema>;
+
+// ---------------------------------------------------------------------------
+// Bitácora de cambios de la cuenta (quién prendió y apagó qué)
+// ---------------------------------------------------------------------------
+
+export const OBJETOS_CAMBIO = ["campana", "conjunto", "anuncio", "cuenta", "otro"] as const;
+export type ObjetoCambio = (typeof OBJETOS_CAMBIO)[number];
+export const ACCIONES_CAMBIO = ["prender", "apagar", "revision", "persona_agregada", "persona_eliminada", "otro"] as const;
+export type AccionCambio = (typeof ACCIONES_CAMBIO)[number];
+
+/** Un cambio en la cuenta publicitaria. `actor` es quien lo hizo (operador o «Meta»), nunca un paciente. */
+export const CambioCuentaSchema = z.object({
+  fuente: z.literal("meta"),
+  cuentaId: z.string().min(1),
+  fecha: FechaSchema,
+  /** HH:mm, hora de Bogotá tal como la muestra Meta. */
+  hora: z.string().regex(/^\d{2}:\d{2}$/),
+  actor: z.string(),
+  /** Texto original del tipo de evento («Estado de la campaña actualizado»). */
+  tipo: z.string(),
+  objetoTipo: z.enum(OBJETOS_CAMBIO),
+  objetoId: z.string(),
+  objetoNombre: z.string(),
+  /** Campaña a la que pertenece el objeto, si Meta la indica. */
+  campanaId: textoNullable,
+  accion: z.enum(ACCIONES_CAMBIO),
+  de: textoNullable,
+  a: textoNullable,
+});
+export type CambioCuenta = z.infer<typeof CambioCuentaSchema>;
+
 export const LoteDatosSchema = z.object({
   insights: z.array(InsightRowSchema),
   desgloses: z.array(BreakdownRowSchema),
@@ -306,6 +361,10 @@ export const LoteDatosSchema = z.object({
   competidores: z.array(CompetidorSchema),
   anunciosCompetencia: z.array(AnuncioCompetidorSchema),
   experimentos: z.array(ExperimentoSchema),
+  /** Opcional: lotes anteriores a la captura de rankings siguen siendo válidos. */
+  rankings: z.array(RankingAnuncioSchema).optional(),
+  /** Opcional: bitácora de cambios de la cuenta (quién prendió/apagó qué). */
+  bitacora: z.array(CambioCuentaSchema).optional(),
   meta: MetaLoteSchema,
 });
 export type LoteDatos = z.infer<typeof LoteDatosSchema>;

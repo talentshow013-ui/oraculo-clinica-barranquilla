@@ -4,7 +4,7 @@
  * `sin_senal` no es un caso borde, es una salida de primera clase: matar un
  * creativo bueno por ruido estadístico es más caro que esperar tres días.
  */
-import type { Creativo, InsightRow } from "@/lib/adapters/types";
+import type { Creativo, InsightRow, RankingAnuncio } from "@/lib/adapters/types";
 import type { Benchmarks } from "@/config/benchmarks";
 import { agregar, ctrEnlace, frecuencia, hookRate, holdRate, cpa, razon, serieDiaria, type Agregado } from "@/lib/metrics/core";
 
@@ -175,6 +175,8 @@ export interface EvaluacionCreativo {
   fatiga: ResultadoFatiga;
   vidaUtilDias: number | null;
   diasActivo: number;
+  /** Cómo lo ve Meta frente a los anuncios que compiten por el mismo público; null si Meta no lo entregó. */
+  rankingMeta: RankingAnuncio | null;
 }
 
 /** Costo por resultado de referencia: el de toda la cuenta (sumas, no promedios). */
@@ -186,8 +188,10 @@ export function evaluarCreativos(
   creativos: ReadonlyArray<Creativo>,
   filas: ReadonlyArray<InsightRow>,
   b: Benchmarks,
+  rankings: ReadonlyArray<RankingAnuncio> = [],
 ): EvaluacionCreativo[] {
   const referencia = costoReferenciaCuenta(filas);
+  const rankingDe = new Map(rankings.map((r) => [r.anuncioId, r]));
   const porAnuncio = new Map<string, InsightRow[]>();
   for (const f of filas) {
     const lista = porAnuncio.get(f.id);
@@ -218,6 +222,7 @@ export function evaluarCreativos(
       fatiga: indiceFatiga(propias),
       vidaUtilDias: vidaUtil(propias, b),
       diasActivo: a.dias || c.diasActivo,
+      rankingMeta: rankingDe.get(c.anuncioId) ?? null,
     };
   });
 }

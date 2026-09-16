@@ -6,6 +6,7 @@ import { Aviso, Celda, Etiqueta, Grid, Kpi, Miniatura, Panel, Barra, Tabla, Th, 
 import MapaAngulos from '@/components/graficas/mapa-angulos'
 import VerTodos from '@/components/cliente/ver-todos'
 import type { AnuncioCompetidor, PerfilCompetidor } from '@/lib/tipos'
+import { urlAnuncioBiblioteca } from '@/lib/competitive/enlaces'
 
 /**
  * RADAR DE MERCADO: lo único honesto es cuánto tiempo lleva un anuncio al aire. Se rehízo el
@@ -37,28 +38,29 @@ export default async function Competencia() {
   return (
     <>
       <Titulo rotulo="Radar de mercado · se ordena por longevidad, nunca por métricas estimadas" extra={<p className="num text-[12.5px] text-texto-2">{ra.perfiles.length} competidores · {r.lote.anunciosCompetencia.length} anuncios</p>}>Qué sostiene el mercado y dónde hay espacio</Titulo>
+      <Aviso tono="neutro" className="mb-3">Todo lo que se dice aquí sale de la Biblioteca de anuncios de Meta, que es pública. Cada anuncio, cada competidor y cada espacio vacío tiene su enlace «Verificar ↗» para abrirlo allá y comprobarlo. Del competidor solo se sabe cuánto lleva al aire y qué estructura usa; nunca su gasto ni su retorno.</Aviso>
       <Grid cols={4}>
         <Kpi nombre="Ganadores probados (60+ días)" valor={ra.ganadores.length} unidad="numero" tono="acento" formula="Anuncios con 60 días o más al aire" porQueImporta="Nadie sostiene 60 días lo que no deja plata" retraso={40} />
         <Kpi nombre="Competidores activos" valor={ra.perfiles.filter((p) => p.anunciosActivos > 0).length} unidad="numero" formula={`Con al menos un anuncio al aire · ${num(activos)} anuncios activos en total`} retraso={80} />
         <Kpi nombre="Espacios vacíos" valor={ra.espaciosVacios.length} unidad="numero" tono="bien" formula="Servicio × ángulo × consciencia sin nadie" porQueImporta="Subasta barata y mensaje nuevo" retraso={120} />
-        <div className="pieza entra-zoom p-4" style={{ '--retraso': '160ms' } as CSSProperties}>
+        <div id="cadencia" className="pieza entra-zoom p-4" style={{ '--retraso': '160ms' } as CSSProperties}>
           <p className="rotulo">Cadencia · anuncios nuevos por semana</p>
           <p className="num mt-2 text-[28px] font-medium leading-none">{num(cadenciaMercado, 1)} <span className="text-[14px] text-texto-2">vs</span> {num(ra.cadenciaPropia, 1)}</p>
           <p className="mt-1.5 text-[12px] text-texto-2">Todo el mercado observado vs. la clínica, últimas {ra.cadencia.semanas} semanas</p>
         </div>
       </Grid>
 
-      <Panel className="mt-3" rotulo="Ganadores probados" titulo="Lo que lleva 60+ días al aire: cópiales la estructura, nunca el copy" retraso={200}>
+      <Panel id="ganadores" className="mt-3" rotulo="Ganadores probados" titulo="Lo que lleva 60+ días al aire: cópiales la estructura, nunca el copy" retraso={200}>
         <VerTodos total={ganadores.length} primeros={<Galeria lista={ganadores.slice(0, TOPE_GANADORES)} />} resto={ganadores.length > TOPE_GANADORES ? <Galeria lista={ganadores.slice(TOPE_GANADORES)} className="mt-3" /> : null} className={ganadores.length > TOPE_GANADORES ? '' : 'hidden'} />
       </Panel>
 
-      <Panel className="mt-3" rotulo="Quién pauta" titulo="Los competidores, por lo que sostienen al aire" retraso={260}>
+      <Panel id="perfiles" className="mt-3" rotulo="Quién pauta" titulo="Los competidores, por lo que sostienen al aire" retraso={260}>
         <VerTodos total={perfiles.length} primeros={<Perfiles lista={perfiles.slice(0, TOPE_PERFILES)} />} resto={perfiles.length > TOPE_PERFILES ? <Perfiles lista={perfiles.slice(TOPE_PERFILES)} sinCabecera /> : null} className={perfiles.length > TOPE_PERFILES ? '' : 'hidden'} />
       </Panel>
 
       <Panel className="mt-3" rotulo="Mapa de ángulos × nivel de consciencia" titulo="Dónde está apretado y dónde no hay nadie" retraso={320}><MapaAngulos anuncios={r.lote.anunciosCompetencia} radar={ra} /></Panel>
 
-      <Panel className="mt-3" tono="marina" rotulo="Dónde no hay nadie" titulo="Las combinaciones que nadie ataca, ya priorizadas" retraso={380}>
+      <Panel id="espacios" className="mt-3" tono="marina" rotulo="Dónde no hay nadie" titulo="Las combinaciones que nadie ataca, ya priorizadas" retraso={380}>
         {ra.espaciosDestacados.length === 0 ? (
           <p className="text-[13px] text-celeste">Todavía no hay espacios vacíos priorizados.</p>
         ) : (
@@ -68,6 +70,7 @@ export default async function Competencia() {
                 <p className="text-[14px] text-white">{nombreServicio(e.servicio)}</p>
                 <p className="mt-0.5 text-[11.5px] text-celeste">{ANGULOS[e.angulo]} · nivel {e.nivelConsciencia}: {NIVELES[e.nivelConsciencia]}</p>
                 <p className="mt-1.5 text-[12.5px] leading-snug text-[#EAF2FF]">{e.porQue}</p>
+                <a href={e.verificar} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-[12px] font-medium text-celeste">Verificar en la Biblioteca de anuncios ↗</a>
               </li>
             ))}
           </ol>
@@ -99,7 +102,7 @@ function Galeria({ lista, className = '' }: { lista: AnuncioCompetidor[]; classN
           <div className="flex flex-1 flex-col gap-1 p-3">
             <p className="truncate text-[12.5px] font-medium">{a.nombreAnunciante}</p>
             <p className="line-clamp-2 text-[12px] leading-snug text-texto-2">{a.copy}</p>
-            <div className="mt-auto pt-1"><Etiqueta tono="acento">{ANGULOS[a.anguloDetectado]}</Etiqueta></div>
+            <div className="mt-auto flex items-center justify-between gap-2 pt-1"><Etiqueta tono="acento">{ANGULOS[a.anguloDetectado]}</Etiqueta><a href={urlAnuncioBiblioteca(a.anuncioId)} target="_blank" rel="noopener noreferrer" className="text-[11.5px] font-medium text-acento" title="Abrir este anuncio en la Biblioteca de anuncios de Meta">Verificar ↗</a></div>
           </div>
         </article>
       ))}
@@ -110,7 +113,7 @@ function Galeria({ lista, className = '' }: { lista: AnuncioCompetidor[]; classN
 function Perfiles({ lista, sinCabecera = false }: { lista: PerfilCompetidor[]; sinCabecera?: boolean }) {
   return (
     <Tabla minAncho={560} className={sinCabecera ? '-mt-px' : ''}>
-      {!sinCabecera && <thead><tr><Th>Competidor</Th><Th num>Anuncios activos</Th><Th num>De 60+ días</Th><Th>Ángulo principal</Th><Th>Usa precio</Th></tr></thead>}
+      {!sinCabecera && <thead><tr><Th>Competidor</Th><Th num>Anuncios activos</Th><Th num>De 60+ días</Th><Th>Ángulo principal</Th><Th>Usa precio</Th><Th>Comprobar</Th></tr></thead>}
       <tbody>
         {lista.map((p) => (
           <tr key={p.id}>
@@ -119,6 +122,7 @@ function Perfiles({ lista, sinCabecera = false }: { lista: PerfilCompetidor[]; s
             <Celda num tono={p.anuncios60 ? 'acento' : undefined}>{num(p.anuncios60)}</Celda>
             <Celda>{p.angulos[0] ? ANGULOS[p.angulos[0]] : '—'}</Celda>
             <Celda>{p.usaPrecio > 0 ? <Etiqueta tono="ojo">sí</Etiqueta> : <span className="text-texto-3">no</span>}</Celda>
+            <Celda><a href={p.verificar} target="_blank" rel="noopener noreferrer" className="text-[12px] font-medium text-acento">Sus anuncios ↗</a>{p.urlPagina && <> · <a href={p.urlPagina} target="_blank" rel="noopener noreferrer" className="text-[12px] text-texto-2">página</a></>}</Celda>
           </tr>
         ))}
       </tbody>

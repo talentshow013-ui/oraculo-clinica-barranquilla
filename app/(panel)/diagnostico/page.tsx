@@ -4,6 +4,7 @@ import { cop } from '@/lib/format'
 import { AREAS, SEVERIDADES } from '@/lib/format/etiquetas'
 import { Aviso, Etiqueta, Titulo, tonoSeveridad } from '@/components/ui'
 import Plegable from '@/components/cliente/plegable'
+import { FuenteDelHallazgo, TarjetaEvidencia } from '@/components/hallazgo-fuente'
 
 /** DIAGNÓSTICO: cada hallazgo responde en orden qué pasa → cómo lo sabemos → qué hago → cuánta plata. */
 export default async function Diagnostico() {
@@ -32,10 +33,11 @@ export default async function Diagnostico() {
                 <div className="lg:col-span-5">
                   <p className="rotulo">Qué pasa</p>
                   <p className="mt-1 text-[13.5px] leading-snug">{h.explicacion}</p>
-                  <p className="rotulo mt-3">Cómo lo sabemos</p>
+                  <p className="rotulo mt-3">Cómo lo sabemos · cada dato lleva a su tabla</p>
                   <ul className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-3 lg:grid-cols-1">
-                    {h.evidencia.map((e) => <li key={e.etiqueta} className="rounded-[12px] bg-superficie-2 px-3 py-2"><span className="block text-[11px] text-texto-2">{e.etiqueta}</span><span className="num block text-[15px] font-semibold">{e.valor}</span></li>)}
+                    {h.evidencia.map((e) => <TarjetaEvidencia key={e.etiqueta} e={e} />)}
                   </ul>
+                  <div className="mt-3"><FuenteDelHallazgo fuente={h.fuente} /></div>
                 </div>
                 <div className="lg:col-span-7">
                   <p className="rotulo">Qué hago</p>

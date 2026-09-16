@@ -220,6 +220,19 @@ describe("construirLoteDesdeCrudos — de los archivos crudos al lote validado",
     expect(v("plataforma")).toEqual(["instagram_reels"]);
   });
 
+  test("archivos __ranking__ (ranking de Meta frente a la competencia) entran al lote con la fecha del archivo; sin datos no rompen", async () => {
+    const { construirLoteDesdeCrudos } = await import("./meta.importar");
+    const texto = "Cohort Info: Optimization Goal (REPLIES), Optimized Event (x), and Audience Type (prospecting (new customers)).\\nAd Relevance Diagnostics:\\n- Name: A, ID: 1001, Type: AD, Quality Ranking: Average, Engagement Rate Ranking: Below Average (Bottom 35% of ads), Conversion Rate Ranking: Average, Diagnosis: meh";
+    const lote = construirLoteDesdeCrudos([
+      archivo("act_1__anuncio__1.json", [dia("2026-09-01", "1001", { adset_id: "s1" })]),
+      { nombre: "act_1__ranking__1.json", contenido: JSON.stringify({ ad_account_id: "1", capturado: "2026-09-15", result: texto }) },
+      { nombre: "act_2__ranking__1.json", contenido: JSON.stringify({ result: "No auction ranking benchmarks data available for the given criteria." }) },
+    ]);
+    expect(lote.rankings).toHaveLength(1);
+    expect(lote.rankings![0]).toMatchObject({ cuentaId: "act_1", anuncioId: "1001", fecha: "2026-09-15", interaccion: "inferior_35" });
+    expect(lote.resumen.rankings).toBe(1);
+  });
+
   test("archivos __creativo__ se cruzan con los anuncios: un creativo por anuncio, con su primer gasto y días activos", async () => {
     const { construirLoteDesdeCrudos } = await import("./meta.importar");
     const lote = construirLoteDesdeCrudos([

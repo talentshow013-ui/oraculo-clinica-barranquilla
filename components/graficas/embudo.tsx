@@ -17,7 +17,7 @@ export default function EmbudoBarras({ pasos, peor, compacto = false }: { pasos:
         const w = p.cantidad == null ? 0 : (Math.sqrt(p.cantidad) / max) * 100
         const esPeor = peor?.paso === p.paso
         return (
-          <li key={p.paso} className={`grid items-center gap-x-2 sm:gap-x-3 ${compacto ? 'grid-cols-[96px_1fr_84px] sm:grid-cols-[120px_1fr_96px]' : 'grid-cols-[96px_1fr_84px] sm:grid-cols-[150px_1fr_120px_120px]'}`}>
+          <li key={p.paso} id={compacto ? undefined : `paso-${p.paso}`} className={`scroll-mt-4 grid items-center gap-x-2 sm:gap-x-3 ${compacto ? 'grid-cols-[96px_1fr_84px] sm:grid-cols-[120px_1fr_96px]' : 'grid-cols-[96px_1fr_84px] sm:grid-cols-[150px_1fr_120px_120px]'}`}>
             <span className="flex items-center gap-2 text-[12.5px]"><span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold ${esPeor ? 'bg-mal text-white' : 'bg-superficie-2 text-texto-2'}`}>{p.orden}</span><span className="truncate">{PASOS[p.paso]}</span></span>
             <span className="relative h-7 overflow-hidden rounded-[8px] bg-superficie-2">
               <span className={`crece absolute inset-y-0 left-0 rounded-[8px] ${esPeor ? 'bg-mal' : i >= 5 ? 'bg-marino' : 'bg-acento'}`} style={{ width: `${Math.max(3, w)}%`, '--retraso': `${120 + i * 90}ms` } as CSSProperties} />

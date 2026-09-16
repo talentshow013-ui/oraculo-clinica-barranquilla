@@ -109,6 +109,31 @@ con gasto y los días activos del anuncio, y clasifica ángulo, servicio y nivel
 los diccionarios del radar (`lib/competitive/angles.ts`, `detectarServicio`). Las publicaciones
 compartidas («impulsar publicación») no traen texto: se usa el nombre limpio del creativo.
 
+## Paso 3b — Ranking frente a la competencia (lo único externo que entrega Meta)
+
+Por cada cuenta: `ads_insights_auction_ranking_benchmarks` con `date_preset: "last_28d"`. Devuelve
+un texto por cohorte («Cohort Info…») con, por anuncio, *Quality / Engagement Rate / Conversion Rate
+Ranking* frente a anuncios de otros anunciantes que compiten por el mismo público. Guarda la
+respuesta tal cual en `datos/crudo/act_<cuenta>__ranking__1.json` con la forma
+`{"ad_account_id": "...", "capturado": "YYYY-MM-DD", "result": "<texto>"}`. Si responde «No auction
+ranking benchmarks data available», guárdalo igual: el importador lo lee como «sin dato».
+Solo trae anuncios con señal suficiente; los nuevos salen «Not Yet Available» (no se juzgan).
+Alimenta la regla R27, la columna «Meta vs. competencia» de Creativos y el bloque «Frente a quién
+te comparas» del Centro de mando.
+
+## Paso 3c — Bitácora de cambios (quién prendió y apagó qué)
+
+Por cada cuenta: `ads_account_get_activity_logs` con `event_category: "status"`, `limit: 1000` y
+ventanas de **15 días** (`start_time`/`end_time` en ISO): más de 1000 eventos por llamada se
+truncan sin aviso, y una cuenta activa pasa de 700 por quincena. Además una llamada con
+`event_category: "account"` desde el inicio del periodo (personas agregadas/quitadas). Guarda cada
+respuesta en `datos/crudo/act_<cuenta>__bitacora-<status|account>__<n>.json` con la forma
+`{"ad_account_id": "...", "capturado": "YYYY-MM-DD", "ventanas": [{"inicio": "...", "fin": "...",
+"eventos": [...]}]}` (los eventos son el arreglo que viene dentro de `result`). Las ventanas
+pueden solaparse: el importador quita duplicados. Si el conector responde «This tool is new and is
+being gradually rolled out», esa cuenta queda sin bitácora y el panel lo dice.
+Alimenta la regla R28 y el bloque «Quién cambió qué» de Campañas.
+
 ## Paso 4 — Resultados de la clínica
 
 **No se sincronizan aquí.** Se anotan por campaña en la pantalla Campañas del panel

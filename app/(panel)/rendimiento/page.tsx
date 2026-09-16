@@ -32,7 +32,7 @@ export default async function Rendimiento() {
       </div>
       <Aviso tono="ojo" className="mt-3">Con {pct(0.57, 0)} de margen medio, un retorno declarado de {ratio(n.roasDeclarado)} son {ratio(n.poas)} reales sobre margen. El presupuesto se decide con el tercero.</Aviso>
 
-      <h2 className="mb-3 mt-5 text-[19px]">14 contra 14</h2>
+      <h2 id="comparacion" className="mb-3 mt-5 scroll-mt-4 text-[19px]">14 contra 14 · {r.contexto.ventanas.reciente.desde} → {r.contexto.ventanas.reciente.hasta} frente a {r.contexto.ventanas.previa.desde} → {r.contexto.ventanas.previa.hasta}</h2>
       <Grid cols={6}>
         <Kpi nombre="Inversión" valor={r.reciente.gasto} unidad="cop" previo={r.previa.gasto} mejorEs="rango" retraso={60} />
         <Kpi nombre="Clic en el enlace" valor={r.reciente.ctrEnlace} unidad="porcentaje" previo={r.previa.ctrEnlace} mejorEs="mayor" retraso={100} />
@@ -40,10 +40,16 @@ export default async function Rendimiento() {
         <Kpi nombre="Costo por clic" valor={r.reciente.cpcEnlace} unidad="cop" previo={r.previa.cpcEnlace} mejorEs="menor" retraso={180} />
         <Kpi nombre="Resultados" valor={r.reciente.resultados} unidad="numero" previo={r.previa.resultados} mejorEs="mayor" retraso={220} />
         <Kpi nombre="Costo por resultado" valor={r.reciente.costoResultado} unidad="cop" previo={r.previa.costoResultado} mejorEs="menor" retraso={260} />
+        <Kpi nombre="Impresiones" valor={r.reciente.impresiones} unidad="numero" previo={r.previa.impresiones} mejorEs="mayor" retraso={300} />
+        <Kpi nombre="Frecuencia" valor={r.reciente.frecuencia} unidad="ratio" previo={r.previa.frecuencia} mejorEs="menor" retraso={340} />
+        <Kpi nombre="Conversaciones" valor={r.reciente.conversacionesIniciadas} unidad="numero" previo={r.previa.conversacionesIniciadas} mejorEs="mayor" retraso={380} />
+        <Kpi nombre="Costo por conversación" valor={r.reciente.costoConversacion} unidad="cop" previo={r.previa.costoConversacion} mejorEs="menor" retraso={420} />
+        <Kpi nombre="Clics al enlace" valor={r.reciente.clicsEnlace} unidad="numero" previo={r.previa.clicsEnlace} mejorEs="mayor" retraso={460} />
+        <Kpi nombre="Respondidas" valor={r.reciente.conversacionesRespondidas} unidad="numero" previo={r.previa.conversacionesRespondidas} mejorEs="mayor" retraso={500} />
       </Grid>
 
       <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Panel rotulo="Serie diaria · 90 días" titulo="Inversión" retraso={200}><Serie datos={r.serie} campo="gasto" unidad="cop" dias={90} /></Panel>
+        <Panel id="serie" rotulo="Serie diaria · 90 días" titulo="Inversión" retraso={200}><Serie datos={r.serie} campo="gasto" unidad="cop" dias={90} /></Panel>
         <Panel rotulo="Serie diaria · 90 días" titulo="Clic en el enlace" retraso={260}><Serie datos={r.serie} campo="ctrEnlace" unidad="porcentaje" dias={90} /></Panel>
         <Panel rotulo="Serie diaria · 90 días" titulo="Costo por mil (presión de la subasta)" retraso={320}><Serie datos={r.serie} campo="cpm" unidad="cop" dias={90} /></Panel>
         <Panel rotulo="Serie diaria · 90 días" titulo="Resultados" retraso={380}><Serie datos={r.serie} campo="resultados" unidad="numero" dias={90} /></Panel>

@@ -4,7 +4,7 @@
 import type { Regla } from "@/lib/diagnostics/engine";
 import { diasEntre, sumarDias } from "@/lib/format/fechas";
 import { pct } from "@/lib/format";
-import { ev, evNum, evPct, notaUmbral } from "./util";
+import { ev, evNum, evPct, fuenteDe, notaUmbral, ORIGEN, RUTA } from "./util";
 
 export const R22: Regla = {
   id: "R22",
@@ -25,7 +25,7 @@ export const R22: Regla = {
           : `Solo ${pct(cobertura, 0)} de los días tienen datos de agenda y ventas`,
       explicacion:
         "Sin registros de citas asistidas y procedimientos vendidos, el panel no puede decir si la pauta gana o pierde plata. Lo que muestra la plataforma es su propia versión, con su propia ventana de atribución. La cifra de caja solo la tiene la clínica.",
-      evidencia: [evNum("Días del periodo", dias), evNum("Días con registros de agenda/ventas", conVenta.size), evPct("Cobertura", cobertura)],
+      evidencia: [evNum("Días del periodo", dias), evNum("Días con registros de agenda/ventas", conVenta.size, 0, RUTA.campanas), evPct("Cobertura", cobertura)],
       acciones: [
         "Registrar semanalmente citas agendadas, asistidas y procedimientos vendidos (cantidad y valor), sin datos de pacientes.",
         "Cargar al menos 60 días de historia para que el retorno real tenga sentido.",
@@ -33,6 +33,7 @@ export const R22: Regla = {
       plataEnRiesgo: null,
       metricas: ["cobertura_datos_venta", "roas_real", "indice_discrepancia"],
       nota: notaUmbral(b.coberturaVentasMinima),
+      fuente: fuenteDe(ORIGEN.clinica, ctx.rango, ctx.lote.embudo.length, `Se cuentan los días del periodo con al menos una cita asistida o una venta anotada por la clínica y se dividen entre los días del periodo. Se avisa por debajo del ${pct(b.coberturaVentasMinima.valor, 0)}.`, RUTA.campanas),
     };
   },
 };
@@ -50,10 +51,11 @@ export const R23: Regla = {
       titulo: `Faltan ${ctx.huecos.length} ${ctx.huecos.length === 1 ? "día" : "días"} de datos en el periodo`,
       explicacion:
         "Un día sin datos se ve igual que un día sin resultados, y eso puede simular una caída que nunca ocurrió. Antes de concluir nada sobre una baja, hay que mirar si coincide con un hueco.",
-      evidencia: [ev("Días sin datos", lista), evNum("Total de huecos", ctx.huecos.length)],
+      evidencia: [ev("Días sin datos", lista, RUTA.fuentes), evNum("Total de huecos", ctx.huecos.length, 0, RUTA.serie)],
       acciones: ["Actualizar los datos del periodo completo antes de la próxima revisión.", "Si el hueco es real (pauta apagada), registrarlo como decisión para que no se lea como problema."],
       plataEnRiesgo: null,
       metricas: ["huecos_datos", "cobertura_periodo"],
+      fuente: fuenteDe(ORIGEN.lote, ctx.rango, ctx.serie.length, "Se recorre cada día del periodo y se marca hueco el que no tiene ninguna fila de rendimiento. Los huecos se listan tal cual; no se rellenan ni se interpolan.", RUTA.fuentes),
     };
   },
 };
@@ -80,9 +82,9 @@ export const R24: Regla = {
       explicacion:
         "El que prueba más rápido aprende más rápido y encuentra primero el mensaje que funciona. No es cuestión de gastar más: es cuestión de producir y probar con una cadencia que el mercado ya está sosteniendo.",
       evidencia: [
-        evNum("Anuncios nuevos de la competencia, últimas 4 semanas", nuevosCompetencia.length),
-        evNum("Competidores observados", competidores),
-        evNum("Anuncios nuevos propios, últimas 4 semanas", nuevosPropios),
+        evNum("Anuncios nuevos de la competencia, últimas 4 semanas", nuevosCompetencia.length, 0, RUTA.cadencia),
+        evNum("Competidores observados", competidores, 0, RUTA.radar),
+        evNum("Anuncios nuevos propios, últimas 4 semanas", nuevosPropios, 0, RUTA.creativos),
       ],
       acciones: [
         "Fijar cadencia mínima igual a la de la competencia y planear la producción con dos semanas de anticipación.",
@@ -90,6 +92,7 @@ export const R24: Regla = {
       ],
       plataEnRiesgo: null,
       metricas: ["brecha_cadencia", "cadencia_competencia", "ritmo_renovacion"],
+      fuente: fuenteDe(ORIGEN.radar, { desde, hasta: ctx.hoy }, anuncios.length, "Se cuentan los anuncios de competidores que aparecieron por primera vez en la Biblioteca de anuncios en las últimas 4 semanas, divididos entre 4 semanas y entre los competidores observados; se comparan con los anuncios propios que arrancaron en el mismo lapso. Cada anuncio del radar tiene su enlace a la Biblioteca para verificarlo.", RUTA.cadencia),
     };
   },
 };

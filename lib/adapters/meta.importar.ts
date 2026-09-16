@@ -6,16 +6,20 @@
  *   <cuentaId>__desglose-<edad|genero|ubicacion|hora|plataforma|dispositivo>__<n>.json           (nivel cuenta)
  *   <cuentaId>__desglose-<dim>__campana__<n>.json   (nivel campaña: trae resultados por segmento; sin fecha → la última del lote)
  *   <cuentaId>__creativo__<n>.json  (respuesta de `ads_get_creatives`; se cruza con los anuncios)
+ *   <cuentaId>__ranking__<n>.json   (respuesta de `ads_insights_auction_ranking_benchmarks`, {capturado, result})
+ *   <cuentaId>__bitacora-<categoria>__<n>.json (respuestas de `ads_account_get_activity_logs`, {ventanas:[{eventos}]})
  * Cada uno es la respuesta de `ads_get_ad_entities` tal cual (o el arreglo de filas).
  * Las páginas se pueden solapar: se quitan duplicados por (nivel, id, fecha) y por segmento.
  * Los creativos salen del cruce creativo × anuncio (un Creativo por anuncio que lo usa). Lo que el
  * conector no trae (embudo, competidores, experimentos) se conserva del lote base si lo hay.
  */
-import type { BreakdownRow, Dimension, InsightRow, LoteDatos } from "./types";
+import type { BreakdownRow, CambioCuenta, Dimension, InsightRow, LoteDatos, RankingAnuncio } from "./types";
 import { LoteDatosSchema } from "./types";
 import { listarHuecos } from "@/lib/format/fechas";
 import { mapearDesgloseMeta, mapearFilaMeta, parsearRespuesta, type FilaMetaCruda } from "./meta.mcp";
 import { mapearCreativosMeta, parsearCreativos, type AnuncioParaCreativo, type CreativoMetaCrudo } from "./meta.creativos";
+import { parsearRankingsMeta } from "./meta.rankings";
+import { parsearBitacoraMeta } from "./meta.bitacora";
 
 export interface ArchivoCrudo {
   nombre: string;
@@ -69,7 +73,7 @@ function interpretarNombre(nombre: string): { cuentaId: string; tipo: string; po
 }
 
 export interface ResultadoImportacion extends LoteDatos {
-  resumen: { archivos: number; filasLeidas: number; insights: number; desgloses: number; creativos: number; cuentas: string[]; ignorados: string[] };
+  resumen: { archivos: number; filasLeidas: number; insights: number; desgloses: number; creativos: number; rankings: number; bitacora: number; cuentas: string[]; ignorados: string[] };
 }
 
 export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, base?: LoteDatos, generadoEn: string = new Date().toISOString()): ResultadoImportacion {
@@ -80,6 +84,8 @@ export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, 
   const anunciosCreativo = new Map<string, AnuncioParaCreativo>();
   const cuentas = new Set<string>();
   const ignorados: string[] = [];
+  const rankings = new Map<string, RankingAnuncio>();
+  const bitacora = new Map<string, CambioCuenta>();
   let filasLeidas = 0;
 
   for (const a of archivos) {
@@ -93,6 +99,19 @@ export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, 
       const lista = parsearCreativos(a.contenido);
       filasLeidas += lista.length;
       for (const c of lista) if (c?.id) creativosCrudos.set(String(c.id), c);
+      continue;
+    }
+    if (meta.tipo.startsWith("bitacora")) {
+      const lista = parsearBitacoraMeta(a.contenido, meta.cuentaId);
+      filasLeidas += lista.length;
+      for (const c of lista) bitacora.set(`${c.cuentaId}|${c.fecha}|${c.hora}|${c.actor}|${c.objetoId}|${c.tipo}|${c.de ?? ""}|${c.a ?? ""}`, c);
+      continue;
+    }
+    if (meta.tipo === "ranking") {
+      const capturado = fechaCaptura(a.contenido) ?? generadoEn.slice(0, 10);
+      const lista = parsearRankingsMeta(a.contenido, meta.cuentaId, capturado);
+      filasLeidas += lista.length;
+      for (const r of lista) rankings.set(`${r.cuentaId}|${r.anuncioId}`, r);
       continue;
     }
     const { filas } = parsearRespuesta(a.contenido);
@@ -141,6 +160,8 @@ export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, 
     competidores: base?.competidores ?? [],
     anunciosCompetencia: base?.anunciosCompetencia ?? [],
     experimentos: base?.experimentos ?? [],
+    rankings: rankings.size ? [...rankings.values()] : (base?.rankings ?? []),
+    bitacora: bitacora.size ? [...bitacora.values()].sort((x, y) => `${x.fecha} ${x.hora}`.localeCompare(`${y.fecha} ${y.hora}`)) : (base?.bitacora ?? []),
     meta: {
       generadoEn,
       desde,
@@ -154,5 +175,15 @@ export function construirLoteDesdeCrudos(archivos: ReadonlyArray<ArchivoCrudo>, 
     },
   };
   const validado = LoteDatosSchema.parse(lote);
-  return { ...validado, resumen: { archivos: archivos.length, filasLeidas, insights: filas.length, desgloses: lote.desgloses.length, creativos: creativos.length, cuentas: [...cuentas], ignorados } };
+  return { ...validado, resumen: { archivos: archivos.length, filasLeidas, insights: filas.length, desgloses: lote.desgloses.length, creativos: creativos.length, rankings: lote.rankings?.length ?? 0, bitacora: lote.bitacora?.length ?? 0, cuentas: [...cuentas], ignorados } };
+}
+
+/** Fecha de captura declarada en el archivo crudo ({capturado: "YYYY-MM-DD"}), si la trae. */
+function fechaCaptura(contenido: string): string | null {
+  try {
+    const obj = JSON.parse(contenido) as { capturado?: unknown };
+    return typeof obj.capturado === "string" && /^\d{4}-\d{2}-\d{2}$/.test(obj.capturado) ? obj.capturado : null;
+  } catch {
+    return null;
+  }
 }

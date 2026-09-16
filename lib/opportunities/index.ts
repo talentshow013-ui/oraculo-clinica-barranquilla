@@ -11,8 +11,11 @@ import type { ConfigCliente } from "@/config/cliente";
 import type { Hallazgo } from "@/lib/diagnostics/engine";
 import type { EspacioVacio } from "@/lib/competitive";
 import { cop } from "@/lib/format";
+import { urlAnuncioBiblioteca, urlBusquedaBiblioteca } from "@/lib/competitive/enlaces";
 
 export type OrigenOportunidad = "hallazgo" | "espacio_vacio" | "ganador_mercado";
+/** De dónde nace: del análisis de los datos propios o de lo que hace el mercado. Nunca se mezclan en pantalla. */
+export type AmbitoOportunidad = "propio" | "mercado";
 
 export interface PruebaOportunidad {
   presupuestoCOP: number | null;
@@ -24,6 +27,11 @@ export interface PruebaOportunidad {
 export interface Oportunidad {
   id: string;
   origen: OrigenOportunidad;
+  ambito: AmbitoOportunidad;
+  /** Ruta del panel donde está el dato que la sustenta. */
+  verEn: string;
+  /** Enlace externo para comprobarla (Biblioteca de anuncios de Meta); null cuando nace de datos propios. */
+  verificar: string | null;
   titulo: string;
   hipotesis: string;
   basadaEn: string[];
@@ -128,6 +136,9 @@ export function desdeHallazgos(hallazgos: ReadonlyArray<Hallazgo>, cliente: Conf
       crear({
         id: `op_${h.reglaId.toLowerCase()}`,
         origen: "hallazgo",
+        ambito: "propio",
+        verEn: h.fuente.enlace,
+        verificar: null,
         titulo: p.titulo,
         hipotesis: `Si ${p.titulo.toLowerCase()}, entonces ${p.entonces}, porque ${p.porque}.`,
         basadaEn: [h.titulo, ...h.evidencia.slice(0, 3).map((e) => `${e.etiqueta}: ${e.valor}`)],
@@ -151,6 +162,9 @@ export function desdeEspaciosVacios(espacios: ReadonlyArray<EspacioVacio>, clien
     crear({
       id: `op_vacio_${e.servicio}_${e.angulo}_${e.nivelConsciencia}`,
       origen: "espacio_vacio",
+      ambito: "mercado",
+      verEn: "/competencia#espacios",
+      verificar: urlBusquedaBiblioteca(`${nombreServicio(e.servicio, cliente)} ${cliente.ciudad}`),
       titulo: `${nombreServicio(e.servicio, cliente)} con ángulo ${NOMBRE_ANGULO[e.angulo]} para ${NIVEL_TEXTO[e.nivelConsciencia]}`,
       hipotesis: `Si se lanza una pieza de ${nombreServicio(e.servicio, cliente)} con ángulo ${NOMBRE_ANGULO[e.angulo]} dirigida a ${NIVEL_TEXTO[e.nivelConsciencia]}, entonces el costo por conversación será menor que el promedio de la cuenta, porque ningún competidor observado está atacando esa combinación y la subasta es más barata.`,
       basadaEn: [`Radar: 0 competidores en ${e.servicio} × ${NOMBRE_ANGULO[e.angulo]} × nivel ${e.nivelConsciencia}`],
@@ -176,6 +190,9 @@ export function desdeGanadoresMercado(ganadores: ReadonlyArray<AnuncioCompetidor
     crear({
       id: `op_ganador_${g.anuncioId}`,
       origen: "ganador_mercado",
+      ambito: "mercado",
+      verEn: "/competencia#ganadores",
+      verificar: urlAnuncioBiblioteca(g.anuncioId),
       titulo: `Replicar la estructura del anuncio de ${g.nombreAnunciante} (${g.diasCorriendo} días al aire)`,
       hipotesis: `Si se produce una pieza propia con la misma estructura (${NOMBRE_ANGULO[g.anguloDetectado]}, ${g.tipoMedia}, ${g.usaPrecio ? "con precio" : "sin precio"}, ${g.usaTestimonio ? "con testimonio" : "sin testimonio"}) para ${nombreServicio(g.servicioDetectado, cliente)}, entonces obtendrá un costo por conversación competitivo, porque el mercado ya validó esa estructura sosteniéndola ${g.diasCorriendo} días. Se copia la estructura, nunca el texto.`,
       basadaEn: [`Radar: ${g.nombreAnunciante} · ${g.diasCorriendo} días · ${g.variantesDelConcepto} variantes`],
@@ -238,6 +255,9 @@ export interface EntradaOportunidades {
   maximo?: number;
 }
 
+/** Las del mercado nunca desplazan a las propias: tienen su propio tope. */
+const MAXIMO_MERCADO = 6;
+
 export function generarOportunidades(e: EntradaOportunidades): Oportunidad[] {
   const todas = [
     ...desdeHallazgos(e.hallazgos, e.cliente, e.gastoQuincenal ?? 0),
@@ -246,7 +266,10 @@ export function generarOportunidades(e: EntradaOportunidades): Oportunidad[] {
   ];
   const vistas = new Set<string>();
   const unicas = todas.filter((o) => (vistas.has(o.id) ? false : (vistas.add(o.id), true)));
-  return priorizarICE(filtrarYaProbadas(unicas, e.experimentos)).slice(0, e.maximo ?? 12);
+  const priorizadas = priorizarICE(filtrarYaProbadas(unicas, e.experimentos));
+  const propias = priorizadas.filter((o) => o.ambito === "propio").slice(0, e.maximo ?? 12);
+  const mercado = priorizadas.filter((o) => o.ambito === "mercado").slice(0, Math.min(MAXIMO_MERCADO, e.maximo ?? 12));
+  return priorizarICE([...propias, ...mercado]);
 }
 
 export function describirPresupuesto(o: Oportunidad): string {

@@ -17,3 +17,7 @@ export type { Hallazgo, Area, Severidad, Evidencia, ErrorRegla } from "@/lib/dia
 export type { ResultadoRadar, PerfilCompetidor, DensidadAngulo, EspacioVacio } from "@/lib/competitive";
 export type { Oportunidad } from "@/lib/opportunities";
 export type { ResultadoLente, ResultadoCriterio } from "@/lib/frameworks";
+export type { Comparativa, ColumnaPropia, MercadoMeta } from "@/lib/metrics/comparativa";
+export type { RankingAnuncio, NivelRanking } from "@/lib/adapters/types";
+export type { ResumenBitacora, Interruptor, ActorBitacora } from "@/lib/metrics/bitacora";
+export type { CambioCuenta } from "@/lib/adapters/types";
