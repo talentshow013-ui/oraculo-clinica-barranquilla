@@ -26,3 +26,5 @@ export type { EstudioReferencias, EstudioCiudad, AnuncioReferencia, SenalPublico
 export type { Publico, Segmentacion, TipoPublico } from "@/lib/adapters/types";
 export type { ResultadoOrganico, PublicacionEvaluada, ResumenRed, GrupoOrganico, CandidataPauta, Franja } from "@/lib/organico";
 export type { PublicacionOrganica, CuentaOrganica, DiaOrganico, LoteOrganico, RedOrganico, FormatoOrganico } from "@/lib/adapters/types";
+export type { ResultadoWeb, ResumenWeb, CanalWeb, FuenteWeb, PaginaResumen, CiudadResumen } from "@/lib/web";
+export type { LoteWeb, SesionesWeb } from "@/lib/adapters/types";

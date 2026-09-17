@@ -163,6 +163,13 @@ No pasa por el conector de anuncios: va directo a Meta con el token de página d
    conectarlo está en `docs/CONEXION_ORGANICO.md`.
 3. Lee los avisos que imprime (métricas que Meta no entregó) y repítelos en el reporte final.
 
+## Paso 3f — Sitio web (Google Analytics 4)
+
+Tampoco pasa por el conector: usa la llave de solo lectura del `.env` (`GA4_PROPIEDAD_ID`,
+`GA4_CREDENCIALES`). Si está: `npm run web:sincronizar` (30 días, incremental; primera vez
+`-- --dias 90`). Escribe `datos/web.json`. Si no está, reporta «sitio web sin conectar»
+(`docs/CONEXION_GA4.md`) y sigue. Repite sus avisos en el reporte final.
+
 ## Paso 6b — Referencias de otras ciudades (opcional, mensual)
 
 Capturas de la Biblioteca de anuncios de otros mercados, a `datos/referencias/` (no al radar):

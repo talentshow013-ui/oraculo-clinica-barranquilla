@@ -7,9 +7,10 @@ import { useEffect, useRef, useState } from 'react'
 export const MODOS = [
   { id: 'pauta', nombre: 'Pauta', detalle: 'Anuncios que se pagan', a: '/panel' },
   { id: 'organico', nombre: 'Orgánico', detalle: 'Instagram y Facebook sin pagar', a: '/organico' },
+  { id: 'google', nombre: 'Google', detalle: 'Sitio web (Google Analytics)', a: '/web' },
 ] as const
 export type Modo = (typeof MODOS)[number]['id']
-export const modoDeRuta = (ruta: string): Modo => (ruta.startsWith('/organico') ? 'organico' : 'pauta')
+export const modoDeRuta = (ruta: string): Modo => (ruta.startsWith('/organico') ? 'organico' : ruta.startsWith('/web') ? 'google' : 'pauta')
 
 /**
  * DESPLEGABLE DE MODO bajo el nombre ORÁCULO: Pauta / Orgánico. Es navegación (no cookie): cada

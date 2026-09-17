@@ -41,6 +41,13 @@ else
   echo "orgánico: sin conectar (npm run organico:conectar -- <token>)"
 fi
 
+# 2c) Sitio web (Google Analytics 4): llave de solo lectura del .env
+if grep -q '^GA4_PROPIEDAD_ID=.\+' .env 2>/dev/null; then
+  if npm run -s web:sincronizar >"reportes/web-$HOY.log" 2>&1; then echo "sitio web: ok"; ESTADO="$ESTADO · Sitio web: al día"; else echo "sitio web: FALLÓ (ver reportes/web-$HOY.log)"; ESTADO="$ESTADO · Sitio web: falló"; fi
+else
+  echo "sitio web: sin conectar (docs/CONEXION_GA4.md)"
+fi
+
 # 3) Validar y correr el motor
 if npm run -s validar-lote; then echo "lote: válido"; else echo "lote: INVÁLIDO — el panel sigue con el anterior"; fi
 if npm run -s verificar -- --json >"reportes/ultimo.json" 2>/dev/null; then echo "motor: ok"; else echo "motor: FALLÓ"; fi
@@ -68,4 +75,5 @@ fi
 find reportes -name 'sincronizacion-*.md' -mtime +60 -delete 2>/dev/null
 find reportes -name 'organico-*.log' -mtime +60 -delete 2>/dev/null
 find reportes -name 'telegram-*.log' -mtime +60 -delete 2>/dev/null
+find reportes -name 'web-*.log' -mtime +60 -delete 2>/dev/null
 echo "=== $(date '+%F %T') · fin"

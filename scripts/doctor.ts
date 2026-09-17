@@ -50,6 +50,14 @@ if (/^META_ORGANICO_TOKEN=.+$/m.test(envTexto)) {
   opcional("Orgánico (Instagram y Facebook) sin conectar", "npm run organico:conectar -- <token>  (docs/CONEXION_ORGANICO.md)");
 }
 
+// Sitio web (Google Analytics 4)
+if (/^GA4_PROPIEDAD_ID=.+$/m.test(envTexto) && hay("datos/ga4-credenciales.json")) {
+  if (hay("datos/web.json")) ok("Sitio web conectado y con datos: datos/web.json");
+  else opcional("Sitio web conectado pero sin datos todavía", "npm run web:sincronizar -- --dias 90");
+} else {
+  opcional("Sitio web (Google Analytics) sin conectar", "GA4_PROPIEDAD_ID en .env + llave en datos/ga4-credenciales.json (docs/CONEXION_GA4.md)");
+}
+
 // Telegram
 if (/^TELEGRAM_BOT_TOKEN=.+$/m.test(envTexto) && /^TELEGRAM_CHAT_ID=.+$/m.test(envTexto)) ok("Avisos por Telegram configurados");
 else opcional("Avisos por Telegram sin configurar", "bot con @BotFather → TELEGRAM_BOT_TOKEN en .env → npm run notificar -- --chats → TELEGRAM_CHAT_ID");

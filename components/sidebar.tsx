@@ -20,6 +20,18 @@ const GRUPOS_ORGANICO: { titulo: string; rutas: { a: string; nombre: string; ico
   ] },
 ]
 
+/** En modo Google el riel muestra los bloques de /web. */
+const GRUPOS_GOOGLE: { titulo: string; rutas: { a: string; nombre: string; icono: ReactNode }[] }[] = [
+  { titulo: 'Sitio web', rutas: [
+    { a: '/web', nombre: 'Resumen', icono: I(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /></>) },
+    { a: '/web#canales', nombre: 'Canales y fuentes', icono: I(<><path d="M4 19V10M10 19V5M16 19v-8M22 19H2" /></>) },
+    { a: '/web#paginas', nombre: 'Páginas que convierten', icono: I(<><path d="M6 3h9l4 4v14H6z" /><path d="M9 12h6M9 16h6M15 3v4h4" /></>) },
+    { a: '/web#eventos', nombre: 'Contactos (eventos clave)', icono: I(<><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /></>) },
+    { a: '/web#ciudades', nombre: 'Ciudades', icono: I(<><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><path d="M12 12l6-6" /></>) },
+    { a: '/web#fuente', nombre: 'Fuente', icono: I(<><ellipse cx="12" cy="6" rx="8" ry="3" /><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6" /></>) },
+  ] },
+]
+
 const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: ReactNode }[] }[] = [
   { titulo: 'Decidir', rutas: [
     { a: '/panel', nombre: 'Centro de mando', icono: I(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /><path d="M12 4v3M12 17v3M4 12h3M17 12h3" /></>) },
@@ -48,7 +60,8 @@ const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: React
 
 export default function Sidebar({ cliente, sede }: { cliente: string; sede: string }) {
   const ruta = usePathname()
-  const grupos = modoDeRuta(ruta) === 'organico' ? GRUPOS_ORGANICO : GRUPOS
+  const modo = modoDeRuta(ruta)
+  const grupos = modo === 'organico' ? GRUPOS_ORGANICO : modo === 'google' ? GRUPOS_GOOGLE : GRUPOS
   return (
     <aside className="no-imprimir sticky top-0 hidden h-[100svh] w-[232px] shrink-0 flex-col bg-marino text-[#EAF2FF] lg:flex" aria-label="Secciones">
       <div className="flex items-center gap-2.5 px-4 pb-4 pt-5">

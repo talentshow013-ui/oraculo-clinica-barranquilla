@@ -19,3 +19,6 @@ entregables/
 datos/referencias/
 # orgánico (Instagram/Facebook) de la clínica: datos reales, fuera del repositorio
 datos/organico.json
+# sitio web (Google Analytics) y su llave de solo lectura: fuera del repositorio
+datos/web.json
+datos/ga4-credenciales.json

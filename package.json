@@ -19,7 +19,8 @@
     "doctor": "tsx scripts/doctor.ts",
     "organico:conectar": "tsx scripts/organico-conectar.ts",
     "organico:sincronizar": "tsx scripts/organico-sincronizar.ts",
-    "notificar": "tsx scripts/notificar.ts"
+    "notificar": "tsx scripts/notificar.ts",
+    "web:sincronizar": "tsx scripts/web-sincronizar.ts"
   },
   "dependencies": {
     "date-fns": "4.4.0",

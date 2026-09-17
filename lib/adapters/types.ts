@@ -527,3 +527,66 @@ export const LoteOrganicoSchema = z.object({
   }),
 });
 export type LoteOrganico = z.infer<typeof LoteOrganicoSchema>;
+
+// ---------------------------------------------------------------------------
+// Sitio web — Google Analytics 4 (archivo aparte: datos/web.json)
+// ---------------------------------------------------------------------------
+
+/** Un día × canal × fuente/medio de tráfico del sitio. */
+export const SesionesWebSchema = z.object({
+  fecha: FechaSchema,
+  /** Grupo de canal de Google: Paid Social, Organic Social, Organic Search, Direct, Referral, Paid Search… */
+  canal: z.string(),
+  fuente: z.string(),
+  medio: z.string(),
+  sesiones: noNegativo,
+  usuarios: noNegativoNullable,
+  usuariosNuevos: noNegativoNullable,
+  sesionesComprometidas: noNegativoNullable,
+  /** Segundos promedio por sesión. */
+  duracionMedia: noNegativoNullable,
+  /** Eventos clave (conversiones) que Google atribuye a ese tráfico. */
+  eventosClave: noNegativoNullable,
+});
+export type SesionesWeb = z.infer<typeof SesionesWebSchema>;
+
+export const PaginaWebSchema = z.object({
+  fecha: FechaSchema,
+  pagina: z.string(),
+  sesiones: noNegativo,
+  sesionesComprometidas: noNegativoNullable,
+  eventosClave: noNegativoNullable,
+});
+export type PaginaWeb = z.infer<typeof PaginaWebSchema>;
+
+export const EventoWebSchema = z.object({
+  fecha: FechaSchema,
+  evento: z.string(),
+  veces: noNegativo,
+  esClave: z.boolean(),
+});
+export type EventoWeb = z.infer<typeof EventoWebSchema>;
+
+export const CiudadWebSchema = z.object({
+  fecha: FechaSchema,
+  ciudad: z.string(),
+  sesiones: noNegativo,
+  eventosClave: noNegativoNullable,
+});
+export type CiudadWeb = z.infer<typeof CiudadWebSchema>;
+
+export const LoteWebSchema = z.object({
+  propiedadId: z.string().min(1),
+  sesiones: z.array(SesionesWebSchema),
+  paginas: z.array(PaginaWebSchema),
+  eventos: z.array(EventoWebSchema),
+  ciudades: z.array(CiudadWebSchema),
+  meta: z.object({
+    capturadoEn: z.string(),
+    desde: FechaSchema,
+    hasta: FechaSchema,
+    origen: z.literal("ga4"),
+    avisos: z.array(z.string()),
+  }),
+});
+export type LoteWeb = z.infer<typeof LoteWebSchema>;
