@@ -1,5 +1,6 @@
 <!--
 Sync Impact Report
+- Version change: 1.2.0 → 1.3.0 (2026-09-16): solo lectura sobre plataformas (X-bis) y cero alucinación operativa (X-ter) tras un incidente de pauta encendida/apagada por el agente
 - Version change: 1.1.0 → 1.2.0 (2026-09-16): Principio II admite el token de página del orgánico en `.env`
 - Version change: (template) → 1.0.0
 - Modified principles: n/a (initial ratification)
@@ -71,6 +72,21 @@ Toda fecha se interpreta en `America/Bogota`; prohibido `toISOString()` crudo pa
 día. Toda comparación de periodos usa ventanas del mismo tamaño. Los huecos de datos se listan en
 `meta.huecos` y la UI los muestra: un hueco puede simular una caída que nunca ocurrió.
 
+### X-bis. Solo lectura sobre las plataformas (enmienda 1.3.0)
+El agente y cualquier automatización del proyecto **leen** Meta (y cualquier plataforma); **nunca
+escriben**: no activan, pausan, crean, borran ni editan campañas, conjuntos, anuncios, presupuestos,
+públicos, creativos, píxeles ni publicaciones impulsadas. Los cambios los ejecuta una persona en el
+administrador de anuncios a partir de la recomendación (qué, por qué, riesgo, quién). Se aplica con
+`permissions.deny` y un hook `PreToolUse` en `.claude/settings.json` (versionado), vigentes en todo
+Claude Code que abra el repositorio, incluido `bypassPermissions` en la VPS. Quitarlo requiere una
+decisión escrita de la gerencia de la clínica y una nueva enmienda.
+
+### X-ter. Cero alucinación operativa (enmienda 1.3.0)
+Toda cifra que el agente enuncie nombra su fuente (motor, archivo del repositorio o respuesta del
+conector en la misma conversación). No se afirma que algo «quedó hecho» sin la salida del comando
+que lo demuestre. Ante una pregunta que los datos no responden, la respuesta es «no hay dato» y cómo
+se obtendría. Toda recomendación lleva dato, regla, riesgo en pesos y alternativa.
+
 ### X. Calidad verificable
 TypeScript `strict` + `noUncheckedIndexedAccess`. Vitest para todo `lib/`; en `lib/` se trabaja
 con TDD (test primero, rojo, verde, refactor). `npx tsc --noEmit` limpio y suite verde son
@@ -115,7 +131,7 @@ principios; MINOR: principio o sección nueva; PATCH: aclaraciones) y fecha. Tod
 código y cada `/speckit-plan` verifican cumplimiento; la complejidad adicional debe
 justificarse por escrito en el plan.
 
-**Version**: 1.2.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-16
+**Version**: 1.3.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-16
 
 Enmienda 1.1.0 (2026-09-13): despliegue en VPS siempre encendida con Claude Code y reloj diario
 (sección "Restricciones de Stack y Despliegue"); candado del panel en internet. Los principios I–X
