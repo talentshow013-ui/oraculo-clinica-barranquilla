@@ -291,7 +291,7 @@ async function serieDiaria(pedir: Peticion, objetoId: string, metricas: readonly
 
 export async function sincronizarOrganico(o: OpcionesSincronizacion): Promise<LoteOrganico> {
   const lote: LoteOrganico = { cuentas: [], publicaciones: [], dias: [], meta: { capturadoEn: o.ahora ?? new Date().toISOString(), desde: o.desde, hasta: o.hasta, origen: "graph", avisos: [] } };
-  const retiradas: Record<RedOrganico, Set<string>> = { instagram: new Set(), facebook: new Set() };
+  const retiradas: Record<"instagram" | "facebook", Set<string>> = { instagram: new Set(), facebook: new Set() };
   const desdeIso = `${o.desde}T00:00`;
 
   if (o.instagramId) {

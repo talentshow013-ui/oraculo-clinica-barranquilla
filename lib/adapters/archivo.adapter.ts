@@ -3,7 +3,9 @@
  * (ver docs/CONEXION_MCP.md). Mismo contrato, mismo guardián. Ningún componente cambia.
  */
 import { resolve } from "node:path";
-import { FuenteArchivoBase } from "./archivo.base";
+import { FuenteArchivoBase, leerLote, recortar } from "./archivo.base";
+import { cargarTikTok, fusionarTikTokEnLote } from "./tiktok.archivo";
+import type { LoteDatos, Rango } from "./types";
 
 /** `ORACULO_RUTA_LOTE` permite leer el lote desde otra carpeta (disco persistente en un servidor). */
 export const RUTA_LOTE = process.env.ORACULO_RUTA_LOTE ? resolve(process.env.ORACULO_RUTA_LOTE) : resolve(process.cwd(), "datos", "lote.json");
@@ -15,5 +17,9 @@ export class FuenteArchivo extends FuenteArchivoBase {
     "Aún no se han cargado datos reales en datos/lote.json. Ejecuta la sincronización semanal desde el asistente para generarlo.";
   constructor(ruta: string = RUTA_LOTE) {
     super(ruta);
+  }
+  /** El lote de Meta más, si existe, la pauta de TikTok (`datos/tiktok.json`) como una cuenta más. */
+  override async obtener(rango: Rango): Promise<LoteDatos> {
+    return recortar(fusionarTikTokEnLote(leerLote(this.ruta, this.ayudaSiFalta), cargarTikTok()), rango);
   }
 }

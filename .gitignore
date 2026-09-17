@@ -22,3 +22,5 @@ datos/organico.json
 # sitio web (Google Analytics) y su llave de solo lectura: fuera del repositorio
 datos/web.json
 datos/ga4-credenciales.json
+# pauta de TikTok: datos reales, fuera del repositorio
+datos/tiktok.json

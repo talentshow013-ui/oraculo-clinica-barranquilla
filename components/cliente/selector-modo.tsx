@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 /** Los dos mundos del panel: la pauta (todo lo que se paga) y el orgánico (lo que se publica sin pagar). */
 export const MODOS = [
   { id: 'pauta', nombre: 'Pauta', detalle: 'Anuncios que se pagan', a: '/panel' },
-  { id: 'organico', nombre: 'Orgánico', detalle: 'Instagram y Facebook sin pagar', a: '/organico' },
+  { id: 'organico', nombre: 'Orgánico', detalle: 'Instagram, Facebook y TikTok sin pagar', a: '/organico' },
   { id: 'google', nombre: 'Google', detalle: 'Sitio web (Google Analytics)', a: '/web' },
 ] as const
 export type Modo = (typeof MODOS)[number]['id']

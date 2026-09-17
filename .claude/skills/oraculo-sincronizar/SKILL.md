@@ -163,6 +163,14 @@ No pasa por el conector de anuncios: va directo a Meta con el token de página d
    conectarlo está en `docs/CONEXION_ORGANICO.md`.
 3. Lee los avisos que imprime (métricas que Meta no entregó) y repítelos en el reporte final.
 
+## Paso 3g — Pauta de TikTok y TikTok orgánico
+
+- Pauta: si el `.env` tiene `TIKTOK_ACCESS_TOKEN` y `TIKTOK_ADVERTISER_ID`: `npm run tiktok:sincronizar`
+  (30 días; primera vez `-- --dias 90`). Escribe `datos/tiktok.json`; el panel lo fusiona con Meta
+  como la cuenta «TikTok · <id>». Si no está, reporta «TikTok sin conectar» y sigue.
+- Orgánico: TikTok no lo da por API. Si la clínica dejó un CSV de TikTok Studio en `datos/entrada/`
+  (o te lo pasan), `npm run organico:importar-tiktok -- <csv>`; si no hay archivo, no inventes nada.
+
 ## Paso 3f — Sitio web (Google Analytics 4)
 
 Tampoco pasa por el conector: usa la llave de solo lectura del `.env` (`GA4_PROPIEDAD_ID`,

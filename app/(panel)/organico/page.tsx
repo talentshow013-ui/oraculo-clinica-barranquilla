@@ -23,9 +23,10 @@ export default async function Organico() {
   const o = r.organico
   const ig = o.redes.find((x) => x.red === 'instagram')
   const fb = o.redes.find((x) => x.red === 'facebook')
+  const tt = o.redes.find((x) => x.red === 'tiktok')
   return (
     <>
-      <Titulo rotulo="Orgánico · Instagram y Facebook sin pauta" extra={o.sinDatos ? undefined : <p className="num text-[12.5px] text-texto-2">{num(o.publicaciones.length)} publicaciones · {fechaCorta(o.desde)} – {fechaCorta(o.hasta)}{o.capturadoEn ? ` · traído ${fechaHora(o.capturadoEn)}` : ''}</p>}>¿Qué publica la clínica y qué le funciona sin pagar?</Titulo>
+      <Titulo rotulo="Orgánico · Instagram, Facebook y TikTok sin pauta" extra={o.sinDatos ? undefined : <p className="num text-[12.5px] text-texto-2">{num(o.publicaciones.length)} publicaciones · {fechaCorta(o.desde)} – {fechaCorta(o.hasta)}{o.capturadoEn ? ` · traído ${fechaHora(o.capturadoEn)}` : ''}</p>}>¿Qué publica la clínica y qué le funciona sin pagar?</Titulo>
 
       {o.sinDatos ? (
         <Panel id="resumen" rotulo="Orgánico" titulo="Falta conectar Instagram y Facebook" retraso={100}>
@@ -47,6 +48,15 @@ export default async function Organico() {
               <Kpi nombre="Seguidores ganados (Facebook)" valor={fb.seguidoresGanados} unidad="numero" mejorEs="mayor" formula="Último día del periodo menos el primero" retraso={240} />
               <Kpi nombre="Vistas orgánicas (Facebook)" valor={fb.vistas} unidad="numero" formula="Suma de vistas de las publicaciones del periodo" retraso={280} />
               <Kpi nombre="Interacciones (Facebook)" valor={fb.interacciones} unidad="numero" formula="Reacciones + comentarios + compartidos" retraso={320} />
+            </Grid>
+          )}
+
+          {tt && (
+            <Grid cols={4} className="mt-3">
+              <Kpi nombre={`Seguidores en TikTok${tt.alias ? ` · @${tt.alias}` : ''}`} valor={tt.seguidores} unidad="numero" formula="Seguidores según la exportación de TikTok Studio" retraso={200} />
+              <Kpi nombre="Seguidores ganados (TikTok)" valor={tt.seguidoresGanados} unidad="numero" mejorEs="mayor" formula="Suma de seguidores netos por día del resumen de TikTok Studio" retraso={240} />
+              <Kpi nombre="Vistas (TikTok)" valor={tt.vistas} unidad="numero" formula="Suma de vistas de los videos del periodo" retraso={280} />
+              <Kpi nombre="Tasa de interacción (TikTok)" valor={tt.tasaInteraccion} unidad="porcentaje" formula="Interacciones ÷ alcance de los videos con alcance (si TikTok no da alcance, «—»)" retraso={320} />
             </Grid>
           )}
 
@@ -97,8 +107,8 @@ export default async function Organico() {
               <Aviso tono="neutro">Meta no entregó la serie diaria de seguidores en este periodo.</Aviso>
             ) : (
               <Tabla minAncho={420}>
-                <thead><tr><Th>Día</Th><Th num>Instagram · nuevos</Th><Th num>Facebook · total</Th></tr></thead>
-                <tbody>{o.seguidores.serie.slice(-31).map((d) => <tr key={d.fecha}><Celda>{fechaCorta(d.fecha)}</Celda><Celda num tono={d.instagramNuevos != null && d.instagramNuevos > 0 ? 'bien' : undefined}>{d.instagramNuevos == null ? '—' : num(d.instagramNuevos)}</Celda><Celda num>{d.facebookTotal == null ? '—' : num(d.facebookTotal)}</Celda></tr>)}</tbody>
+                <thead><tr><Th>Día</Th><Th num>Instagram · nuevos</Th><Th num>Facebook · total</Th><Th num>TikTok · nuevos</Th></tr></thead>
+                <tbody>{o.seguidores.serie.slice(-31).map((d) => <tr key={d.fecha}><Celda>{fechaCorta(d.fecha)}</Celda><Celda num tono={d.instagramNuevos != null && d.instagramNuevos > 0 ? 'bien' : undefined}>{d.instagramNuevos == null ? '—' : num(d.instagramNuevos)}</Celda><Celda num>{d.facebookTotal == null ? '—' : num(d.facebookTotal)}</Celda><Celda num tono={d.tiktokNuevos != null && d.tiktokNuevos > 0 ? 'bien' : undefined}>{d.tiktokNuevos == null ? '—' : num(d.tiktokNuevos)}</Celda></tr>)}</tbody>
               </Tabla>
             )}
           </Panel>
@@ -129,7 +139,7 @@ function TablaPublicaciones({ lista, prefijo, sinCabecera = false }: { lista: Pu
               <a href={p.enlace} target="_blank" rel="noopener noreferrer" className="font-medium text-acento underline-offset-2 hover:underline" title="Abrir en la red social">{recortar(p.texto || '(sin texto)', 70)} ↗</a>
               <span className="num mt-0.5 block text-[11.5px] text-texto-3">{fechaCorta(p.fecha)} · {String(p.hora).padStart(2, '0')}:00 · {NOMBRE_RED[p.red]}</span>
             </Celda>
-            <Celda><Etiqueta tono={p.formato === 'reel' ? 'acento' : 'neutro'}>{NOMBRE_FORMATO[p.formato]}</Etiqueta></Celda>
+            <Celda><Etiqueta tono={p.red === 'tiktok' ? 'ojo' : p.formato === 'reel' ? 'acento' : 'neutro'}>{p.red === 'tiktok' ? 'TikTok' : NOMBRE_FORMATO[p.formato]}</Etiqueta></Celda>
             <Celda num>{p.alcance == null ? '—' : num(p.alcance)}</Celda>
             <Celda num>{p.vistas == null ? '—' : num(p.vistas)}</Celda>
             <Celda num>{p.meGusta == null ? '—' : num(p.meGusta)}</Celda>

@@ -256,7 +256,7 @@ function resolverCuentas(lote: LoteDatos, cfg: ConfigCliente, fuentes: EstadoFue
   const ultima = fuentes.find((f) => f.conectado)?.ultimaActualizacion ?? lote.meta.generadoEn ?? null;
   const configuradas: CuentaPublicitaria[] = cfg.cuentasPublicitarias.map((c) => ({ ...c, activa: conPauta.has(c.id), ultimaSincronizacion: ultima }));
   // Cuentas que aparecen en los datos y no están en la configuración: se muestran con su id.
-  const extra = [...conPauta].filter((id) => !cfg.cuentasPublicitarias.some((c) => c.id === id)).map<CuentaPublicitaria>((id) => ({ id, nombre: id, plataforma: "meta", moneda: "COP", activa: true, ultimaSincronizacion: ultima }));
+  const extra = [...conPauta].filter((id) => !cfg.cuentasPublicitarias.some((c) => c.id === id)).map<CuentaPublicitaria>((id) => ({ id, nombre: id.startsWith("tt_") ? `TikTok · ${id.slice(3)}` : id, plataforma: id.startsWith("tt_") ? "tiktok" : "meta", moneda: "COP", activa: true, ultimaSincronizacion: ultima }));
   return [...configuradas, ...extra];
 }
 

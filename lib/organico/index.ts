@@ -9,7 +9,7 @@ import type { FormatoOrganico, LoteOrganico, PublicacionOrganica, RedOrganico } 
 import type { FuenteHallazgo } from "@/lib/diagnostics/engine";
 import { diaSemana, sumarDias } from "@/lib/format/fechas";
 
-export const NOMBRE_RED: Record<RedOrganico, string> = { instagram: "Instagram", facebook: "Facebook" };
+export const NOMBRE_RED: Record<RedOrganico, string> = { instagram: "Instagram", facebook: "Facebook", tiktok: "TikTok" };
 export const NOMBRE_FORMATO: Record<FormatoOrganico, string> = { reel: "Reel", video: "Video", imagen: "Imagen", carrusel: "Carrusel", historia: "Historia", texto: "Texto", enlace: "Enlace" };
 export const FRANJAS = ["madrugada", "mañana", "mediodía", "tarde", "noche"] as const;
 export type Franja = (typeof FRANJAS)[number];
@@ -74,7 +74,7 @@ export interface ResultadoOrganico {
   porDia: GrupoOrganico[];
   porFranja: GrupoOrganico[];
   paraPauta: CandidataPauta[];
-  seguidores: { serie: { fecha: string; instagramNuevos: number | null; facebookTotal: number | null }[]; ganados: Record<RedOrganico, number | null> };
+  seguidores: { serie: { fecha: string; instagramNuevos: number | null; facebookTotal: number | null; tiktokNuevos: number | null }[]; ganados: Record<RedOrganico, number | null> };
   /** Frases de dueño, calculadas (nunca inventadas). */
   lecturas: string[];
   fuente: FuenteHallazgo;
@@ -140,7 +140,7 @@ function vacio(rango: { desde: string; hasta: string }): ResultadoOrganico {
     porDia: [],
     porFranja: [],
     paraPauta: [],
-    seguidores: { serie: [], ganados: { instagram: null, facebook: null } },
+    seguidores: { serie: [], ganados: { instagram: null, facebook: null, tiktok: null } },
     lecturas: [],
     fuente: { origen: "Meta · Instagram y Facebook (publicaciones sin pauta)", desde: rango.desde, hasta: rango.hasta, registros: 0, metodo: "Todavía no se ha conectado el orgánico.", enlace: "/organico#fuente" },
   };
@@ -153,7 +153,7 @@ export function analizarOrganico(lote: LoteOrganico | null, rango: { desde: stri
   const dias = lote.dias.filter((d) => en(d.fecha)).sort((a, b) => a.fecha.localeCompare(b.fecha));
 
   // Seguidores ganados: Instagram entrega nuevos por día; Facebook, el total del día.
-  const ganados: Record<RedOrganico, number | null> = { instagram: suma(dias.filter((d) => d.red === "instagram").map((d) => d.seguidoresNuevos)), facebook: null };
+  const ganados: Record<RedOrganico, number | null> = { instagram: suma(dias.filter((d) => d.red === "instagram").map((d) => d.seguidoresNuevos)), facebook: null, tiktok: suma(dias.filter((d) => d.red === "tiktok").map((d) => d.seguidoresNuevos)) };
   const fbTotales = dias.filter((d) => d.red === "facebook" && d.seguidoresTotal != null);
   if (fbTotales.length >= 2) ganados.facebook = fbTotales[fbTotales.length - 1]!.seguidoresTotal! - fbTotales[0]!.seguidoresTotal!;
 
@@ -192,7 +192,7 @@ export function analizarOrganico(lote: LoteOrganico | null, rango: { desde: stri
     : [];
 
   const fechas = [...new Set(dias.map((d) => d.fecha))].sort();
-  const serie = fechas.map((f) => ({ fecha: f, instagramNuevos: dias.find((d) => d.red === "instagram" && d.fecha === f)?.seguidoresNuevos ?? null, facebookTotal: dias.find((d) => d.red === "facebook" && d.fecha === f)?.seguidoresTotal ?? null }));
+  const serie = fechas.map((f) => ({ fecha: f, instagramNuevos: dias.find((d) => d.red === "instagram" && d.fecha === f)?.seguidoresNuevos ?? null, facebookTotal: dias.find((d) => d.red === "facebook" && d.fecha === f)?.seguidoresTotal ?? null, tiktokNuevos: dias.find((d) => d.red === "tiktok" && d.fecha === f)?.seguidoresNuevos ?? null }));
 
   const lecturas: string[] = [];
   const mejorFormato = porFormato.find((g) => g.mejor);

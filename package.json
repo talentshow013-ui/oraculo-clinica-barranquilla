@@ -20,7 +20,9 @@
     "organico:conectar": "tsx scripts/organico-conectar.ts",
     "organico:sincronizar": "tsx scripts/organico-sincronizar.ts",
     "notificar": "tsx scripts/notificar.ts",
-    "web:sincronizar": "tsx scripts/web-sincronizar.ts"
+    "web:sincronizar": "tsx scripts/web-sincronizar.ts",
+    "tiktok:sincronizar": "tsx scripts/tiktok-sincronizar.ts",
+    "organico:importar-tiktok": "tsx scripts/organico-importar-tiktok.ts"
   },
   "dependencies": {
     "date-fns": "4.4.0",

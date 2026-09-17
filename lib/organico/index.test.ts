@@ -122,6 +122,6 @@ describe("orgánico · seguidores", () => {
     const r = analizarOrganico(lote, rango, "2026-09-15");
     expect(r.seguidores.serie).toHaveLength(2);
     expect(r.seguidores.serie[0]).toMatchObject({ fecha: "2026-09-01", instagramNuevos: 10, facebookTotal: 7990 });
-    expect(r.seguidores.ganados).toEqual({ instagram: 25, facebook: 10 });
+    expect(r.seguidores.ganados).toEqual({ instagram: 25, facebook: 10, tiktok: null });
   });
 });

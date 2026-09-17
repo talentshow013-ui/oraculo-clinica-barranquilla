@@ -458,7 +458,7 @@ export interface FuenteDatos {
 // (archivo aparte: datos/organico.json; la pauta no se toca)
 // ---------------------------------------------------------------------------
 
-export const REDES_ORGANICO = ["instagram", "facebook"] as const;
+export const REDES_ORGANICO = ["instagram", "facebook", "tiktok"] as const;
 export type RedOrganico = (typeof REDES_ORGANICO)[number];
 export const FORMATOS_ORGANICO = ["reel", "video", "imagen", "carrusel", "historia", "texto", "enlace"] as const;
 export type FormatoOrganico = (typeof FORMATOS_ORGANICO)[number];

@@ -50,6 +50,14 @@ if (/^META_ORGANICO_TOKEN=.+$/m.test(envTexto)) {
   opcional("Orgánico (Instagram y Facebook) sin conectar", "npm run organico:conectar -- <token>  (docs/CONEXION_ORGANICO.md)");
 }
 
+// Pauta de TikTok
+if (/^TIKTOK_ACCESS_TOKEN=.+$/m.test(envTexto) && /^TIKTOK_ADVERTISER_ID=.+$/m.test(envTexto)) {
+  if (hay("datos/tiktok.json")) ok("Pauta de TikTok conectada y con datos: datos/tiktok.json");
+  else opcional("Pauta de TikTok conectada pero sin datos todavía", "npm run tiktok:sincronizar -- --dias 90");
+} else {
+  opcional("Pauta de TikTok sin conectar", "TIKTOK_ACCESS_TOKEN y TIKTOK_ADVERTISER_ID en .env (docs/CONEXION_TIKTOK.md)");
+}
+
 // Sitio web (Google Analytics 4)
 if (/^GA4_PROPIEDAD_ID=.+$/m.test(envTexto) && hay("datos/ga4-credenciales.json")) {
   if (hay("datos/web.json")) ok("Sitio web conectado y con datos: datos/web.json");

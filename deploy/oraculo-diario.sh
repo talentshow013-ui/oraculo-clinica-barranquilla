@@ -41,6 +41,13 @@ else
   echo "orgánico: sin conectar (npm run organico:conectar -- <token>)"
 fi
 
+# 2d) Pauta de TikTok (solo lectura, token del .env)
+if grep -q '^TIKTOK_ACCESS_TOKEN=.\+' .env 2>/dev/null; then
+  if npm run -s tiktok:sincronizar >"reportes/tiktok-$HOY.log" 2>&1; then echo "tiktok: ok"; ESTADO="$ESTADO · TikTok: al día"; else echo "tiktok: FALLÓ (ver reportes/tiktok-$HOY.log)"; ESTADO="$ESTADO · TikTok: falló"; fi
+else
+  echo "tiktok: sin conectar (docs/CONEXION_TIKTOK.md)"
+fi
+
 # 2c) Sitio web (Google Analytics 4): llave de solo lectura del .env
 if grep -q '^GA4_PROPIEDAD_ID=.\+' .env 2>/dev/null; then
   if npm run -s web:sincronizar >"reportes/web-$HOY.log" 2>&1; then echo "sitio web: ok"; ESTADO="$ESTADO · Sitio web: al día"; else echo "sitio web: FALLÓ (ver reportes/web-$HOY.log)"; ESTADO="$ESTADO · Sitio web: falló"; fi
@@ -76,4 +83,5 @@ find reportes -name 'sincronizacion-*.md' -mtime +60 -delete 2>/dev/null
 find reportes -name 'organico-*.log' -mtime +60 -delete 2>/dev/null
 find reportes -name 'telegram-*.log' -mtime +60 -delete 2>/dev/null
 find reportes -name 'web-*.log' -mtime +60 -delete 2>/dev/null
+find reportes -name 'tiktok-*.log' -mtime +60 -delete 2>/dev/null
 echo "=== $(date '+%F %T') · fin"

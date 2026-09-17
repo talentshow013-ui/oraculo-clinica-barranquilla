@@ -37,6 +37,7 @@ no está, se dice que no está (`null` → «—»). Cero jerga técnica en text
 - `/oraculo-semana` — informe semanal de dirección desde `npm run verificar -- --json`.
 - `/oraculo-pregunta <pregunta>` — responde con dato, regla y alternativa; discrepa con evidencia.
 - `npm run organico:sincronizar` — trae Instagram y Facebook orgánico a `datos/organico.json` (lo corre el reloj diario).
+- `npm run tiktok:sincronizar` — pauta de TikTok (solo lectura) a `datos/tiktok.json`, fusionada con Meta al leer; `npm run organico:importar-tiktok -- <csv>` mete el orgánico de TikTok (CSV de TikTok Studio) en `datos/organico.json`.
 - `npm run web:sincronizar` — trae el sitio web (Google Analytics 4, solo lectura) a `datos/web.json`; pantalla `/web`, motor `lib/web/`.
 
 ## Comandos npm
