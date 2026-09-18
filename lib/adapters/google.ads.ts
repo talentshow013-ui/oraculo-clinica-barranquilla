@@ -61,7 +61,7 @@ export async function cuentasAccesibles(c: CredencialesGoogleAds, accessToken: s
 // GAQL
 // ---------------------------------------------------------------------------
 
-const METRICAS = "metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions, metrics.all_conversions, metrics.interactions, metrics.video_views, metrics.engagements";
+const METRICAS = "metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions, metrics.all_conversions, metrics.interactions, metrics.engagements";
 
 export function consultaGaql(nivel: Exclude<Nivel, "cuenta">, desde: string, hasta: string): string {
   const rango = `segments.date BETWEEN '${desde}' AND '${hasta}' AND metrics.cost_micros > 0`;

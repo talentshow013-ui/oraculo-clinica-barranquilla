@@ -26,3 +26,6 @@ datos/ga4-credenciales.json
 datos/tiktok.json
 # pauta de Google Ads
 datos/googleads.json
+
+# credenciales OAuth de Google Ads
+datos/google-ads-oauth.json
