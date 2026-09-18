@@ -4,7 +4,7 @@
  */
 import { resolve } from "node:path";
 import { FuenteArchivoBase, leerLote, recortar } from "./archivo.base";
-import { cargarTikTok, fusionarTikTokEnLote } from "./tiktok.archivo";
+import { fusionarPlataformasEnLote } from "./tiktok.archivo";
 import type { LoteDatos, Rango } from "./types";
 
 /** `ORACULO_RUTA_LOTE` permite leer el lote desde otra carpeta (disco persistente en un servidor). */
@@ -18,8 +18,8 @@ export class FuenteArchivo extends FuenteArchivoBase {
   constructor(ruta: string = RUTA_LOTE) {
     super(ruta);
   }
-  /** El lote de Meta más, si existe, la pauta de TikTok (`datos/tiktok.json`) como una cuenta más. */
+  /** El lote de Meta más, si existen, la pauta de TikTok (`datos/tiktok.json`) y de Google Ads (`datos/googleads.json`) como cuentas más. */
   override async obtener(rango: Rango): Promise<LoteDatos> {
-    return recortar(fusionarTikTokEnLote(leerLote(this.ruta, this.ayudaSiFalta), cargarTikTok()), rango);
+    return recortar(fusionarPlataformasEnLote(leerLote(this.ruta, this.ayudaSiFalta)), rango);
   }
 }

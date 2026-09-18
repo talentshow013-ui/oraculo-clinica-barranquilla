@@ -48,6 +48,13 @@ else
   echo "tiktok: sin conectar (docs/CONEXION_TIKTOK.md)"
 fi
 
+# 2e) Pauta de Google Ads (solo lectura)
+if grep -q '^GOOGLE_ADS_REFRESH_TOKEN=.\+' .env 2>/dev/null; then
+  if npm run -s googleads:sincronizar >"reportes/googleads-$HOY.log" 2>&1; then echo "google ads: ok"; ESTADO="$ESTADO · Google Ads: al día"; else echo "google ads: FALLÓ (ver reportes/googleads-$HOY.log)"; ESTADO="$ESTADO · Google Ads: falló"; fi
+else
+  echo "google ads: sin conectar (docs/CONEXION_GOOGLE_ADS.md)"
+fi
+
 # 2c) Sitio web (Google Analytics 4): llave de solo lectura del .env
 if grep -q '^GA4_PROPIEDAD_ID=.\+' .env 2>/dev/null; then
   if npm run -s web:sincronizar >"reportes/web-$HOY.log" 2>&1; then echo "sitio web: ok"; ESTADO="$ESTADO · Sitio web: al día"; else echo "sitio web: FALLÓ (ver reportes/web-$HOY.log)"; ESTADO="$ESTADO · Sitio web: falló"; fi
@@ -84,4 +91,5 @@ find reportes -name 'organico-*.log' -mtime +60 -delete 2>/dev/null
 find reportes -name 'telegram-*.log' -mtime +60 -delete 2>/dev/null
 find reportes -name 'web-*.log' -mtime +60 -delete 2>/dev/null
 find reportes -name 'tiktok-*.log' -mtime +60 -delete 2>/dev/null
+find reportes -name 'googleads-*.log' -mtime +60 -delete 2>/dev/null
 echo "=== $(date '+%F %T') · fin"

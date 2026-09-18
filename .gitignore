@@ -24,3 +24,5 @@ datos/web.json
 datos/ga4-credenciales.json
 # pauta de TikTok: datos reales, fuera del repositorio
 datos/tiktok.json
+# pauta de Google Ads
+datos/googleads.json

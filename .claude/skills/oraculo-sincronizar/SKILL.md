@@ -171,6 +171,12 @@ No pasa por el conector de anuncios: va directo a Meta con el token de página d
 - Orgánico: TikTok no lo da por API. Si la clínica dejó un CSV de TikTok Studio en `datos/entrada/`
   (o te lo pasan), `npm run organico:importar-tiktok -- <csv>`; si no hay archivo, no inventes nada.
 
+## Paso 3h — Pauta de Google Ads
+
+Si el `.env` tiene `GOOGLE_ADS_REFRESH_TOKEN` y `GOOGLE_ADS_CUSTOMER_ID`: `npm run googleads:sincronizar`
+(30 días; primera vez `-- --dias 90`). Escribe `datos/googleads.json`; el panel lo fusiona como la
+cuenta «Google Ads · <id>». Si no está, reporta «Google Ads sin conectar» y sigue.
+
 ## Paso 3f — Sitio web (Google Analytics 4)
 
 Tampoco pasa por el conector: usa la llave de solo lectura del `.env` (`GA4_PROPIEDAD_ID`,

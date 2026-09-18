@@ -21,7 +21,7 @@ export interface CuentaPublicitaria {
   id: string;
   /** Lo que ve el dueño. */
   nombre: string;
-  plataforma: "meta" | "tiktok";
+  plataforma: "meta" | "tiktok" | "google";
   moneda: "COP";
 }
 

@@ -16,7 +16,7 @@ import { z } from "zod";
 // Enumeraciones
 // ---------------------------------------------------------------------------
 
-export const FUENTES = ["meta", "tiktok", "radar", "clinica"] as const;
+export const FUENTES = ["meta", "tiktok", "google", "radar", "clinica"] as const;
 export const NIVELES = ["cuenta", "campana", "conjunto", "anuncio"] as const;
 export const ESTADOS = ["activo", "pausado", "archivado", "en_revision", "rechazado"] as const;
 

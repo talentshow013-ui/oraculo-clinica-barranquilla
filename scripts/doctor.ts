@@ -58,6 +58,14 @@ if (/^TIKTOK_ACCESS_TOKEN=.+$/m.test(envTexto) && /^TIKTOK_ADVERTISER_ID=.+$/m.t
   opcional("Pauta de TikTok sin conectar", "TIKTOK_ACCESS_TOKEN y TIKTOK_ADVERTISER_ID en .env (docs/CONEXION_TIKTOK.md)");
 }
 
+// Pauta de Google Ads
+if (/^GOOGLE_ADS_REFRESH_TOKEN=.+$/m.test(envTexto) && /^GOOGLE_ADS_CUSTOMER_ID=.+$/m.test(envTexto)) {
+  if (hay("datos/googleads.json")) ok("Pauta de Google Ads conectada y con datos: datos/googleads.json");
+  else opcional("Pauta de Google Ads conectada pero sin datos todavía", "npm run googleads:sincronizar -- --dias 90");
+} else {
+  opcional("Pauta de Google Ads sin conectar", "npm run googleads:conectar (docs/CONEXION_GOOGLE_ADS.md)");
+}
+
 // Sitio web (Google Analytics 4)
 if (/^GA4_PROPIEDAD_ID=.+$/m.test(envTexto) && hay("datos/ga4-credenciales.json")) {
   if (hay("datos/web.json")) ok("Sitio web conectado y con datos: datos/web.json");
