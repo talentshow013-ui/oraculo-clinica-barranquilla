@@ -1,9 +1,10 @@
-# Prompt para el agente de frontend — modo «Orgánico» y desplegable Pauta / Orgánico
+# Prompt para el agente de frontend — modos «Orgánico» y «Google» y el desplegable Pauta / Orgánico / Google
 
-Copia desde aquí hasta el final y pásaselo al agente. **Todo ya existe y funciona**: la pantalla
-`/organico` (`app/(panel)/organico/page.tsx`), el desplegable bajo ORÁCULO
-(`components/cliente/selector-modo.tsx`, usado en `components/sidebar.tsx`) y la entrada «Orgánico»
-en el menú móvil. Su trabajo es solo pulir lo visual. Lo funcional está probado (392 tests): no lo rehagas.
+Copia desde aquí hasta el final y pásaselo al agente. **Todo ya existe y funciona**: las pantallas
+`/organico` (`app/(panel)/organico/page.tsx`) y `/web` (`app/(panel)/web/page.tsx`), el desplegable
+de TRES modos bajo ORÁCULO (`components/cliente/selector-modo.tsx`: Pauta / Orgánico / Google, usado
+en `components/sidebar.tsx` con un riel distinto por modo) y las entradas en el menú móvil. Su trabajo
+es solo pulir lo visual. Lo funcional está probado (424 tests): no lo rehagas.
 
 ---
 
@@ -68,4 +69,42 @@ Anclas que el riel usa (no las cambies): `#resumen`, `#para-pauta`, `#mejores`, 
    red y una frase de dueño («Conecta Instagram y Facebook una vez y esto se llena solo cada
    mañana»). Los `avisos[]` van como `Aviso` neutro arriba, plegados en un solo renglón si hay más de uno.
 
-No agregues pestañas nuevas ni muevas nada a otras pantallas. Todo lo orgánico vive en `/organico`.
+## Orgánico ahora también tiene TikTok
+
+`r.organico.redes` puede traer una tercera red `tiktok` (viene de una exportación manual, no de API):
+un tercer bloque de KPI ya está en la página (`tt`), y la tabla de seguidores tiene la columna
+«TikTok · nuevos». En las tablas de publicaciones, las de TikTok llevan el chip «TikTok» (tono ojo).
+Trátalo como tercera tarjeta de red, misma jerarquía que Instagram y Facebook; si `tt` no existe, no
+dejes hueco. Los avisos incluyen uno fijo («viene de la exportación manual…»): píntalo como nota
+discreta, no como alerta.
+
+## Pantalla `/web` (modo Google) — pule estas 5 cosas
+
+`r.web` (`ResultadoWeb`, tipo en `@/lib/tipos`): `sinDatos`, `resumen` (sesiones, usuarios,
+usuariosNuevos, sesionesComprometidas, tasaCompromiso, eventosClave, tasaConversion, duracionMedia),
+`porCanal[]` (`canal, sesiones, eventosClave, tasaConversion, participacion, mejor`), `porFuente[]`,
+`pautaMeta` ({ sesiones, eventosClave, participacionSesiones, participacionEventos } | null),
+`paginas[]`, `eventosClave[]` ({ evento, veces }), `ciudades[]` ({ ciudad, sesiones, eventosClave,
+participacion }), `fueraDeCiudad`, `serie[]` ({ fecha, sesiones, eventosClave }), `lecturas[]`,
+`fuente`. Anclas del riel (no cambiar): `#resumen #lectura #canales #fuentes #paginas #eventos
+#ciudades #serie #fuente`.
+
+1. **Los dos KPI de «pauta de Meta»** («Visitas que trae la pauta de Meta» y «Contactos que trae la
+   pauta de Meta») son el puente con la pestaña Pauta: agrúpalos en una tarjeta con el logo/color de
+   Meta y un enlace «Ver la pauta →» a `/panel`. Si `pautaMeta` es null, la tarjeta dice «Google no
+   ve visitas desde la pauta: revisa que los anuncios lleven parámetros de seguimiento (utm)».
+2. **Por canal**: barras con la participación y, a la derecha, la tasa de conversión como chip;
+   el canal `mejor` con punto verde. Los nombres de canal de Google están en inglés («Paid Social»,
+   «Organic Search», «Direct»…): tradúcelos en la vista con un diccionario pequeño (Paid Social →
+   Redes pagadas, Organic Social → Redes orgánicas, Organic Search → Búsqueda orgánica, Paid Search
+   → Búsqueda pagada, Direct → Directo, Referral → Referidos, Email → Correo, Unassigned → Sin
+   asignar). El dato no se toca; solo la etiqueta.
+3. **Páginas de entrada**: la ruta en monoespaciado, la fila con mejor tasa en negrita; tasa con
+   barra fina bajo el número.
+4. **Eventos clave vacíos** es el aviso más importante de esta pantalla (sin eventos clave no hay
+   contactos): que se vea como tarjeta destacada con el paso a seguir, no como aviso pequeño.
+5. **Serie diaria**: mismo estilo de tabla compacta que en Orgánico; si hay más de 14 días, los
+   últimos 14 y un «ver todos».
+
+No agregues pestañas nuevas ni muevas nada a otras pantallas. Lo orgánico vive en `/organico`, el
+sitio web en `/web`. No toques `lib/`, `scripts/`, `deploy/`, `config/`, `.claude/`.
