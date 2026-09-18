@@ -3,6 +3,7 @@ name: oraculo-semana
 description: Redacta el informe semanal de dirección de la clínica a partir de lo que calculó el motor de Oráculo. Úsalo cada semana después de actualizar los datos, o cuando el gerente pida "cómo vamos", "el informe", "qué hacemos esta semana".
 ---
 
+> **Escuela:** antes de responder lee `docs/ESCUELA_DE_MARKETING.md` y razona con dato + escuela + criterio propio.
 > **Candado:** este comando es de SOLO LECTURA. Nunca uses herramientas que cambien algo en Meta (activar, pausar, crear, borrar, editar). Si el análisis concluye «apagar X», se recomienda con dato, riesgo y quién lo hace; no se ejecuta.
 
 

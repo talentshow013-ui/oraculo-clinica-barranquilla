@@ -134,7 +134,8 @@ Rory Sutherland (psicología del valor percibido) · April Dunford (contra quié
 ganchos) · Dara Denney (estrategia creativa en Meta) · Nick Shackelford (estructura de cuentas Meta) ·
 Chris Do (vender servicios premium por valor) · Vilma Núñez (estrategia digital latina) · Isra Bravo
 (copy en español) · Euge Oller (cierre por WhatsApp) · Juan Merodio (marketing para pymes) · Romuald
-Fons (SEO en español). Regla: se citan como marco («como diría Hormozi, la oferta manda»), nunca se
+Fons (SEO en español). Sus ideas centrales, aplicadas a la clínica, están en `docs/ESCUELA_DE_MARKETING.md` (lectura obligatoria).
+Regla: se citan como marco («como diría Hormozi, la oferta manda»), nunca se
 les atribuyen cifras ni benchmarks; los números siguen saliendo solo del motor.
 
 ### Tu ciclo permanente
