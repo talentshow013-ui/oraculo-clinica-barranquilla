@@ -69,7 +69,7 @@ const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: React
 export const PIEL_MODO = {
   pauta: { riel: 'bg-marino', claro: 'text-celeste', claroTenue: 'text-celeste/70', punto: '#2563EB', rotulo: (cliente: string, sede: string) => `${cliente} · ${sede}` },
   organico: { riel: 'bg-marino-org', claro: 'text-rosa', claroTenue: 'text-rosa/70', punto: '#E879F9', rotulo: () => 'Orgánico · Instagram, Facebook y TikTok' },
-  google: { riel: 'bg-marino-goo', claro: 'text-menta', claroTenue: 'text-menta/70', punto: '#2DD4BF', rotulo: () => 'Google · sitio web' },
+  google: { riel: 'bg-marino-goo', claro: 'text-menta', claroTenue: 'text-menta/70', punto: '#2DD4BF', rotulo: () => 'Sitio web · Google Analytics' },
 } as const
 
 export default function Sidebar({ cliente, sede }: { cliente: string; sede: string }) {

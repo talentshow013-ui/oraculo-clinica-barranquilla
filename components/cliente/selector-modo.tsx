@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 export const MODOS = [
   { id: 'pauta', nombre: 'Pauta', detalle: 'Anuncios que se pagan', a: '/panel' },
   { id: 'organico', nombre: 'Orgánico', detalle: 'Instagram, Facebook y TikTok sin pagar', a: '/organico' },
-  { id: 'google', nombre: 'Google', detalle: 'Sitio web (Google Analytics)', a: '/web' },
+  { id: 'google', nombre: 'Sitio web', detalle: 'Visitas y contactos de la página (Google Analytics)', a: '/web' },
 ] as const
 export type Modo = (typeof MODOS)[number]['id']
 export const modoDeRuta = (ruta: string): Modo => (ruta.startsWith('/organico') ? 'organico' : ruta.startsWith('/web') ? 'google' : 'pauta')

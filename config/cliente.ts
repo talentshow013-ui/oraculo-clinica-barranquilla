@@ -59,6 +59,7 @@ export const cliente: ConfigCliente = {
     { id: "act_1083324715683244", nombre: "F2 · Vivante Facial 2026", plataforma: "meta", moneda: "COP" },
     { id: "act_28503083", nombre: "Vivante 6 · Varios tratamientos", plataforma: "meta", moneda: "COP" },
     { id: "act_677891593042927", nombre: "No invasiva · Otros tratamientos", plataforma: "meta", moneda: "COP" },
+    { id: "ga_3145639496", nombre: "Google Ads · Estética Vivante (búsqueda)", plataforma: "google", moneda: "COP" },
   ],
   ciudad: "Barranquilla",
   zonasValidas: ["Barranquilla", "Soledad", "Malambo", "Puerto Colombia", "Galapa", "Sabanagrande", "Baranoa", "Atlántico"],

@@ -7,6 +7,7 @@ import { Aviso, Barra, Celda, Etiqueta, Grid, Kpi, Panel, Tabla, Th, Titulo, Vac
 import Contar from '@/components/cliente/contar'
 import Ayuda from '@/components/cliente/ayuda'
 import { FuenteDelHallazgo } from '@/components/hallazgo-fuente'
+import IrACuenta from '@/components/cliente/ir-a-cuenta'
 
 const AVISO_SIN_DATOS = 'Todavía no se ha conectado Google Analytics. Se conecta una vez con una llave de solo lectura (guía: docs/CONEXION_GA4.md) y después se trae solo cada día.'
 
@@ -30,10 +31,17 @@ export default async function Web() {
   const r = await motor()
   const w = r.web
   const ciudad = r.cliente.ciudad.split(',')[0]!.trim()
+  const googleAds = r.cuentas.find((c) => c.plataforma === 'google')
+  const avisoPauta = (
+    <Aviso tono="acento" className="mb-3">
+      <span>Esta pantalla es el <strong>sitio web</strong> (Google Analytics): quién entra a la página y quién escribe. <strong>La pauta de Google Ads</strong> (campañas, gasto, anuncios) está en Pauta, eligiendo la cuenta de Google Ads.{googleAds ? <> <IrACuenta cuentaId={googleAds.id} className="ml-1 rounded-full bg-acento px-2.5 py-0.5 text-[12px] font-semibold text-white hover:opacity-90">Ver la pauta de Google Ads →</IrACuenta></> : ' Todavía no está conectada.'}</span>
+    </Aviso>
+  )
   return (
     <>
-      <Titulo rotulo="Google · sitio web de la clínica" extra={w.sinDatos ? undefined : <p className="num text-[12.5px] text-texto-2">{num(w.resumen.sesiones)} visitas · {fechaCorta(w.desde)} – {fechaCorta(w.hasta)}{w.capturadoEn ? ` · traído ${fechaHora(w.capturadoEn)}` : ''}</p>}>¿Quién llega al sitio y quién termina escribiendo?</Titulo>
+      <Titulo rotulo="Sitio web de la clínica · Google Analytics (no es la pauta de Google Ads)" extra={w.sinDatos ? undefined : <p className="num text-[12.5px] text-texto-2">{num(w.resumen.sesiones)} visitas · {fechaCorta(w.desde)} – {fechaCorta(w.hasta)}{w.capturadoEn ? ` · traído ${fechaHora(w.capturadoEn)}` : ''}</p>}>¿Quién llega al sitio y quién termina escribiendo?</Titulo>
 
+      {avisoPauta}
       {w.sinDatos ? (
         <Panel id="resumen" rotulo="Sitio web" titulo="Falta conectar Google Analytics" retraso={100}>
           <Vacio titulo="Todavía no hay datos del sitio web" texto={AVISO_SIN_DATOS} />
