@@ -66,6 +66,14 @@ if (/^GOOGLE_ADS_REFRESH_TOKEN=.+$/m.test(envTexto) && /^GOOGLE_ADS_CUSTOMER_ID=
   opcional("Pauta de Google Ads sin conectar", "npm run googleads:conectar (docs/CONEXION_GOOGLE_ADS.md)");
 }
 
+// Embudo de pacientes (Kommo)
+if (/^KOMMO_TOKEN=.+$/m.test(envTexto)) {
+  if (hay("datos/kommo.json")) ok("Embudo de pacientes (Kommo) conectado y con datos: datos/kommo.json");
+  else opcional("Kommo conectado pero sin datos todavía", "npm run kommo:sincronizar -- --dias 90");
+} else {
+  opcional("Embudo de pacientes (Kommo) sin conectar", "KOMMO_SUBDOMINIO y KOMMO_TOKEN en .env (docs/CONEXION_KOMMO.md)");
+}
+
 // Sitio web (Google Analytics 4)
 if (/^GA4_PROPIEDAD_ID=.+$/m.test(envTexto) && hay("datos/ga4-credenciales.json")) {
   if (hay("datos/web.json")) ok("Sitio web conectado y con datos: datos/web.json");

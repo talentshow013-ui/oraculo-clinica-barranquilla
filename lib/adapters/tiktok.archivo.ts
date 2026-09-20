@@ -10,6 +10,7 @@ import { CreativoSchema, InsightRowSchema, type LoteDatos } from "@/lib/adapters
 import { validarSinPII } from "@/lib/privacy";
 import { listarHuecos } from "@/lib/format/fechas";
 import type { LoteTikTok } from "./tiktok.ads";
+import { cargarKommo, fusionarKommoEnLote } from "./kommo.archivo";
 
 export const RUTA_TIKTOK = process.env.ORACULO_RUTA_TIKTOK ? resolve(process.env.ORACULO_RUTA_TIKTOK) : resolve(process.cwd(), "datos", "tiktok.json");
 
@@ -56,7 +57,7 @@ export function fusionarPlataformaEnLote(lote: LoteDatos, extra: LotePlataforma 
   return { ...lote, insights, creativos, meta: { ...lote.meta, desde, hasta, huecos: listarHuecos(desde, hasta, presentes), advertencias: [...lote.meta.advertencias, ...extra.meta.avisos] } };
 }
 export const fusionarTikTokEnLote = fusionarPlataformaEnLote;
-/** Meta + TikTok + Google Ads, en ese orden. */
+/** Meta + TikTok + Google Ads + embudo de pacientes (Kommo), en ese orden. */
 export function fusionarPlataformasEnLote(lote: LoteDatos): LoteDatos {
-  return fusionarPlataformaEnLote(fusionarPlataformaEnLote(lote, cargarTikTok()), cargarGoogleAds());
+  return fusionarKommoEnLote(fusionarPlataformaEnLote(fusionarPlataformaEnLote(lote, cargarTikTok()), cargarGoogleAds()), cargarKommo());
 }

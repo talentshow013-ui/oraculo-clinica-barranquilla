@@ -177,6 +177,13 @@ Si el `.env` tiene `GOOGLE_ADS_REFRESH_TOKEN` y `GOOGLE_ADS_CUSTOMER_ID`: `npm r
 (30 días; primera vez `-- --dias 90`). Escribe `datos/googleads.json`; el panel lo fusiona como la
 cuenta «Google Ads · <id>». Si no está, reporta «Google Ads sin conectar» y sigue.
 
+## Paso 3j — Embudo de pacientes (Kommo)
+
+Si el `.env` tiene `KOMMO_TOKEN`: `npm run kommo:sincronizar` (30 días; primera vez `-- --dias 90`).
+Trae leads, citas agendadas, asistidas y ventas por día, AGREGADOS (nunca una persona) a
+`datos/kommo.json`; el panel los suma al embudo. Si no está, reporta «Kommo sin conectar» y sigue.
+Repite el aviso de «leads sin fuente» si aparece: sin fuente no se puede atribuir a Meta u orgánico.
+
 ## Paso 3f — Sitio web (Google Analytics 4)
 
 Tampoco pasa por el conector: usa la llave de solo lectura del `.env` (`GA4_PROPIEDAD_ID`,

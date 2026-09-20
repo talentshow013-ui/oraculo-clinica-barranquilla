@@ -24,6 +24,7 @@
     "tiktok:sincronizar": "tsx scripts/tiktok-sincronizar.ts",
     "googleads:conectar": "tsx scripts/googleads-conectar.ts",
     "googleads:sincronizar": "tsx scripts/googleads-sincronizar.ts",
+    "kommo:sincronizar": "tsx scripts/kommo-sincronizar.ts",
     "organico:importar-tiktok": "tsx scripts/organico-importar-tiktok.ts"
   },
   "dependencies": {

@@ -31,3 +31,6 @@ datos/googleads.json
 datos/google-ads-oauth.json
 # imágenes de publicaciones orgánicas (datos del cliente)
 public/organico/
+# embudo de pacientes (Kommo)
+datos/kommo.json
+config/kommo.json

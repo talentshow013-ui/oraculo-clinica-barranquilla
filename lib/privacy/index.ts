@@ -71,6 +71,7 @@ const RUTAS_PERMITIDAS: ReadonlyArray<RegExp> = [
   /^rankings\[\d+\]\.nombre$/,
   /^bitacora\[\d+\]\.(objetoNombre|actor)$/,
   /^publicos\[\d+\]\.(nombre|campanaNombre)$/,
+  /^etapas\[\d+\]\.nombre$/,
 ];
 
 /**

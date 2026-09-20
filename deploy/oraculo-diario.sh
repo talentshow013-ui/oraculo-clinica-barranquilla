@@ -55,6 +55,13 @@ else
   echo "google ads: sin conectar (docs/CONEXION_GOOGLE_ADS.md)"
 fi
 
+# 2f) Embudo de pacientes desde Kommo (solo lectura)
+if grep -q '^KOMMO_TOKEN=.\+' .env 2>/dev/null; then
+  if npm run -s kommo:sincronizar >"reportes/kommo-$HOY.log" 2>&1; then echo "kommo: ok"; ESTADO="$ESTADO · Pacientes (Kommo): al día"; else echo "kommo: FALLÓ (ver reportes/kommo-$HOY.log)"; ESTADO="$ESTADO · Pacientes (Kommo): falló"; fi
+else
+  echo "kommo: sin conectar (docs/CONEXION_KOMMO.md)"
+fi
+
 # 2c) Sitio web (Google Analytics 4): llave de solo lectura del .env
 if grep -q '^GA4_PROPIEDAD_ID=.\+' .env 2>/dev/null; then
   if npm run -s web:sincronizar >"reportes/web-$HOY.log" 2>&1; then echo "sitio web: ok"; ESTADO="$ESTADO · Sitio web: al día"; else echo "sitio web: FALLÓ (ver reportes/web-$HOY.log)"; ESTADO="$ESTADO · Sitio web: falló"; fi
@@ -92,4 +99,5 @@ find reportes -name 'telegram-*.log' -mtime +60 -delete 2>/dev/null
 find reportes -name 'web-*.log' -mtime +60 -delete 2>/dev/null
 find reportes -name 'tiktok-*.log' -mtime +60 -delete 2>/dev/null
 find reportes -name 'googleads-*.log' -mtime +60 -delete 2>/dev/null
+find reportes -name 'kommo-*.log' -mtime +60 -delete 2>/dev/null
 echo "=== $(date '+%F %T') · fin"
