@@ -1,8 +1,7 @@
 {
-  "_comentario": "Candado de SOLO LECTURA sobre Meta. El agente puede LEER campañas, conjuntos, anuncios, creativos, públicos, ranking y bitácora; JAMÁS puede prender, apagar, crear, borrar, editar presupuestos, públicos, píxeles, catálogos ni impulsar publicaciones. Estas reglas se aplican en todos los Claude Code que abran este repositorio (PC de la clínica, agencia y VPS), incluso con permisos en modo automático: un deny gana siempre. Además el hook de abajo corta cualquier intento aunque cambie el nombre del conector (meta_ads, meta-ads, meta-personal, meta…). No quitar sin decisión escrita de la gerencia de la clínica.",
+  "_comentario": "Candado sobre Meta. El agente LEE todo. Puede pausar, activar o cambiar presupuesto/puja de campañas, conjuntos y anuncios (ads_update_entity, ads_activate_entity) SOLO cuando una persona se lo pide en el chat y después de confirmar con un «sí» explícito; nunca por iniciativa propia (regla en CLAUDE.md y PROMPT_ORACULO_v2.md). Crear campañas/conjuntos/anuncios/creativos, borrar, tocar públicos, píxeles, catálogos e impulsar publicaciones siguen bloqueados (deny + hook), con cualquier nombre del conector. No ampliar sin decisión escrita de la gerencia de la clínica.",
   "permissions": {
     "deny": [
-      "mcp__meta-ads__ads_activate_entity",
       "mcp__meta-ads__ads_boost_ig_post",
       "mcp__meta-ads__ads_catalog_create",
       "mcp__meta-ads__ads_catalog_create_feed_rule",
@@ -45,8 +44,6 @@
       "mcp__meta-ads__ads_pixel_parameter_update",
       "mcp__meta-ads__ads_update_custom_audience",
       "mcp__meta-ads__ads_update_custom_audience_users",
-      "mcp__meta-ads__ads_update_entity",
-      "mcp__meta-business__ads_activate_entity",
       "mcp__meta-business__ads_boost_ig_post",
       "mcp__meta-business__ads_catalog_create",
       "mcp__meta-business__ads_catalog_create_feed_rule",
@@ -89,8 +86,6 @@
       "mcp__meta-business__ads_pixel_parameter_update",
       "mcp__meta-business__ads_update_custom_audience",
       "mcp__meta-business__ads_update_custom_audience_users",
-      "mcp__meta-business__ads_update_entity",
-      "mcp__meta-personal__ads_activate_entity",
       "mcp__meta-personal__ads_boost_ig_post",
       "mcp__meta-personal__ads_catalog_create",
       "mcp__meta-personal__ads_catalog_create_feed_rule",
@@ -133,8 +128,6 @@
       "mcp__meta-personal__ads_pixel_parameter_update",
       "mcp__meta-personal__ads_update_custom_audience",
       "mcp__meta-personal__ads_update_custom_audience_users",
-      "mcp__meta-personal__ads_update_entity",
-      "mcp__meta__ads_activate_entity",
       "mcp__meta__ads_boost_ig_post",
       "mcp__meta__ads_catalog_create",
       "mcp__meta__ads_catalog_create_feed_rule",
@@ -177,8 +170,6 @@
       "mcp__meta__ads_pixel_parameter_update",
       "mcp__meta__ads_update_custom_audience",
       "mcp__meta__ads_update_custom_audience_users",
-      "mcp__meta__ads_update_entity",
-      "mcp__meta_ads__ads_activate_entity",
       "mcp__meta_ads__ads_boost_ig_post",
       "mcp__meta_ads__ads_catalog_create",
       "mcp__meta_ads__ads_catalog_create_feed_rule",
@@ -221,8 +212,6 @@
       "mcp__meta_ads__ads_pixel_parameter_update",
       "mcp__meta_ads__ads_update_custom_audience",
       "mcp__meta_ads__ads_update_custom_audience_users",
-      "mcp__meta_ads__ads_update_entity",
-      "mcp__meta_business__ads_activate_entity",
       "mcp__meta_business__ads_boost_ig_post",
       "mcp__meta_business__ads_catalog_create",
       "mcp__meta_business__ads_catalog_create_feed_rule",
@@ -265,8 +254,6 @@
       "mcp__meta_business__ads_pixel_parameter_update",
       "mcp__meta_business__ads_update_custom_audience",
       "mcp__meta_business__ads_update_custom_audience_users",
-      "mcp__meta_business__ads_update_entity",
-      "mcp__meta_personal__ads_activate_entity",
       "mcp__meta_personal__ads_boost_ig_post",
       "mcp__meta_personal__ads_catalog_create",
       "mcp__meta_personal__ads_catalog_create_feed_rule",
@@ -308,14 +295,13 @@
       "mcp__meta_personal__ads_pixel_parameter_delete",
       "mcp__meta_personal__ads_pixel_parameter_update",
       "mcp__meta_personal__ads_update_custom_audience",
-      "mcp__meta_personal__ads_update_custom_audience_users",
-      "mcp__meta_personal__ads_update_entity"
+      "mcp__meta_personal__ads_update_custom_audience_users"
     ]
   },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "^mcp__meta[^_]*(_[^_]*)?__ads_(update|activate|create|delete|boost|creative_|finalize|experiment_.*_(create|update)|catalog_(create|update|delete|product|event_source_(connect|disconnect))|pixel_).*",
+        "matcher": "^mcp__meta[^_]*(_[^_]*)?__ads_(create|delete|boost|creative_|finalize|experiment_.*_(create|update)|catalog_(create|update|delete|product|event_source_(connect|disconnect))|pixel_|update_custom_audience|delete_custom_audience).*",
         "hooks": [
           {
             "type": "command",

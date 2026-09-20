@@ -4,7 +4,7 @@ description: Redacta el informe semanal de dirección de la clínica a partir de
 ---
 
 > **Escuela:** antes de responder lee `docs/ESCUELA_DE_MARKETING.md` y razona con dato + escuela + criterio propio.
-> **Candado:** este comando es de SOLO LECTURA. Nunca uses herramientas que cambien algo en Meta (activar, pausar, crear, borrar, editar). Si el análisis concluye «apagar X», se recomienda con dato, riesgo y quién lo hace; no se ejecuta.
+> **Candado:** este comando solo LEE. Nunca cambies nada en Meta por tu cuenta. Si el análisis concluye «apagar X», se recomienda con dato y riesgo y se espera a que una persona lo pida y confirme con un «sí» (regla en CLAUDE.md).
 
 
 # /oraculo-semana — Informe semanal de dirección

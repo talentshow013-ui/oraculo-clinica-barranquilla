@@ -3,7 +3,7 @@ name: oraculo-sincronizar
 description: Trae los datos reales de campañas de Meta (y opcionalmente el radar de competencia) al archivo datos/lote.json con la forma exacta del contrato de Oráculo, usando el conector oficial de Meta configurado en Claude Code. Úsalo cada mañana (lo hace el reloj de la VPS), cada semana antes de /oraculo-semana, o cuando digan "actualiza los datos", "sincroniza", "trae lo de Meta".
 ---
 
-> **Candado:** este comando es de SOLO LECTURA. Nunca uses herramientas que cambien algo en Meta (activar, pausar, crear, borrar, editar). Si el análisis concluye «apagar X», se recomienda con dato, riesgo y quién lo hace; no se ejecuta.
+> **Candado:** este comando solo LEE. Nunca cambies nada en Meta por tu cuenta. Si el análisis concluye «apagar X», se recomienda con dato y riesgo y se espera a que una persona lo pida y confirme con un «sí» (regla en CLAUDE.md).
 
 
 # /oraculo-sincronizar — Fuente real → `datos/lote.json`
