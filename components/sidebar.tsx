@@ -62,32 +62,43 @@ const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: React
   ] },
 ]
 
+/**
+ * CADA MODO ES OTRO MUNDO: el riel cambia de color (Pauta marino; Orgánico marino con matiz
+ * violeta/rosa; Google azul-verde) y el rótulo bajo ORÁCULO dice en qué mundo se está.
+ */
+export const PIEL_MODO = {
+  pauta: { riel: 'bg-marino', claro: 'text-celeste', claroTenue: 'text-celeste/70', punto: '#2563EB', rotulo: (cliente: string, sede: string) => `${cliente} · ${sede}` },
+  organico: { riel: 'bg-marino-org', claro: 'text-rosa', claroTenue: 'text-rosa/70', punto: '#E879F9', rotulo: () => 'Orgánico · Instagram, Facebook y TikTok' },
+  google: { riel: 'bg-marino-goo', claro: 'text-menta', claroTenue: 'text-menta/70', punto: '#2DD4BF', rotulo: () => 'Google · sitio web' },
+} as const
+
 export default function Sidebar({ cliente, sede }: { cliente: string; sede: string }) {
   const ruta = usePathname()
   const modo = modoDeRuta(ruta)
   const grupos = modo === 'organico' ? GRUPOS_ORGANICO : modo === 'google' ? GRUPOS_GOOGLE : GRUPOS
+  const piel = PIEL_MODO[modo]
   return (
-    <aside className="no-imprimir sticky top-0 hidden h-[100svh] w-[232px] shrink-0 flex-col bg-marino text-[#EAF2FF] lg:flex" aria-label="Secciones">
+    <aside className={`no-imprimir sticky top-0 hidden h-[100svh] w-[232px] shrink-0 flex-col text-[#EAF2FF] transition-colors duration-500 lg:flex ${piel.riel}`} aria-label="Secciones">
       <div className="flex items-center gap-2.5 px-4 pb-4 pt-5">
         <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-full bg-white/10 ring-1 ring-white/15">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="7" className="text-celeste" /><circle cx="12" cy="12" r="2.2" fill="#2563EB" stroke="none" /></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="7" className={piel.claro} /><circle cx="12" cy="12" r="2.2" fill={piel.punto} stroke="none" /></svg>
         </span>
         <span className="leading-tight">
           <span className="block text-[12.5px] font-semibold tracking-[0.2em]">ORÁCULO</span>
-          <span className="block text-[11.5px] text-celeste">{cliente} · {sede.split(',')[0]}</span>
+          <span className={`block text-[11.5px] ${piel.claro}`}>{piel.rotulo(cliente, sede.split(',')[0]!)}</span>
         </span>
       </div>
       <div className="px-4 pb-3"><SelectorModo /></div>
       <nav className="sin-barra flex-1 overflow-y-auto px-2.5 pb-4">
         {grupos.map((g) => (
           <div key={g.titulo} className="mb-3">
-            <p className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-celeste/70">{g.titulo}</p>
+            <p className={`px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.22em] ${piel.claroTenue}`}>{g.titulo}</p>
             {g.rutas.map((x) => {
               const activo = x.a.includes('#') || x.a.includes('?') ? false : ruta === x.a || ruta.startsWith(x.a + '/')
               return (
                 <Link key={x.a} href={x.a} aria-current={activo ? 'page' : undefined} className={`group relative mb-0.5 flex items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-[13px] transition-colors ${activo ? 'bg-white text-marino' : 'text-[#EAF2FF]/85 hover:bg-white/10 hover:text-white'}`}>
                   <span className={`absolute -left-2.5 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-acento transition-transform ${activo ? 'scale-y-100' : 'scale-y-0'}`} aria-hidden="true" />
-                  <span className={activo ? 'text-acento' : 'text-celeste'}>{x.icono}</span>
+                  <span className={activo ? 'text-acento' : piel.claro}>{x.icono}</span>
                   {x.nombre}
                 </Link>
               )
@@ -95,7 +106,7 @@ export default function Sidebar({ cliente, sede }: { cliente: string; sede: stri
           </div>
         ))}
       </nav>
-      <p className="px-4 pb-4 text-[10.5px] leading-snug text-celeste/70">Todo dato ausente se muestra como «—». Nunca se inventa un cero.</p>
+      <p className={`px-4 pb-4 text-[10.5px] leading-snug ${piel.claroTenue}`}>Todo dato ausente se muestra como «—». Nunca se inventa un cero.</p>
     </aside>
   )
 }

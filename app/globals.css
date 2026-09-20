@@ -23,6 +23,15 @@
   --color-celeste: #93C5FD;
   --color-cobalto: #1D4ED8;
   --color-hielo: #EAF2FF;
+  /* los otros dos mundos: Orgánico (marino con matiz violeta/rosa) y Google (azul-verde) */
+  --color-marino-org: #1C1342;
+  --color-marino-org-2: #2A1B5E;
+  --color-rosa: #F0ABFC;
+  --color-hielo-org: #F6F1FF;
+  --color-marino-goo: #0B3038;
+  --color-marino-goo-2: #10444E;
+  --color-menta: #99F6E4;
+  --color-hielo-goo: #EEFBF8;
   --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --radius-pieza: 20px;
   --ease-casa: cubic-bezier(0.16, 1, 0.3, 1);
@@ -35,7 +44,9 @@
   font-display: swap;
 }
 
-html { -webkit-text-size-adjust: 100%; }
+/* `overflow-x: clip` también en la raíz: solo en el cuerpo no impide que el celular ensanche la
+   ventana cuando una tabla ancha desborda (medido: innerWidth 418 en un teléfono de 390). */
+html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
 body {
   background: var(--color-fondo);
   color: var(--color-texto);
@@ -109,6 +120,16 @@ tbody tr:hover { background-color: rgba(234, 242, 255, 0.7); }
 /* la tarjeta que se inclina al pasar (galería del radar) */
 .inclina { transition: transform 0.5s var(--ease-casa), box-shadow 0.5s var(--ease-casa); transform-style: preserve-3d; }
 .inclina:hover { transform: perspective(900px) rotateX(3deg) rotateY(-4deg) translateY(-4px); box-shadow: 0 30px 50px -28px rgba(11, 29, 58, 0.45); }
+/* ── la tarjeta de publicación: la imagen se acerca al pasar, la cinta del veredicto ── */
+.tarjeta-pub img { transition: transform 0.6s var(--ease-casa); }
+.tarjeta-pub:hover img { transform: scale(1.04); }
+.tarjeta-pub:hover { transform: translateY(-4px); }
+/* carriles horizontales (mejores publicaciones): una tarjeta tras otra, con imán al parar */
+.carril { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 12px; margin: -4px -4px 0; scrollbar-width: none; }
+.carril::-webkit-scrollbar { display: none; }
+.carril > * { flex: 0 0 auto; width: 236px; scroll-snap-align: start; }
+/* el ícono de Instagram en color de marca solo donde se pide (la pastilla de la cabecera) */
+.ig-marca { color: transparent; }
 /* la marquesina de advertencias */
 .marquesina { display: flex; gap: 40px; width: max-content; animation: marquesina 28s linear infinite; }
 .marquesina:hover { animation-play-state: paused; }

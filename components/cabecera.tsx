@@ -27,12 +27,14 @@ export default function Cabecera({ r }: { r: ResultadoMotor }) {
   )
   /* Orgánico: las redes conectadas, con su ícono, en el lugar de la cuenta publicitaria */
   const redes = r.organico.redes
+  /* la pastilla de redes tiene la MISMA altura y radio que el selector de cuenta de Pauta
+     (36 px: py-1 + círculo de 28); los íconos van en color de marca solo aquí */
   const cabeceraOrganico = (
     <>
-      <div className="flex items-center gap-2 rounded-full bg-marino px-3 py-1.5 text-white">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-celeste">Orgánico</span>
+      <div className="flex h-9 items-center gap-2.5 rounded-full bg-marino-org py-1 pl-1.5 pr-3 text-white" aria-label="Redes conectadas">
+        <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-full bg-white/12 text-[10px] font-bold text-rosa">Or</span>
         {redes.length === 0 ? <span className="text-[12.5px]">Sin conectar</span> : redes.map((x) => (
-          <span key={x.red} className="flex items-center gap-1.5 text-[12.5px]" title={`${x.red === 'instagram' ? '@' : ''}${x.alias}`}><IconoRed red={x.red} /><span className="hidden lg:inline">{x.red === 'instagram' ? `@${x.alias}` : x.alias}</span></span>
+          <span key={x.red} className="flex items-center gap-1.5 text-[12.5px]" title={`${x.red === 'facebook' ? '' : '@'}${x.alias}`}><IconoRed red={x.red} tam={18} marca /><span className="hidden lg:inline">{x.red === 'facebook' ? x.alias : `@${x.alias}`}</span></span>
         ))}
       </div>
       <Ayuda titulo="Periodo" texto="Se recortan las publicaciones y la serie diaria a estas fechas." className="hidden md:block"><SelectorPeriodo periodo={r.periodo} /></Ayuda>
@@ -44,9 +46,9 @@ export default function Cabecera({ r }: { r: ResultadoMotor }) {
   )
   const cabeceraGoogle = (
     <>
-      <div className="flex items-center gap-2 rounded-full bg-marino px-3 py-1.5 text-white">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-celeste">Google</span>
-        <span className="flex items-center gap-1.5 text-[12.5px]"><IconoRed red="google" /><span className="hidden lg:inline">Sitio web · Analytics</span></span>
+      <div className="flex h-9 items-center gap-2.5 rounded-full bg-marino-goo py-1 pl-1.5 pr-3 text-white" aria-label="Sitio web conectado">
+        <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-full bg-white/12 text-[10px] font-bold text-menta">Go</span>
+        <span className="flex items-center gap-1.5 text-[12.5px]"><IconoRed red="google" tam={18} marca /><span className="hidden lg:inline">Sitio web · Analytics</span></span>
       </div>
       <Ayuda titulo="Periodo" texto="Se recortan las visitas y contactos a estas fechas." className="hidden md:block"><SelectorPeriodo periodo={r.periodo} /></Ayuda>
       <div className="ml-auto flex items-center gap-1.5">
@@ -56,10 +58,7 @@ export default function Cabecera({ r }: { r: ResultadoMotor }) {
     </>
   )
   return (
-    <header className="no-imprimir sticky top-0 z-30 border-b border-borde bg-superficie/92 backdrop-blur-md">
-      <div className="mx-auto flex h-[60px] max-w-[1400px] items-center gap-3 px-4 sm:px-6">
-        <MenuMovil />
-        <CabeceraModo organico={cabeceraOrganico} google={cabeceraGoogle} pauta={<>
+    <CabeceraModo menu={<MenuMovil />} organico={cabeceraOrganico} google={cabeceraGoogle} pauta={<>
         <SelectorCuenta cuentas={r.cuentas} actual={r.cuenta} />
         <SelectorCampana campanas={r.campanasCuenta} actual={r.campanaActiva} />
 
@@ -83,7 +82,5 @@ export default function Cabecera({ r }: { r: ResultadoMotor }) {
           </Link>
         </div>
         </>} />
-      </div>
-    </header>
   )
 }

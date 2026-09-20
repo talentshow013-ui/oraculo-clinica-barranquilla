@@ -90,9 +90,10 @@ export function Barra({ pct, tono = 'acento', etiqueta, valor, alto = 6, retraso
   )
 }
 
-export function Vacio({ titulo, texto }: { titulo: string; texto: string }) {
+export function Vacio({ titulo, texto, icono }: { titulo: string; texto: string; icono?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center gap-1.5 rounded-[14px] border border-dashed border-borde-fuerte px-6 py-10 text-center">
+      {icono && <span className="mb-1 grid h-12 w-12 place-items-center rounded-full bg-superficie-2 text-texto-2" aria-hidden="true">{icono}</span>}
       <p className="text-[15px]">{titulo}</p>
       <p className="max-w-[40ch] text-[13px] text-texto-2">{texto}</p>
     </div>
