@@ -184,6 +184,12 @@ Tampoco pasa por el conector: usa la llave de solo lectura del `.env` (`GA4_PROP
 `-- --dias 90`). Escribe `datos/web.json`. Si no está, reporta «sitio web sin conectar»
 (`docs/CONEXION_GA4.md`) y sigue. Repite sus avisos en el reporte final.
 
+## Paso 3i — Borradores (opcional)
+
+Si piden revisar borradores: `ads_get_ad_entities` con `level: "campaign"` y `object_state: "draft"`
+(sin filtros ni métricas). Se guarda tal cual en `datos/crudo/act_<cuenta>__borrador__1.json` para
+que `/oraculo-pregunta` los comente; no entran al lote (no tienen rendimiento).
+
 ## Paso 6b — Referencias de otras ciudades (opcional, mensual)
 
 Capturas de la Biblioteca de anuncios de otros mercados, a `datos/referencias/` (no al radar):
