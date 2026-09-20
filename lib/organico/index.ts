@@ -23,12 +23,20 @@ const FACTOR_TASA = 1.5;
 /** Alcance mínimo para que una tasa signifique algo (evita el 1 de 3). */
 const ALCANCE_MINIMO_TASA = 100;
 
+export const VEREDICTOS_PUBLICACION = ["estrella", "gusta", "lejos", "normal", "floja", "sin_dato"] as const;
+export type VeredictoPublicacion = (typeof VEREDICTOS_PUBLICACION)[number];
+export const NOMBRE_VEREDICTO: Record<VeredictoPublicacion, string> = { estrella: "Estrella", gusta: "Gusta", lejos: "Llega lejos", normal: "Normal", floja: "Floja", sin_dato: "Sin dato" };
+
 export interface PublicacionEvaluada extends PublicacionOrganica {
   fecha: string;
   hora: number;
   diaSemana: number;
   franja: Franja;
   tasaInteraccion: number | null;
+  /** Cómo le fue frente a las demás del periodo (mediana de alcance y de tasa). */
+  veredicto: VeredictoPublicacion;
+  /** Qué hacer con ella, en una frase de dueño; calculada con reglas, no inventada. */
+  queHacer: string;
 }
 
 export interface ResumenRed {
@@ -108,7 +116,23 @@ function franjaDe(hora: number): Franja {
 function evaluar(p: PublicacionOrganica): PublicacionEvaluada {
   const fecha = p.publicadoEn.slice(0, 10);
   const hora = Number(p.publicadoEn.slice(11, 13));
-  return { ...p, fecha, hora, diaSemana: diaSemana(fecha), franja: franjaDe(hora), tasaInteraccion: tasaDe(p.interacciones, p.alcance) };
+  return { ...p, fecha, hora, diaSemana: diaSemana(fecha), franja: franjaDe(hora), tasaInteraccion: tasaDe(p.interacciones, p.alcance), veredicto: "sin_dato", queHacer: "" };
+}
+
+/** Veredicto y consejo frente a la mediana del periodo: estrella (ambas arriba), gusta (tasa arriba), lejos (alcance arriba), normal, floja (ambas abajo). */
+function juzgar(p: PublicacionEvaluada, medAlcance: number | null, medTasa: number | null, mejorFormato: string | null, mejorFranja: Franja | null): PublicacionEvaluada {
+  if (p.alcance == null || medAlcance == null) return { ...p, veredicto: "sin_dato", queHacer: "Meta no entregó el alcance de esta publicación: no se juzga." };
+  const alcanceAlto = p.alcance >= medAlcance;
+  const tasaAlta = p.tasaInteraccion != null && medTasa != null && p.tasaInteraccion >= medTasa;
+  const tasaBaja = p.tasaInteraccion != null && medTasa != null && p.tasaInteraccion < medTasa * 0.6;
+  const formato = `${p.red}|${p.formato}`;
+  const pista = [mejorFormato && formato !== mejorFormato ? `el formato que mejor rinde es ${NOMBRE_FORMATO[mejorFormato.split("|")[1] as FormatoOrganico].toLowerCase()}` : "", mejorFranja && p.franja !== mejorFranja ? `la franja que mejor rinde es ${NOMBRE_FRANJA[mejorFranja].toLowerCase()}` : ""].filter(Boolean).join(" y ");
+  if (alcanceAlto && tasaAlta) return { ...p, veredicto: "estrella", queHacer: "Llega lejos y gusta: ponle pauta ya y repite el mismo gancho en el próximo video." };
+  if (tasaAlta) return { ...p, veredicto: "gusta", queHacer: `Gusta a quien la ve pero llegó a poca gente: vuelve a publicarla en otro horario${pista ? ` (${pista})` : ""} o impúlsala con poco presupuesto.` };
+  if (alcanceAlto && tasaBaja) return { ...p, veredicto: "lejos", queHacer: "Llegó lejos pero pocos reaccionaron: el gancho atrae y el contenido no cierra; cambia el final o el llamado a escribir." };
+  if (alcanceAlto) return { ...p, veredicto: "lejos", queHacer: "Llega lejos con interacción normal: sirve para dar a conocer; prueba una versión con pregunta o llamado a escribir." };
+  if (tasaBaja) return { ...p, veredicto: "floja", queHacer: `Ni llegó ni gustó: no repetir este ángulo${pista ? `; ${pista}` : ""}.` };
+  return { ...p, veredicto: "normal", queHacer: `En la media. Para subirla: mismo tema con un gancho más fuerte en el primer segundo${pista ? `; ${pista}` : ""}.` };
 }
 
 function agrupar(pubs: ReadonlyArray<PublicacionEvaluada>, claves: ReadonlyArray<{ clave: string; etiqueta: string }>, claveDe: (p: PublicacionEvaluada) => string): GrupoOrganico[] {
@@ -165,6 +189,13 @@ export function analizarOrganico(lote: LoteOrganico | null, rango: { desde: stri
     return { red: c.red, alias: c.alias, seguidores: c.seguidores, seguidoresGanados: ganados[c.red], publicaciones: del.length, alcance, vistas: suma(del.map((p) => p.vistas)), interacciones, tasaInteraccion: alcance != null && alcance >= ALCANCE_MINIMO_TASA && intConAlcance != null ? intConAlcance / alcance : null };
   });
 
+  const conAlcance0 = pubs.filter((p) => p.alcance != null);
+  const conTasa0 = pubs.filter((p) => p.tasaInteraccion != null);
+  const medAlcance0 = mediana(conAlcance0.map((p) => p.alcance!));
+  const medTasa0 = mediana(conTasa0.map((p) => p.tasaInteraccion!));
+  const grupoFormato = agrupar(pubs, [...new Set(pubs.map((p) => `${p.red}|${p.formato}`))].map((k) => ({ clave: k, etiqueta: k })), (p) => `${p.red}|${p.formato}`).find((g) => g.mejor && g.publicaciones >= 2);
+  const grupoFranja = agrupar(pubs, FRANJAS.map((f) => ({ clave: f, etiqueta: f })), (p) => p.franja).find((g) => g.mejor && g.publicaciones >= 2);
+  for (let i = 0; i < pubs.length; i++) pubs[i] = juzgar(pubs[i]!, medAlcance0, medTasa0, grupoFormato?.clave ?? null, (grupoFranja?.clave as Franja | undefined) ?? null);
   const conAlcance = pubs.filter((p) => p.alcance != null);
   const conTasa = pubs.filter((p) => p.tasaInteraccion != null);
   const mejores = {

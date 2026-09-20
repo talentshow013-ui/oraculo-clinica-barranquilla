@@ -13,6 +13,7 @@ import { dirname } from "node:path";
 import { cargarEnv } from "@/lib/adapters/env";
 import { RUTA_ORGANICO, parsearOrganico } from "@/lib/adapters/organico.archivo";
 import { crearPeticion, fusionarLotes, sincronizarOrganico } from "@/lib/adapters/organico.graph";
+import { guardarMiniaturas } from "@/lib/adapters/organico.miniaturas";
 import { LoteOrganicoSchema } from "@/lib/adapters/types";
 import { hoyBogota, sumarDias } from "@/lib/format/fechas";
 import { validarSinPII } from "@/lib/privacy";
@@ -35,6 +36,8 @@ async function main() {
   const nuevo = await sincronizarOrganico({ pedir: crearPeticion(token!), instagramId, paginaId, desde, hasta });
   const viejo = existsSync(RUTA_ORGANICO) ? parsearOrganico(readFileSync(RUTA_ORGANICO, "utf8")) : null;
   const lote = LoteOrganicoSchema.parse(validarSinPII(fusionarLotes(viejo, nuevo)));
+  const mini = await guardarMiniaturas(lote);
+  console.log(`✓ Imágenes de las publicaciones: ${mini.nuevas} nuevas guardadas${mini.fallidas ? ` · ${mini.fallidas} no se pudieron bajar` : ""}`);
   mkdirSync(dirname(RUTA_ORGANICO), { recursive: true });
   writeFileSync(RUTA_ORGANICO, JSON.stringify(lote, null, 2), "utf8");
   for (const c of lote.cuentas) console.log(`✓ ${c.red === "instagram" ? "Instagram @" : "Facebook "}${c.alias}: ${c.seguidores?.toLocaleString("es-CO") ?? "—"} seguidores`);

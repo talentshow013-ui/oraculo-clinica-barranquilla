@@ -109,6 +109,20 @@ describe("orgánico · qué formato, día y franja rinden", () => {
   });
 });
 
+describe("orgánico · veredicto y qué hacer por publicación", () => {
+  const r = analizarOrganico(lote, rango, "2026-09-15");
+  const v = (id: string) => r.publicaciones.find((p) => p.id === id)!;
+  test("la estrella llega lejos y gusta; la floja ni una ni otra; sin alcance no se juzga", () => {
+    expect(v("r1").veredicto).toBe("estrella");
+    expect(v("r1").queHacer).toMatch(/pauta/);
+    expect(v("i1").veredicto).toBe("floja");
+    expect(v("sinalcance").veredicto).toBe("sin_dato");
+  });
+  test("toda publicación con alcance trae un consejo no vacío", () => {
+    for (const p of r.publicaciones.filter((x) => x.alcance != null)) expect(p.queHacer.length).toBeGreaterThan(10);
+  });
+});
+
 describe("orgánico · qué merece pauta", () => {
   test("reciente, con tasa muy por encima y alcance sobre la mediana; con el porqué", () => {
     const r = analizarOrganico(lote, rango, "2026-09-15");

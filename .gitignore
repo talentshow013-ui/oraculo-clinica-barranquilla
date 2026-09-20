@@ -29,3 +29,5 @@ datos/googleads.json
 
 # credenciales OAuth de Google Ads
 datos/google-ads-oauth.json
+# imágenes de publicaciones orgánicas (datos del cliente)
+public/organico/

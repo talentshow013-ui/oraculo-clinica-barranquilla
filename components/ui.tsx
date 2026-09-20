@@ -117,7 +117,7 @@ export function Celda({ children, num = false, tono, className = '' }: { childre
 
 /** Miniatura de un creativo o de un anuncio del radar: imagen local si la hay; si no, un marco con el tipo. */
 export function Miniatura({ url, tipo, alt, className = '' }: { url: string | null; tipo: string; alt: string; className?: string }) {
-  const local = url?.startsWith('/radar/') || url?.startsWith('/creativos/')
+  const local = url?.startsWith('/radar/') || url?.startsWith('/creativos/') || url?.startsWith('/organico/')
   return (
     <span className={`relative block overflow-hidden rounded-[12px] bg-superficie-2 ${className}`}>
       {local ? (

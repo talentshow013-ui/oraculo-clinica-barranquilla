@@ -8,6 +8,9 @@ import type { GrupoOrganico, PublicacionEvaluada } from '@/lib/tipos'
 import { Aviso, Barra, Celda, Etiqueta, Grid, Kpi, Panel, Tabla, Th, Titulo, Vacio } from '@/components/ui'
 import { FuenteDelHallazgo } from '@/components/hallazgo-fuente'
 import VerTodos from '@/components/cliente/ver-todos'
+import { RejillaPublicaciones, TarjetaPublicacion } from '@/components/tarjeta-publicacion'
+import { IconoRed } from '@/components/iconos-redes'
+import type { RedOrganico } from '@/lib/adapters/types'
 
 const TOPE = 15
 const recortar = (t: string, n: number) => { const c = Array.from(t); return c.length > n ? c.slice(0, n).join('') + '…' : t }
@@ -18,9 +21,12 @@ const AVISO_SIN_DATOS = 'Todavía no se ha conectado el orgánico. Se conecta un
  * resumen por red, mejores publicaciones, qué formato / día / franja rinde, qué merece pauta y
  * seguidores. Cada publicación es un enlace a la red; cada bloque dice de dónde sale.
  */
-export default async function Organico() {
+export default async function Organico({ searchParams }: { searchParams: Promise<{ red?: string }> }) {
+  const { red } = await searchParams
+  const redElegida = (['instagram', 'facebook', 'tiktok'] as const).find((x) => x === red) as RedOrganico | undefined
   const r = await motor()
   const o = r.organico
+  const todas = redElegida ? o.publicaciones.filter((p) => p.red === redElegida) : o.publicaciones
   const ig = o.redes.find((x) => x.red === 'instagram')
   const fb = o.redes.find((x) => x.red === 'facebook')
   const tt = o.redes.find((x) => x.red === 'tiktok')
@@ -70,28 +76,21 @@ export default async function Organico() {
             {o.paraPauta.length === 0 ? (
               <Aviso tono="neutro">Ninguna publicación reciente se despega lo suficiente del resto. Cuando una lo haga, aparece aquí con el porqué.</Aviso>
             ) : (
-              <ol className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                {o.paraPauta.map((c, i) => (
-                  <li key={c.publicacion.id} className="pieza entra-zoom p-3" style={{ '--retraso': `${80 + i * 60}ms` } as CSSProperties}>
-                    <p className="flex flex-wrap items-center gap-2 text-[12px] text-texto-2"><Etiqueta tono="bien">{NOMBRE_FORMATO[c.publicacion.formato]} · {NOMBRE_RED[c.publicacion.red]}</Etiqueta><span className="num">{fechaCorta(c.publicacion.fecha)}</span></p>
-                    <p className="mt-1 text-[14px] font-medium leading-snug">{recortar(c.publicacion.texto || '(sin texto)', 140)}</p>
-                    <p className="mt-1 text-[12.5px] leading-snug text-texto-2">{c.porQue}</p>
-                    <a href={c.publicacion.enlace} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block rounded-full bg-acento/[0.08] px-2.5 py-1 text-[12px] font-medium text-acento ring-1 ring-acento/20 hover:bg-acento/[0.14]">Ver la publicación ↗</a>
-                  </li>
-                ))}
-              </ol>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {o.paraPauta.map((c, i) => <TarjetaPublicacion key={c.publicacion.id} p={{ ...c.publicacion, queHacer: c.porQue }} id={`pauta-${c.publicacion.id}`} retraso={80 + i * 60} />)}
+              </div>
             )}
           </Panel>
 
           <Panel id="mejores" className="mt-3" rotulo="Mejores publicaciones del periodo (dato propio)" titulo="Las que más lejos llegaron y las que más conversación generaron" retraso={440}>
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <p className="rotulo mb-1.5">Por alcance</p>
-                <TablaPublicaciones lista={o.mejores.porAlcance} prefijo="alcance" />
+                <RejillaPublicaciones lista={o.mejores.porAlcance.slice(0, 5)} prefijo="alcance" />
               </div>
               <div>
                 <p className="rotulo mb-1.5">Por tasa de interacción</p>
-                <TablaPublicaciones lista={o.mejores.porTasa} prefijo="tasa" />
+                <RejillaPublicaciones lista={o.mejores.porTasa.slice(0, 5)} prefijo="tasa" />
               </div>
             </div>
           </Panel>
@@ -113,8 +112,13 @@ export default async function Organico() {
             )}
           </Panel>
 
-          <Panel id="todas" className="mt-3" rotulo="Todas las publicaciones del periodo" titulo="De la más reciente a la más antigua" retraso={640}>
-            <VerTodos total={o.publicaciones.length} primeros={<TablaPublicaciones lista={o.publicaciones.slice(0, TOPE)} prefijo="pub" />} resto={o.publicaciones.length > TOPE ? <TablaPublicaciones lista={o.publicaciones.slice(TOPE)} prefijo="pub" sinCabecera /> : null} className={o.publicaciones.length > TOPE ? '' : 'hidden'} />
+          <Panel id="todas" className="mt-3" rotulo="Todas las publicaciones del periodo" titulo={redElegida ? <span className="flex items-center gap-2"><IconoRed red={redElegida} tam={18} />{NOMBRE_RED[redElegida]} · de la más reciente a la más antigua</span> : 'De la más reciente a la más antigua'} retraso={640} extra={
+            <div className="flex flex-wrap gap-1.5">
+              <Link href="/organico#todas" className={`rounded-full px-2.5 py-1 text-[12px] font-medium ring-1 ${!redElegida ? 'bg-marino text-white ring-marino' : 'bg-superficie-2 text-texto-2 ring-borde hover:bg-hielo'}`}>Todas</Link>
+              {o.redes.map((x) => <Link key={x.red} href={`/organico?red=${x.red}#todas`} className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium ring-1 ${redElegida === x.red ? 'bg-marino text-white ring-marino' : 'bg-superficie-2 text-texto-2 ring-borde hover:bg-hielo'}`}><IconoRed red={x.red} tam={13} />{NOMBRE_RED[x.red]}</Link>)}
+            </div>
+          }>
+            <VerTodos total={todas.length} primeros={<RejillaPublicaciones lista={todas.slice(0, TOPE)} prefijo="pub" vacio={redElegida ? `Todavía no hay publicaciones de ${NOMBRE_RED[redElegida]} en el periodo.` : undefined} />} resto={todas.length > TOPE ? <RejillaPublicaciones lista={todas.slice(TOPE)} prefijo="pub" /> : null} className={todas.length > TOPE ? '' : 'hidden'} />
           </Panel>
 
           <Panel id="fuente" className="mt-3" rotulo="De dónde sale" titulo="Fuente de esta pantalla" retraso={680}>
@@ -127,33 +131,6 @@ export default async function Organico() {
   )
 }
 
-function TablaPublicaciones({ lista, prefijo, sinCabecera = false }: { lista: PublicacionEvaluada[]; prefijo: string; sinCabecera?: boolean }) {
-  if (!lista.length) return <Aviso tono="neutro">Sin publicaciones con este dato en el periodo.</Aviso>
-  return (
-    <Tabla minAncho={720}>
-      {!sinCabecera && <thead><tr><Th>Publicación</Th><Th>Formato</Th><Th num>Alcance</Th><Th num>Vistas</Th><Th num>Me gusta</Th><Th num>Coment.</Th><Th num>Guard.</Th><Th num>Compart.</Th><Th num>Tasa</Th><Th num>Seg. prom.</Th></tr></thead>}
-      <tbody>
-        {lista.map((p) => (
-          <tr key={p.id} id={`${prefijo}-${p.id}`}>
-            <Celda>
-              <a href={p.enlace} target="_blank" rel="noopener noreferrer" className="font-medium text-acento underline-offset-2 hover:underline" title="Abrir en la red social">{recortar(p.texto || '(sin texto)', 70)} ↗</a>
-              <span className="num mt-0.5 block text-[11.5px] text-texto-3">{fechaCorta(p.fecha)} · {String(p.hora).padStart(2, '0')}:00 · {NOMBRE_RED[p.red]}</span>
-            </Celda>
-            <Celda><Etiqueta tono={p.red === 'tiktok' ? 'ojo' : p.formato === 'reel' ? 'acento' : 'neutro'}>{p.red === 'tiktok' ? 'TikTok' : NOMBRE_FORMATO[p.formato]}</Etiqueta></Celda>
-            <Celda num>{p.alcance == null ? '—' : num(p.alcance)}</Celda>
-            <Celda num>{p.vistas == null ? '—' : num(p.vistas)}</Celda>
-            <Celda num>{p.meGusta == null ? '—' : num(p.meGusta)}</Celda>
-            <Celda num>{p.comentarios == null ? '—' : num(p.comentarios)}</Celda>
-            <Celda num>{p.guardados == null ? '—' : num(p.guardados)}</Celda>
-            <Celda num>{p.compartidos == null ? '—' : num(p.compartidos)}</Celda>
-            <Celda num tono={p.tasaInteraccion != null && p.tasaInteraccion >= 0.05 ? 'bien' : undefined}>{pct(p.tasaInteraccion)}</Celda>
-            <Celda num>{p.segundosPromedio == null ? '—' : seg(p.segundosPromedio)}</Celda>
-          </tr>
-        ))}
-      </tbody>
-    </Tabla>
-  )
-}
 
 function Grupos({ id, titulo, filas, retraso }: { id: string; titulo: string; filas: GrupoOrganico[]; retraso: number }) {
   const conDatos = filas.filter((g) => g.publicaciones > 0)
