@@ -37,6 +37,8 @@ import { cargarOrganico } from "@/lib/adapters/organico.archivo";
 import { analizarOrganico, type ResultadoOrganico } from "@/lib/organico";
 import { cargarWeb } from "@/lib/adapters/web.archivo";
 import { analizarWeb, type ResultadoWeb } from "@/lib/web";
+import { cargarKommo } from "@/lib/adapters/kommo.archivo";
+import { analizarPacientes, type ResultadoPacientes } from "@/lib/pacientes";
 import { estudiarReferencias, type EstudioReferencias } from "@/lib/audiences/referencias";
 import { analizarPublicos, type ResultadoPublicos } from "@/lib/audiences";
 
@@ -163,6 +165,8 @@ export interface ResultadoMotor {
   organico: ResultadoOrganico;
   /** Sitio web (Google Analytics 4), recortado al periodo. */
   web: ResultadoWeb;
+  /** Pacientes (Kommo): leads → cita → asistió → venta, recortado al periodo. */
+  pacientes: ResultadoPacientes;
   /** Periodo analizado: el elegido con el calendario (cookies desde/hasta) o todo el lote; minimo/maximo = lo que hay. */
   periodo: PeriodoElegido;
   privacidad: { segmentosOcultos: number; k: number; AVISO_PANEL: string };
@@ -260,11 +264,11 @@ function resolverCuentas(lote: LoteDatos, cfg: ConfigCliente, fuentes: EstadoFue
   return [...configuradas, ...extra];
 }
 
-async function desdeCookies(): Promise<{ cuenta?: string; campana?: string; desde?: string; hasta?: string }> {
+async function desdeCookies(): Promise<{ cuenta?: string; campana?: string; desde?: string; hasta?: string; modo?: string }> {
   try {
     const { cookies } = await import("next/headers");
     const c = await cookies();
-    return { cuenta: c.get("cuenta")?.value, campana: c.get("campana")?.value, desde: c.get("desde")?.value, hasta: c.get("hasta")?.value };
+    return { cuenta: c.get("cuenta")?.value, campana: c.get("campana")?.value, desde: c.get("desde")?.value, hasta: c.get("hasta")?.value, modo: c.get("modo")?.value };
   } catch {
     return {}; // fuera de una petición (scripts, tests, compilación)
   }
@@ -309,6 +313,8 @@ export interface OpcionesMotor {
   fuente?: FuenteDatos;
   /** Id de la cuenta a analizar; desconocida o ausente → principal. */
   cuentaId?: string;
+  /** Mundo: «google» limita a las cuentas de Google Ads; lo demás, a Meta/TikTok. */
+  plataforma?: "google" | "pauta";
   /** Resultados por pauta; si no se pasan y no hay lote explícito, se leen de datos/resultados.json. */
   resultados?: RegistroPauta[];
   /** Campaña a mirar dentro de la cuenta; desconocida o ausente → todas. */
@@ -327,8 +333,10 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
   const datosCompletos = lote ?? (await obtenerLote(fuente));
   const fuentes = lote ? [] : [...(await fuente.estado()), estadoResultados(resultadosTodos)];
 
-  const cuentas = resolverCuentas(datosCompletos, cfg, fuentes);
-  const principal = cuentas[0] ?? { id: "sin_cuenta", nombre: "Sin cuenta", plataforma: "meta" as const, moneda: "COP" as const, activa: false, ultimaSincronizacion: null };
+  const todasLasCuentas = resolverCuentas(datosCompletos, cfg, fuentes);
+  // Mundo Google: las cuentas de Google Ads viven en el desplegable «Google», no en Pauta.
+  const cuentas = opciones.plataforma === "google" ? todasLasCuentas.filter((c) => c.plataforma === "google") : todasLasCuentas.filter((c) => c.plataforma !== "google");
+  const principal = cuentas[0] ?? { id: "sin_cuenta", nombre: "Sin cuenta", plataforma: (opciones.plataforma === "google" ? "google" : "meta") as CuentaPublicitaria["plataforma"], moneda: "COP" as const, activa: false, ultimaSincronizacion: null };
   const cuenta = cuentas.find((c) => c.id === opciones.cuentaId) ?? principal;
   // Los resultados son por cuenta y campaña: se mezclan DESPUÉS de filtrar la cuenta.
   const resultadosPauta = resultadosTodos.filter((s) => s.cuentaId === cuenta.id);
@@ -448,6 +456,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     referencias: estudiarReferencias(cargarReferencias(), hoy, cfg.radar),
     organico: analizarOrganico(lote ? null : cargarOrganico(), { desde: periodo.desde, hasta: periodo.hasta }, hoy),
     web: analizarWeb(lote ? null : cargarWeb(), { desde: periodo.desde, hasta: periodo.hasta }, cfg.ciudad.split(",")[0]!.trim()),
+    pacientes: analizarPacientes(lote ? null : cargarKommo(), { desde: periodo.desde, hasta: periodo.hasta }),
     bitacora: loteMotor.bitacora?.length ? { reciente: resumirBitacora(loteMotor.bitacora, ctx.ventanas.reciente), periodo: resumirBitacora(loteMotor.bitacora, ctx.rango) } : null,
     comparativa: construirComparativa(ctx.nivelBase === "anuncio" ? ctx.filasAnuncio : ctx.nivelBase === "conjunto" ? ctx.filasConjunto : ctx.filasCampana, ctx.ventanas, loteMotor.rankings ?? []),
     maestras,
@@ -488,11 +497,12 @@ export async function motor(cuentaId?: string, campanaId?: string, rango?: { des
   const camp = campanaId ?? galletas.campana ?? "";
   const desde = rango?.desde ?? galletas.desde ?? "";
   const hasta = rango?.hasta ?? galletas.hasta ?? "";
-  const clave = `${fuente.nombre}|${id}|${camp}|${desde}|${hasta}`;
+  const plataforma = galletas.modo === "google" ? "google" : "pauta";
+  const clave = `${fuente.nombre}|${plataforma}|${id}|${camp}|${desde}|${hasta}`;
   const enCache = cache.get(clave);
   const vigente = enCache && Date.now() - enCache.creadoEn < CACHE_SEG * 1000;
   if (vigente && process.env.NODE_ENV === "production") return enCache.promesa;
-  const promesa = correrMotor(undefined, { fuente, cuentaId: id || undefined, campanaId: camp || undefined, desde: desde || undefined, hasta: hasta || undefined });
+  const promesa = correrMotor(undefined, { fuente, cuentaId: id || undefined, campanaId: camp || undefined, desde: desde || undefined, hasta: hasta || undefined, plataforma });
   cache.set(clave, { promesa, creadoEn: Date.now() });
   return promesa;
 }

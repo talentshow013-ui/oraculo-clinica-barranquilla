@@ -91,7 +91,8 @@ interface AdDef {
  * lleva facial y la promoción; la segunda láser y corporal); la tercera queda sin pauta a propósito.
  * Así la demostración sigue funcionando con las cuentas reales del cliente.
  */
-export const CUENTAS_SEED = cliente.cuentasPublicitarias.map((c) => c.id);
+/** Cuentas de pauta del seed (Meta/TikTok); las de Google viven en el mundo «Google», no en Pauta. */
+export const CUENTAS_SEED = cliente.cuentasPublicitarias.filter((c) => c.plataforma !== "google").map((c) => c.id);
 const CUENTA_POR_CAMPANA: Record<string, string> = {
   camp_facial: CUENTAS_SEED[0] ?? "act_demo_1",
   camp_madre: CUENTAS_SEED[0] ?? "act_demo_1",

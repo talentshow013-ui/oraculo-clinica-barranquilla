@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
 import SelectorModo, { modoDeRuta } from './cliente/selector-modo'
 import { IconoRed } from './iconos-redes'
@@ -26,7 +26,14 @@ const GRUPOS_ORGANICO: { titulo: string; rutas: { a: string; nombre: string; ico
 
 /** En modo Google el riel muestra los bloques de /web. */
 const GRUPOS_GOOGLE: { titulo: string; rutas: { a: string; nombre: string; icono: ReactNode }[] }[] = [
-  { titulo: 'Sitio web', rutas: [
+  { titulo: 'Pauta de Google Ads', rutas: [
+    { a: '/panel?plataforma=google', nombre: 'Centro de mando', icono: I(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /><path d="M12 4v3M12 17v3M4 12h3M17 12h3" /></>) },
+    { a: '/diagnostico?plataforma=google', nombre: 'Diagnóstico', icono: I(<><path d="M9 3h6l1 4h3l-1 14H6L5 7h3z" /><path d="M9 11h6M9 15h4" /></>) },
+    { a: '/campanas?plataforma=google', nombre: 'Campañas', icono: I(<><path d="M4 6h9M4 12h13M4 18h7" /><circle cx="18" cy="6" r="2" /><circle cx="15" cy="18" r="2" /></>) },
+    { a: '/creativos?plataforma=google', nombre: 'Anuncios', icono: I(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M10 9l5 3-5 3z" /></>) },
+    { a: '/rendimiento?plataforma=google', nombre: 'Rendimiento', icono: I(<><path d="M4 19V10M10 19V5M16 19v-8M22 19H2" /></>) },
+  ] },
+  { titulo: 'Sitio web (Analytics)', rutas: [
     { a: '/web', nombre: 'Resumen', icono: I(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /></>) },
     { a: '/web#canales', nombre: 'Canales y fuentes', icono: I(<><path d="M4 19V10M10 19V5M16 19v-8M22 19H2" /></>) },
     { a: '/web#paginas', nombre: 'Páginas que convierten', icono: I(<><path d="M6 3h9l4 4v14H6z" /><path d="M9 12h6M9 16h6M15 3v4h4" /></>) },
@@ -69,13 +76,25 @@ const GRUPOS: { titulo: string; rutas: { a: string; nombre: string; icono: React
 export const PIEL_MODO = {
   pauta: { riel: 'bg-marino', claro: 'text-celeste', claroTenue: 'text-celeste/70', punto: '#2563EB', rotulo: (cliente: string, sede: string) => `${cliente} · ${sede}` },
   organico: { riel: 'bg-marino-org', claro: 'text-rosa', claroTenue: 'text-rosa/70', punto: '#E879F9', rotulo: () => 'Orgánico · Instagram, Facebook y TikTok' },
-  google: { riel: 'bg-marino-goo', claro: 'text-menta', claroTenue: 'text-menta/70', punto: '#2DD4BF', rotulo: () => 'Sitio web · Google Analytics' },
+  google: { riel: 'bg-marino-goo', claro: 'text-menta', claroTenue: 'text-menta/70', punto: '#2DD4BF', rotulo: () => 'Google · pauta y sitio web' },
+  pacientes: { riel: 'bg-marino-pac', claro: 'text-ambar', claroTenue: 'text-ambar/70', punto: '#F59E0B', rotulo: () => 'Pacientes · Kommo' },
 } as const
+
+const GRUPOS_PACIENTES: { titulo: string; rutas: { a: string; nombre: string; icono: ReactNode }[] }[] = [
+  { titulo: 'Pacientes', rutas: [
+    { a: '/pacientes', nombre: 'Resumen', icono: I(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.5" /></>) },
+    { a: '/pacientes#embudo', nombre: 'Lead → cita → venta', icono: I(<><path d="M3 5h18l-7 8v6l-4 2v-8z" /></>) },
+    { a: '/pacientes#fuentes', nombre: 'Por fuente', icono: I(<><path d="M4 19V10M10 19V5M16 19v-8M22 19H2" /></>) },
+    { a: '/pacientes#semanas', nombre: 'Semana a semana', icono: I(<><path d="M4 6h16M4 12h10M4 18h13" /></>) },
+    { a: '/pacientes#etapas', nombre: 'Etapas de Kommo', icono: I(<><path d="M4 6h9M4 12h13M4 18h7" /></>) },
+    { a: '/pacientes#fuente', nombre: 'Fuente', icono: I(<><ellipse cx="12" cy="6" rx="8" ry="3" /><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6" /></>) },
+  ] },
+]
 
 export default function Sidebar({ cliente, sede }: { cliente: string; sede: string }) {
   const ruta = usePathname()
-  const modo = modoDeRuta(ruta)
-  const grupos = modo === 'organico' ? GRUPOS_ORGANICO : modo === 'google' ? GRUPOS_GOOGLE : GRUPOS
+  const modo = modoDeRuta(ruta, useSearchParams()?.toString())
+  const grupos = modo === 'organico' ? GRUPOS_ORGANICO : modo === 'google' ? GRUPOS_GOOGLE : modo === 'pacientes' ? GRUPOS_PACIENTES : GRUPOS
   const piel = PIEL_MODO[modo]
   return (
     <aside className={`no-imprimir sticky top-0 hidden h-[100svh] w-[232px] shrink-0 flex-col text-[#EAF2FF] transition-colors duration-500 lg:flex ${piel.riel}`} aria-label="Secciones">
@@ -96,7 +115,7 @@ export default function Sidebar({ cliente, sede }: { cliente: string; sede: stri
             {g.rutas.map((x) => {
               const activo = x.a.includes('#') || x.a.includes('?') ? false : ruta === x.a || ruta.startsWith(x.a + '/')
               return (
-                <Link key={x.a} href={x.a} aria-current={activo ? 'page' : undefined} className={`group relative mb-0.5 flex items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-[13px] transition-colors ${activo ? 'bg-white text-marino' : 'text-[#EAF2FF]/85 hover:bg-white/10 hover:text-white'}`}>
+                <Link key={x.a} href={x.a} aria-current={activo ? 'page' : undefined} onClick={() => { if (x.a.includes('plataforma=google')) document.cookie = 'modo=google; path=/; max-age=31536000; samesite=lax'; else if (!x.a.startsWith('/organico') && !x.a.startsWith('/web') && !x.a.startsWith('/pacientes')) document.cookie = 'modo=pauta; path=/; max-age=31536000; samesite=lax' }} className={`group relative mb-0.5 flex items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-[13px] transition-colors ${activo ? 'bg-white text-marino' : 'text-[#EAF2FF]/85 hover:bg-white/10 hover:text-white'}`}>
                   <span className={`absolute -left-2.5 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-acento transition-transform ${activo ? 'scale-y-100' : 'scale-y-0'}`} aria-hidden="true" />
                   <span className={activo ? 'text-acento' : piel.claro}>{x.icono}</span>
                   {x.nombre}

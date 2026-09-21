@@ -1,16 +1,17 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 /** Los dos mundos del panel: la pauta (todo lo que se paga) y el orgánico (lo que se publica sin pagar). */
 export const MODOS = [
   { id: 'pauta', nombre: 'Pauta', detalle: 'Anuncios que se pagan', a: '/panel' },
   { id: 'organico', nombre: 'Orgánico', detalle: 'Instagram, Facebook y TikTok sin pagar', a: '/organico' },
-  { id: 'google', nombre: 'Sitio web', detalle: 'Visitas y contactos de la página (Google Analytics)', a: '/web' },
+  { id: 'google', nombre: 'Google', detalle: 'Pauta de Google Ads y sitio web (Analytics)', a: '/panel?plataforma=google' },
+  { id: 'pacientes', nombre: 'Pacientes', detalle: 'Leads, citas y ventas (Kommo)', a: '/pacientes' },
 ] as const
 export type Modo = (typeof MODOS)[number]['id']
-export const modoDeRuta = (ruta: string): Modo => (ruta.startsWith('/organico') ? 'organico' : ruta.startsWith('/web') ? 'google' : 'pauta')
+export const modoDeRuta = (ruta: string, busqueda?: string | null): Modo => (ruta.startsWith('/organico') ? 'organico' : ruta.startsWith('/web') || (busqueda ?? '').includes('plataforma=google') ? 'google' : ruta.startsWith('/pacientes') ? 'pacientes' : 'pauta')
 
 /**
  * DESPLEGABLE DE MODO bajo el nombre ORÁCULO: Pauta / Orgánico. Es navegación (no cookie): cada
@@ -18,7 +19,8 @@ export const modoDeRuta = (ruta: string): Modo => (ruta.startsWith('/organico') 
  */
 export default function SelectorModo({ claro = false }: { claro?: boolean }) {
   const ruta = usePathname()
-  const actual = MODOS.find((m) => m.id === modoDeRuta(ruta))!
+  const busqueda = useSearchParams()
+  const actual = MODOS.find((m) => m.id === modoDeRuta(ruta, busqueda?.toString()))!
   const [abierto, setAbierto] = useState(false)
   const raiz = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function SelectorModo({ claro = false }: { claro?: boolean }) {
         <ul role="listbox" aria-label="Modo del panel" className="absolute left-0 top-[calc(100%+6px)] z-40 w-[220px] overflow-hidden rounded-[14px] bg-white p-1 text-texto shadow-xl ring-1 ring-borde">
           {MODOS.map((m) => (
             <li key={m.id} role="option" aria-selected={m.id === actual.id}>
-              <Link href={m.a} onClick={() => setAbierto(false)} className={`block rounded-[10px] px-3 py-2 ${m.id === actual.id ? 'bg-acento/[0.08]' : 'hover:bg-superficie-2'}`}>
+              <Link href={m.a} onClick={() => { setAbierto(false); document.cookie = `modo=${m.id === 'google' ? 'google' : 'pauta'}; path=/; max-age=31536000; samesite=lax` }} className={`block rounded-[10px] px-3 py-2 ${m.id === actual.id ? 'bg-acento/[0.08]' : 'hover:bg-superficie-2'}`}>
                 <span className="block text-[13px] font-medium">{m.nombre}</span>
                 <span className="block text-[11.5px] text-texto-2">{m.detalle}</span>
               </Link>

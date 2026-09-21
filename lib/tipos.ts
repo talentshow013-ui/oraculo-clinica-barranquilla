@@ -28,3 +28,4 @@ export type { ResultadoOrganico, PublicacionEvaluada, ResumenRed, GrupoOrganico,
 export type { PublicacionOrganica, CuentaOrganica, DiaOrganico, LoteOrganico, RedOrganico, FormatoOrganico } from "@/lib/adapters/types";
 export type { ResultadoWeb, ResumenWeb, CanalWeb, FuenteWeb, PaginaResumen, CiudadResumen } from "@/lib/web";
 export type { LoteWeb, SesionesWeb } from "@/lib/adapters/types";
+export type { ResultadoPacientes, TotalesPacientes, FuentePacientes, SemanaPacientes } from "@/lib/pacientes";

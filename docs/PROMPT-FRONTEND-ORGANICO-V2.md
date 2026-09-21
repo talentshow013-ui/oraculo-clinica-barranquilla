@@ -79,3 +79,25 @@ Anclas que usa el riel (no cambiar): Orgánico `#resumen #para-pauta #mejores #f
    → Sin asignar); «Eventos clave» vacío como tarjeta destacada con el paso a seguir.
 
 No agregues pestañas nuevas. Lo orgánico vive en `/organico`, el sitio web en `/web`.
+
+## Dos modos nuevos (2026-09-20): «Google» con la pauta adentro, y «Pacientes» (Kommo)
+
+Ya funcionan; pule solo lo visual.
+
+- **Google**: el desplegable ahora entra por `/panel?plataforma=google`. En ese mundo el riel tiene
+  dos grupos: «Pauta de Google Ads» (Centro de mando, Diagnóstico, Campañas, Anuncios, Rendimiento:
+  son las MISMAS pantallas de Pauta, con el selector de cuenta limitado a Google Ads) y «Sitio web
+  (Analytics)» (`/web`). La cookie `modo` decide qué cuentas ve el selector; el riel la fija al
+  hacer clic. Pule: que el riel de Google se vea como un solo mundo (color azul-verde ya definido:
+  `bg-marino-goo`, `text-menta`), con el logo de Google Ads en el grupo de pauta y el de Analytics
+  en el de sitio web; en las pantallas de pauta dentro de Google, un rótulo arriba «Pauta de Google
+  Ads» para que nadie crea que está en Meta.
+- **Pacientes** (`app/(panel)/pacientes/page.tsx`, datos en `r.pacientes: ResultadoPacientes`):
+  KPI (leads, citas, asistieron, ventas; tasas lead→cita, cita→asistencia, lead→venta; valor),
+  lectura, embudo de 4 barras, por fuente, semana a semana, etapas de Kommo, fuente. Paleta ámbar
+  (`bg-marino-pac`, `text-ambar`, `bg-hielo-pac`). Pule: el embudo de 4 pasos como embudo de
+  verdad (barras decrecientes centradas, con el % de caída entre pasos escrito entre barra y barra);
+  las tasas como tarjetas grandes con un semáforo (lead→cita < 5 % rojo, 5–10 ámbar, > 10 verde;
+  cita→asistencia < 60 % rojo); la tabla «por fuente» con la fila «Sin fuente» en ámbar y su nota;
+  «Etapas de Kommo» como chips agrupados por paso (Lead / Cita / Asistió / Venta).
+- Anclas del riel de Pacientes (no cambiar): `#resumen #lectura #embudo #fuentes #semanas #etapas #fuente`.

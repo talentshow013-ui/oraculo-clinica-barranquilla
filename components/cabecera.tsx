@@ -44,6 +44,19 @@ export default function Cabecera({ r }: { r: ResultadoMotor }) {
       </div>
     </>
   )
+  const cabeceraPacientes = (
+    <>
+      <div className="flex h-9 items-center gap-2.5 rounded-full bg-marino-pac py-1 pl-1.5 pr-3 text-white" aria-label="Pacientes · Kommo">
+        <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-full bg-white/12 text-[10px] font-bold text-ambar">K</span>
+        <span className="text-[12.5px]">Pacientes · Kommo</span>
+      </div>
+      <Ayuda titulo="Periodo" texto="Se recortan leads, citas y ventas a estas fechas." className="hidden md:block"><SelectorPeriodo periodo={r.periodo} /></Ayuda>
+      <div className="ml-auto flex items-center gap-1.5">
+        {r.pacientes.capturadoEn && <span className="hidden text-[12px] text-texto-3 sm:inline">Traído {fechaHora(r.pacientes.capturadoEn)}</span>}
+        <Link href="/pacientes#fuente" className="rounded-full bg-superficie-2 px-2.5 py-1 text-[12px] font-semibold text-texto-2 ring-1 ring-borde hover:bg-hielo">De dónde sale</Link>
+      </div>
+    </>
+  )
   const cabeceraGoogle = (
     <>
       <div className="flex h-9 items-center gap-2.5 rounded-full bg-marino-goo py-1 pl-1.5 pr-3 text-white" aria-label="Sitio web conectado">
@@ -58,7 +71,7 @@ export default function Cabecera({ r }: { r: ResultadoMotor }) {
     </>
   )
   return (
-    <CabeceraModo menu={<MenuMovil />} organico={cabeceraOrganico} google={cabeceraGoogle} pauta={<>
+    <CabeceraModo menu={<MenuMovil />} organico={cabeceraOrganico} google={cabeceraGoogle} pacientes={cabeceraPacientes} pauta={<>
         <SelectorCuenta cuentas={r.cuentas} actual={r.cuenta} />
         <SelectorCampana campanas={r.campanasCuenta} actual={r.campanaActiva} />
 

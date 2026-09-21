@@ -32,6 +32,11 @@
   --color-marino-goo-2: #10444E;
   --color-menta: #99F6E4;
   --color-hielo-goo: #EEFBF8;
+  /* Pacientes (Kommo): marino con matiz ámbar */
+  --color-marino-pac: #2B1E0B;
+  --color-marino-pac-2: #3F2D12;
+  --color-ambar: #FCD34D;
+  --color-hielo-pac: #FFF8E8;
   --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --radius-pieza: 20px;
   --ease-casa: cubic-bezier(0.16, 1, 0.3, 1);

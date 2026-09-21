@@ -1,5 +1,5 @@
 'use client'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { modoDeRuta } from './selector-modo'
 
@@ -14,15 +14,19 @@ const FONDO = {
   pauta: 'bg-superficie/92',
   organico: 'bg-hielo-org/92',
   google: 'bg-hielo-goo/92',
+  pacientes: 'bg-hielo-pac/92',
 } as const
 
-export default function CabeceraModo({ menu, pauta, organico, google }: { menu: ReactNode; pauta: ReactNode; organico: ReactNode; google: ReactNode }) {
-  const modo = modoDeRuta(usePathname())
+export default function CabeceraModo({ menu, pauta, organico, google, pacientes }: { menu: ReactNode; pauta: ReactNode; organico: ReactNode; google: ReactNode; pacientes: ReactNode }) {
+  const ruta = usePathname()
+  const modo = modoDeRuta(ruta, useSearchParams()?.toString())
+  /* en el mundo Google, las pantallas de pauta (Centro de mando, Campañas…) llevan los controles de cuenta/campaña (limitados a Google Ads); /web lleva la pastilla del sitio */
+  const enPautaGoogle = modo === 'google' && !ruta.startsWith('/web')
   return (
     <header className={`no-imprimir sticky top-0 z-30 border-b border-borde backdrop-blur-md transition-colors duration-500 ${FONDO[modo]}`} data-modo={modo}>
       <div className="mx-auto flex h-[60px] max-w-[1400px] items-center gap-3 px-4 sm:px-6">
         {menu}
-        {modo === 'organico' ? organico : modo === 'google' ? google : pauta}
+        {modo === 'organico' ? organico : modo === 'google' ? (enPautaGoogle ? pauta : google) : modo === 'pacientes' ? pacientes : pauta}
       </div>
     </header>
   )
