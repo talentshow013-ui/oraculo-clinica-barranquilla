@@ -24,6 +24,17 @@ enlace al panel. Los lunes, además, el informe semanal. Todo sale del motor: ci
 En la VPS, `deploy/oraculo-diario.sh` lo manda solo cada mañana a las 6:30 si las dos claves están
 en el `.env`. Nada de esto va al repositorio.
 
+## Alertas de la clínica: 6 a. m., 12 m. y 6 p. m.
+Tres veces al día (`deploy/oraculo-alertas.sh`, cron) trae Meta y Google en vivo y manda, por cuenta:
+1. **Alertas** (umbrales de la clínica, `lib/notificaciones/alertas.ts → UMBRALES_CLINICA`):
+   costo por lead por encima de $4.000 (3 días); anuncio rechazado; CTR por debajo de 1,30 % en un
+   conjunto (con al menos 1.000 impresiones); anuncio de bajo rendimiento a 3 / 7 / 15 días
+   (gancho < 20 %, retención < 20 %, o más de 2.000 impresiones sin un lead).
+2. **Al aire**: cada campaña activa con leads, gasto, costo por lead y CTR, y debajo cada anuncio
+   activo con leads, costo, impresiones, CTR, gancho y retención; los prendidos en los últimos 3 días
+   salen con 🆕 NUEVO.
+A mano: `npm run notificar -- --alertas`. Para cambiar un umbral se edita `UMBRALES_CLINICA`.
+
 ## El bot también RESPONDE (texto, notas de voz y fotos)
 Además de los avisos, Oráculo contesta lo que le escriban por Telegram las personas de
 `TELEGRAM_CHAT_ID`: «¿cómo le fue ayer a la cuenta de Meta?», una nota de voz, o la foto de un

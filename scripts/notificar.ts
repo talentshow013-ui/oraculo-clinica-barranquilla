@@ -7,12 +7,14 @@
  *   npm run notificar -- --estado "texto"     → el resumen, con una línea de estado arriba
  *   npm run notificar -- --archivo ruta.md    → manda el contenido de un archivo (informe del lunes)
  *   npm run notificar -- --texto "mensaje"    → manda ese texto tal cual
+ *   npm run notificar -- --alertas [momento]  → alertas de la clínica (CPL > 4.000, rechazados, CTR bajo, bajo rendimiento) y estado de todo lo activo
  *
  * Necesita en .env: TELEGRAM_BOT_TOKEN (de @BotFather) y TELEGRAM_CHAT_ID (uno o varios, separados por coma). Opcional: ORACULO_URL_PANEL.
  */
 import { readFileSync } from "node:fs";
 import { cargarEnv } from "@/lib/adapters/env";
 import { chatsRecientes, componerResumenDiario, enviarTelegram, recortar, type ResumenCuenta } from "@/lib/notificaciones/telegram";
+import { UMBRALES_CLINICA, componerAvisoPauta } from "@/lib/notificaciones/alertas";
 
 cargarEnv();
 const arg = (n: string) => {
@@ -41,7 +43,18 @@ async function main() {
   let texto: string;
   if (tiene("--prueba")) texto = "🔮 Oráculo conectado. Cada mañana llega aquí el resumen del día.";
   else if (arg("--texto")) texto = arg("--texto")!;
-  else if (arg("--archivo")) texto = recortar(readFileSync(arg("--archivo")!, "utf8").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]!));
+  else if (tiene("--alertas")) {
+    const { motor } = await import("@/lib/datos");
+    const base = await motor();
+    const cuentas: { nombre: string; insights: typeof base.loteCuenta.insights }[] = [];
+    for (const c of base.cuentas) {
+      const r = c.id === base.cuenta.id ? base : await motor(c.id);
+      cuentas.push({ nombre: c.nombre, insights: r.loteCuenta.insights });
+    }
+    const hora = Number(new Date().toLocaleString("en-US", { timeZone: "America/Bogota", hour: "numeric", hour12: false }));
+    const momento = arg("--alertas") && !arg("--alertas")!.startsWith("--") ? arg("--alertas")! : hora < 11 ? "6 a. m." : hora < 16 ? "12 m." : "6 p. m.";
+    texto = componerAvisoPauta(cuentas, { hoy: base.hoy, momento, umbrales: UMBRALES_CLINICA, urlPanel: process.env.ORACULO_URL_PANEL });
+  } else if (arg("--archivo")) texto = recortar(readFileSync(arg("--archivo")!, "utf8").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]!));
   else {
     const { motor } = await import("@/lib/datos");
     const base = await motor();
