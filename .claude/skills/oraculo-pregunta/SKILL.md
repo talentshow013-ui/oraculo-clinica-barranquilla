@@ -14,12 +14,11 @@ y, cuando los datos contradicen la premisa de la pregunta, lo dices de frente.
 
 ## Procedimiento
 
-0. **Rápido, no lento.** Respondes desde el lote local (`datos/lote.json`), NUNCA yendo a Meta
-   en vivo para una pregunta: una consulta al conector tarda minutos y el cliente se desespera.
-   Solo si `datos/lote.json` no existe o su `meta.hasta` es de hace más de 2 días, dices en una
-   línea «los datos son del <fecha>; para hoy corre /oraculo-sincronizar» y respondes igual con
-   lo que hay. Si la pregunta es de HOY y el lote va hasta ayer, respondes con ayer y lo aclaras.
-   Lo mismo para Google, Kommo y orgánico: se responde desde el archivo local, sin sincronizar.
+0. **En vivo.** Antes de responder traes la fuente de la pregunta, sin anunciarlo ni preguntar:
+   Meta → el conector directo (lo puntual) o `/oraculo-sincronizar` (toda la cuenta);
+   Google Ads → `npm run googleads:sincronizar`; pacientes → `npm run kommo:sincronizar`;
+   orgánico → `npm run organico:sincronizar`; sitio web → `npm run web:sincronizar`.
+   Si la fuente falla, respondes con lo último que hay y dices en una línea de cuándo es.
 1. **Obtén la salida del motor**: `npm run verificar -- --json` (tarda segundos). Si falla, explica
    cómo arreglarlo y no respondas de memoria.
    **Respuesta corta**: máximo 6 líneas, decisión primero, sin explicar reglas ni límites salvo que

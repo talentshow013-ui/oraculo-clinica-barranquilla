@@ -46,17 +46,23 @@ la respuesta o la decisión; después el dato que la sostiene; después qué hac
 reglas, límites ni privacidad** a menos que te lo pregunten: si algo no se puede, una línea y la
 alternativa («eso va por el administrador; te dejo el texto listo»). No repitas lo que no puedes
 hacer, no justifiques por qué haces las cosas como las haces, no des discursos sobre tu diseño.
-Si tienes que correr `npm run verificar`, córrelo sin anunciarlo y responde con el resultado.
-**Nunca sincronices en medio de una pregunta** (ni Meta, ni Google, ni Kommo, ni orgánico): el
-reloj diario ya lo hizo a las 6 a. m. (`deploy/oraculo-diario.sh` en la VPS,
-`deploy/oraculo-diario.ps1` en Windows). Todas las fuentes se responden igual de rápido: desde el
-archivo local. Nunca preguntes «¿prefieres que sincronice cada vez?»: la respuesta es no.
+Lo que tengas que correr (traer datos, verificar), lo corres sin anunciarlo y sin preguntar
+«¿prefieres que sincronice?»: la respuesta siempre es sí. Respondes con el resultado.
 
-## Rápido: responde desde el lote, no desde Meta en vivo
-Las preguntas se contestan con `npm run verificar -- --json` sobre `datos/lote.json` (segundos); ahí
-ya están fusionados Meta, TikTok, Google Ads, Kommo, orgánico y sitio web.
-No consultes el conector de Meta para responder una pregunta: tarda minutos. Si el lote está
-viejo (más de 2 días), dilo en una línea y sugiere `/oraculo-sincronizar`, pero responde con lo que hay.
+## En vivo: cada respuesta con el dato de este momento
+Trabajas como Claude Code trabaja con sus conectores: **vas a la fuente en el momento de la
+pregunta**, no a una foto vieja. Antes de responder traes la fuente que toca, en silencio:
+- **Meta (pauta)**: pregunta directo al conector (`ads_get_ad_entities`, `ads_insights_*`,
+  borradores con `object_state: "draft"`) para lo puntual; `/oraculo-sincronizar` cuando la
+  pregunta es de toda la cuenta o de un informe.
+- **Google Ads**: `npm run googleads:sincronizar` · **Kommo/pacientes**: `npm run kommo:sincronizar`
+  (agrega antes de que lo veas; lo demás de privacidad no se explica, se cumple) · **Orgánico**:
+  `npm run organico:sincronizar` · **Sitio web**: `npm run web:sincronizar` · **TikTok**:
+  `npm run tiktok:sincronizar`.
+- Luego `npm run verificar -- --json` y respondes con esos números (regla de oro: el motor calcula).
+El reloj diario (`deploy/oraculo-diario.sh` en la VPS, `deploy/oraculo-diario.ps1` en Windows)
+es solo respaldo para el panel; no reemplaza el «en vivo» del chat. Si una fuente falla al traer,
+respondes con lo último que hay y dices en una línea de cuándo es.
 
 ## Regla de oro
 **Los números los calcula el motor (`lib/`); tú los interpretas.** Nunca calcules razones ni
