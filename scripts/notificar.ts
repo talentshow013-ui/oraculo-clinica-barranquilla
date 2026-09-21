@@ -8,7 +8,7 @@
  *   npm run notificar -- --archivo ruta.md    → manda el contenido de un archivo (informe del lunes)
  *   npm run notificar -- --texto "mensaje"    → manda ese texto tal cual
  *
- * Necesita en .env: TELEGRAM_BOT_TOKEN (de @BotFather) y TELEGRAM_CHAT_ID. Opcional: ORACULO_URL_PANEL.
+ * Necesita en .env: TELEGRAM_BOT_TOKEN (de @BotFather) y TELEGRAM_CHAT_ID (uno o varios, separados por coma). Opcional: ORACULO_URL_PANEL.
  */
 import { readFileSync } from "node:fs";
 import { cargarEnv } from "@/lib/adapters/env";
@@ -49,8 +49,11 @@ async function main() {
     for (const c of base.cuentas) cuentas.push({ nombre: c.nombre, r: c.id === base.cuenta.id ? base : await motor(c.id) });
     texto = componerResumenDiario(cuentas, { hoy: base.hoy, urlPanel: process.env.ORACULO_URL_PANEL, estado: arg("--estado") });
   }
-  const id = await enviarTelegram(token, chat, texto);
-  console.log(`✓ Enviado a Telegram (mensaje ${id}).`);
+  /* varias personas: TELEGRAM_CHAT_ID=111,222 (cada una habló con el bot al menos una vez) */
+  for (const c of chat.split(",").map((x) => x.trim()).filter(Boolean)) {
+    const id = await enviarTelegram(token, c, texto);
+    console.log(`✓ Enviado a Telegram (chat ${c}, mensaje ${id}).`);
+  }
 }
 
 main().catch((e) => {

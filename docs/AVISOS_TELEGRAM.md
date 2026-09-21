@@ -17,7 +17,9 @@ enlace al panel. Los lunes, además, el informe semanal. Todo sale del motor: ci
    npm run notificar -- --prueba       # debe llegar «Oráculo conectado»
    npm run notificar                   # el resumen de hoy, como lo verá la clínica
    ```
-4. Opcional: `ORACULO_URL_PANEL=https://…` en `.env` para que el mensaje traiga el enlace al panel.
+4. Para mandarlo a **varias personas** (sin grupo): cada una abre el bot y pulsa Iniciar; `--chats` muestra
+   los ids y se ponen separados por coma: `TELEGRAM_CHAT_ID=111111,222222`.
+5. Opcional: `ORACULO_URL_PANEL=https://…` en `.env` para que el mensaje traiga el enlace al panel.
 
 En la VPS, `deploy/oraculo-diario.sh` lo manda solo cada mañana a las 6:30 si las dos claves están
 en el `.env`. Nada de esto va al repositorio.
