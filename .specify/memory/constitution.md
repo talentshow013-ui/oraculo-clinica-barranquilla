@@ -1,5 +1,6 @@
 <!--
 Sync Impact Report
+- Version change: 1.4.0 → 1.5.0 (2026-09-21): crear/editar/publicar borradores/creativos/públicos permitidos a pedido y con confirmación; solo borrar, píxeles y catálogos bloqueados
 - Version change: 1.3.0 → 1.4.0 (2026-09-20): pausar/activar/presupuesto permitidos solo a pedido explícito y con confirmación; crear/borrar siguen bloqueados
 - Version change: 1.2.0 → 1.3.0 (2026-09-16): solo lectura sobre plataformas (X-bis) y cero alucinación operativa (X-ter) tras un incidente de pauta encendida/apagada por el agente
 - Version change: 1.1.0 → 1.2.0 (2026-09-16): Principio II admite el token de página del orgánico en `.env`
@@ -73,15 +74,15 @@ Toda fecha se interpreta en `America/Bogota`; prohibido `toISOString()` crudo pa
 día. Toda comparación de periodos usa ventanas del mismo tamaño. Los huecos de datos se listan en
 `meta.huecos` y la UI los muestra: un hueco puede simular una caída que nunca ocurrió.
 
-### X-bis. Nunca por iniciativa propia; cambios solo a pedido y con confirmación (enmienda 1.4.0)
+### X-bis. Nunca por iniciativa propia; cambios completos solo a pedido y con confirmación (enmienda 1.5.0)
 El agente **lee** todo. **Nunca** cambia nada en una plataforma por iniciativa propia ni por una
-automatización (el reloj diario solo lee). Pausar, activar o cambiar presupuesto/puja de campañas,
-conjuntos y anuncios está permitido **únicamente** cuando una persona lo pide en el chat y tras un
-«sí» explícito a la acción concreta (qué, valor actual → nuevo, riesgo), una sola vez, con
-confirmación del conector y registro en `datos/experimentos.json`. Crear, borrar, públicos, píxeles,
-catálogos e impulsar publicaciones siguen bloqueados por `permissions.deny` + hook `PreToolUse` en
-`.claude/settings.json`, vigentes en todo Claude Code que opere el repositorio. Ampliar requiere
-decisión escrita de la gerencia de la clínica y una nueva enmienda.
+automatización (el reloj diario solo lee). Pausar, activar, cambiar presupuestos y pujas, crear
+campañas, conjuntos, anuncios, creativos y públicos, y revisar, editar y publicar borradores está
+permitido **únicamente** cuando una persona lo pide en el chat y tras un «sí» explícito a la
+acción concreta (qué, valor actual → nuevo o el borrador completo, riesgo), una sola vez, con
+confirmación del conector y registro en `datos/experimentos.json`. Borrar, píxeles y catálogos
+siguen bloqueados por `permissions.deny` + hook `PreToolUse` en `.claude/settings.json`, vigentes
+en todo Claude Code que opere el repositorio. Ampliar requiere decisión escrita de la gerencia.
 
 ### X-ter. Cero alucinación operativa (enmienda 1.3.0)
 Toda cifra que el agente enuncie nombra su fuente (motor, archivo del repositorio o respuesta del
@@ -133,7 +134,7 @@ principios; MINOR: principio o sección nueva; PATCH: aclaraciones) y fecha. Tod
 código y cada `/speckit-plan` verifican cumplimiento; la complejidad adicional debe
 justificarse por escrito en el plan.
 
-**Version**: 1.4.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-20
+**Version**: 1.5.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-21
 
 Enmienda 1.1.0 (2026-09-13): despliegue en VPS siempre encendida con Claude Code y reloj diario
 (sección "Restricciones de Stack y Despliegue"); candado del panel en internet. Los principios I–X

@@ -65,4 +65,12 @@ segmentación, presupuesto, textos). No tiene métricas porque no ha corrido. Se
 Con eso, la mesa opina ANTES de que gasten: oferta (Hormozi), gancho y ángulo (Schwartz, Savannah),
 a quién le habla (Godin), estructura y presupuesto (Shackelford), y lo cruza con lo que ya se probó
 en la cuenta. Se responde con: qué está bien, qué cambiar y por qué, y el riesgo en pesos si sale
-así. Nunca se publica, edita ni crea el borrador: eso lo hace una persona en el administrador.
+así.
+
+**Editar o publicar el borrador, o crear uno nuevo**, se hace cuando lo piden y con la regla de
+4 pasos de `CLAUDE.md`: (1) muestras el borrador completo tal como quedaría (objetivo, público,
+presupuesto diario, copy, titular, creativo, destino) y el riesgo en pesos; (2) esperas un «sí»
+en un mensaje aparte; (3) ejecutas con el conector (`ads_update_entity` para editar,
+`ads_create_campaign` / `ads_create_ad_set` / `ads_create_ad` / `ads_create_creative` para crear,
+`ads_activate_entity` para publicar); (4) confirmas con la respuesta y lo anotas en
+`datos/experimentos.json`. Nada se borra: si algo sobra, se pausa.
