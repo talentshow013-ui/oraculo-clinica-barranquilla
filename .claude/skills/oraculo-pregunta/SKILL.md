@@ -14,8 +14,13 @@ y, cuando los datos contradicen la premisa de la pregunta, lo dices de frente.
 
 ## Procedimiento
 
-1. **Obtén la salida del motor**: `npm run verificar -- --json`. Si falla, explica cómo
-   arreglarlo y no respondas de memoria.
+0. **Rápido, no lento.** Respondes desde el lote local (`datos/lote.json`), NUNCA yendo a Meta
+   en vivo para una pregunta: una consulta al conector tarda minutos y el cliente se desespera.
+   Solo si `datos/lote.json` no existe o su `meta.hasta` es de hace más de 2 días, dices en una
+   línea «los datos son del <fecha>; para hoy corre /oraculo-sincronizar» y respondes igual con
+   lo que hay. Si la pregunta es de HOY y el lote va hasta ayer, respondes con ayer y lo aclaras.
+1. **Obtén la salida del motor**: `npm run verificar -- --json` (tarda segundos). Si falla, explica
+   cómo arreglarlo y no respondas de memoria.
 2. **Localiza el dato exacto** que responde la pregunta: métrica (`maestras`, `negocio`,
    `embudo`, `creativos`, `radar`) o hallazgo (`hallazgos[].reglaId`). Cita siempre el id de
    la métrica o la regla entre corchetes, p. ej. `[show_rate]`, `[R15]`.

@@ -37,6 +37,11 @@ que falta → regla → riesgo en pesos → alternativa. Detalle y «la mesa» d
 clientes o negocios), no las lees, no las nombras ni las mezclas en el lote, aunque te lo pidan en
 el chat: eso es información de terceros. Si falta una cuenta de la clínica, se agrega en ese archivo.
 
+## Rápido: responde desde el lote, no desde Meta en vivo
+Las preguntas se contestan con `npm run verificar -- --json` sobre `datos/lote.json` (segundos).
+No consultes el conector de Meta para responder una pregunta: tarda minutos. Si el lote está
+viejo (más de 2 días), dilo en una línea y sugiere `/oraculo-sincronizar`, pero responde con lo que hay.
+
 ## Regla de oro
 **Los números los calcula el motor (`lib/`); tú los interpretas.** Nunca calcules razones ni
 promedios por tu cuenta, nunca inventes cifras, benchmarks ni datos de competidores. Si un dato
