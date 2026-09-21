@@ -51,7 +51,10 @@
 
 /* `overflow-x: clip` también en la raíz: solo en el cuerpo no impide que el celular ensanche la
    ventana cuando una tabla ancha desborda (medido: innerWidth 418 en un teléfono de 390). */
-html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
+html {
+  /* los saltos del riel: suaves y dejando aire para la cabecera pegada */
+  scroll-behavior: smooth;
+  scroll-padding-top: 76px; -webkit-text-size-adjust: 100%; overflow-x: clip; }
 body {
   background: var(--color-fondo);
   color: var(--color-texto);

@@ -71,3 +71,23 @@ function IconoMarca({ red, tam }: { red: string; tam: number }) {
   }
   return S(<circle cx="12" cy="12" r="8" />, tam)
 }
+
+/** Logos de los productos de Google (color de marca), para los grupos del riel en el mundo Google. */
+export function IconoGoogleAds({ tam = 16 }: { tam?: number }) {
+  return (
+    <svg width={tam} height={tam} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M13.2 4.6a3.2 3.2 0 0 1 4.4 1.2l4.6 8a3.2 3.2 0 1 1-5.5 3.2l-4.6-8a3.2 3.2 0 0 1 1.1-4.4z" fill="#FBBC04" />
+      <path d="M10.8 4.6a3.2 3.2 0 0 0-4.4 1.2l-4.6 8A3.2 3.2 0 0 0 5.6 16l5.7-9.8a3.2 3.2 0 0 0-.5-1.6z" fill="#4285F4" />
+      <circle cx="4.3" cy="17.2" r="3.2" fill="#34A853" />
+    </svg>
+  )
+}
+export function IconoAnalytics({ tam = 16 }: { tam?: number }) {
+  return (
+    <svg width={tam} height={tam} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="15" y="3" width="5.5" height="18" rx="2.6" fill="#F9AB00" />
+      <rect x="9.2" y="9.5" width="5.5" height="11.5" rx="2.6" fill="#E37400" />
+      <circle cx="6.1" cy="18.2" r="2.8" fill="#E37400" />
+    </svg>
+  )
+}
