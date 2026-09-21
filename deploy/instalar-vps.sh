@@ -26,7 +26,7 @@ node -v
 paso 3 "Usuario oraculo"
 id oraculo >/dev/null 2>&1 || adduser --disabled-password --gecos "Oraculo" oraculo
 # Solo puede reiniciar su propio servicio (lo usa el reloj cuando llega código nuevo).
-echo "oraculo ALL=(root) NOPASSWD: /usr/bin/systemctl restart oraculo-panel" >/etc/sudoers.d/oraculo
+echo "oraculo ALL=(root) NOPASSWD: /usr/bin/systemctl restart oraculo-panel, /usr/bin/systemctl restart oraculo-telegram" >/etc/sudoers.d/oraculo
 chmod 440 /etc/sudoers.d/oraculo
 
 paso 4 "Llave de despliegue (solo lectura) para GitHub"
@@ -65,6 +65,9 @@ paso 8 "Servicio del panel y reloj diario"
 cp /home/oraculo/oraculo/deploy/oraculo-panel.service /etc/systemd/system/oraculo-panel.service
 systemctl daemon-reload
 systemctl enable --now oraculo-panel >/dev/null
+cp /home/oraculo/oraculo/deploy/oraculo-telegram.service /etc/systemd/system/oraculo-telegram.service
+systemctl daemon-reload
+systemctl enable oraculo-telegram >/dev/null  # arranca solo cuando .env tenga las claves de Telegram y Gemini
 chmod +x /home/oraculo/oraculo/deploy/oraculo-diario.sh
 sudo -u oraculo bash -c '( crontab -l 2>/dev/null | grep -v oraculo-diario ; echo "30 6 * * * /home/oraculo/oraculo/deploy/oraculo-diario.sh" ) | crontab -'
 sleep 3

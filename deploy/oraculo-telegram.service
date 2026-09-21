@@ -1,0 +1,18 @@
+# Oráculo que responde por Telegram (texto, voz, fotos) — se instala con:
+#   cp deploy/oraculo-telegram.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now oraculo-telegram
+[Unit]
+Description=Oráculo · bot de Telegram que responde
+After=network.target
+
+[Service]
+Type=simple
+User=oraculo
+WorkingDirectory=/home/oraculo/oraculo
+Environment=NODE_ENV=production
+Environment=TZ=America/Bogota
+ExecStart=/usr/bin/npm run -s telegram:bot
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

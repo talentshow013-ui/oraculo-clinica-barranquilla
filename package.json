@@ -20,6 +20,7 @@
     "organico:conectar": "tsx scripts/organico-conectar.ts",
     "organico:sincronizar": "tsx scripts/organico-sincronizar.ts",
     "notificar": "tsx scripts/notificar.ts",
+    "telegram:bot": "tsx scripts/telegram-bot.ts",
     "web:sincronizar": "tsx scripts/web-sincronizar.ts",
     "tiktok:sincronizar": "tsx scripts/tiktok-sincronizar.ts",
     "googleads:conectar": "tsx scripts/googleads-conectar.ts",

@@ -24,6 +24,17 @@ enlace al panel. Los lunes, además, el informe semanal. Todo sale del motor: ci
 En la VPS, `deploy/oraculo-diario.sh` lo manda solo cada mañana a las 6:30 si las dos claves están
 en el `.env`. Nada de esto va al repositorio.
 
+## El bot también RESPONDE (texto, notas de voz y fotos)
+Además de los avisos, Oráculo contesta lo que le escriban por Telegram las personas de
+`TELEGRAM_CHAT_ID`: «¿cómo le fue ayer a la cuenta de Meta?», una nota de voz, o la foto de un
+anuncio para que opine. Responde con los números del motor (nunca inventa) y no cambia nada en las
+plataformas: eso se pide en el computador. Usa Gemini (`GEMINI_API_KEY` en `.env`).
+
+- En la VPS corre como servicio: `systemctl enable --now oraculo-telegram` (ya lo deja el instalador);
+  se reinicia solo. Ver qué pasa: `journalctl -u oraculo-telegram -f`.
+- A mano, en cualquier PC: `npm run telegram:bot`.
+- Solo contesta a los chats de la lista; a cualquier otro, silencio.
+
 ## Comandos
 | Comando | Qué hace |
 |---|---|
