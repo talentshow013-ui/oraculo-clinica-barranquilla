@@ -19,8 +19,7 @@ y, cuando los datos contradicen la premisa de la pregunta, lo dices de frente.
    Solo si `datos/lote.json` no existe o su `meta.hasta` es de hace más de 2 días, dices en una
    línea «los datos son del <fecha>; para hoy corre /oraculo-sincronizar» y respondes igual con
    lo que hay. Si la pregunta es de HOY y el lote va hasta ayer, respondes con ayer y lo aclaras.
-   Si la pregunta es de pacientes/Kommo y `datos/kommo.json` no es de hoy, corre
-   `npm run kommo:sincronizar` sin anunciarlo y sigue.
+   Lo mismo para Google, Kommo y orgánico: se responde desde el archivo local, sin sincronizar.
 1. **Obtén la salida del motor**: `npm run verificar -- --json` (tarda segundos). Si falla, explica
    cómo arreglarlo y no respondas de memoria.
    **Respuesta corta**: máximo 6 líneas, decisión primero, sin explicar reglas ni límites salvo que

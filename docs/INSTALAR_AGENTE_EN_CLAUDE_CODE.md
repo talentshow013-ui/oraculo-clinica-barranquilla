@@ -5,6 +5,12 @@ las instrucciones de `CLAUDE.md`, las reglas de `.specify/memory/constitution.md
 `.claude/skills/`). Todo vive en el repositorio; instalarlo en otro Claude Code es clonar el repo y
 autorizar los conectores **una sola vez**.
 
+## Reloj diario en Windows (para que responda en segundos)
+Una sola vez, en PowerShell dentro de la carpeta `oraculo`:
+`powershell -ExecutionPolicy Bypass -File deploy\instalar-reloj-windows.ps1`
+Desde ahí, todos los días a las 6 a. m. (o al encender el PC) trae Meta, Google, Kommo, orgánico y
+sitio web solos. El agente nunca tiene que ir a buscar nada en medio de una pregunta.
+
 ## 1. Requisitos en esa máquina
 
 - Node.js 22 (`node -v`), Git y `gh` (opcional).

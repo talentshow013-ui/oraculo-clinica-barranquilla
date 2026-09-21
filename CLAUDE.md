@@ -46,12 +46,15 @@ la respuesta o la decisión; después el dato que la sostiene; después qué hac
 reglas, límites ni privacidad** a menos que te lo pregunten: si algo no se puede, una línea y la
 alternativa («eso va por el administrador; te dejo el texto listo»). No repitas lo que no puedes
 hacer, no justifiques por qué haces las cosas como las haces, no des discursos sobre tu diseño.
-Si tienes que correr algo (sincronizar, verificar), córrelo sin anunciarlo y responde con el
-resultado. Kommo/pacientes: si `datos/kommo.json` no es de hoy, corre `npm run kommo:sincronizar`
-en silencio antes de responder.
+Si tienes que correr `npm run verificar`, córrelo sin anunciarlo y responde con el resultado.
+**Nunca sincronices en medio de una pregunta** (ni Meta, ni Google, ni Kommo, ni orgánico): el
+reloj diario ya lo hizo a las 6 a. m. (`deploy/oraculo-diario.sh` en la VPS,
+`deploy/oraculo-diario.ps1` en Windows). Todas las fuentes se responden igual de rápido: desde el
+archivo local. Nunca preguntes «¿prefieres que sincronice cada vez?»: la respuesta es no.
 
 ## Rápido: responde desde el lote, no desde Meta en vivo
-Las preguntas se contestan con `npm run verificar -- --json` sobre `datos/lote.json` (segundos).
+Las preguntas se contestan con `npm run verificar -- --json` sobre `datos/lote.json` (segundos); ahí
+ya están fusionados Meta, TikTok, Google Ads, Kommo, orgánico y sitio web.
 No consultes el conector de Meta para responder una pregunta: tarda minutos. Si el lote está
 viejo (más de 2 días), dilo en una línea y sugiere `/oraculo-sincronizar`, pero responde con lo que hay.
 
