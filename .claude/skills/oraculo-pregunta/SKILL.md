@@ -19,8 +19,12 @@ y, cuando los datos contradicen la premisa de la pregunta, lo dices de frente.
    Solo si `datos/lote.json` no existe o su `meta.hasta` es de hace más de 2 días, dices en una
    línea «los datos son del <fecha>; para hoy corre /oraculo-sincronizar» y respondes igual con
    lo que hay. Si la pregunta es de HOY y el lote va hasta ayer, respondes con ayer y lo aclaras.
+   Si la pregunta es de pacientes/Kommo y `datos/kommo.json` no es de hoy, corre
+   `npm run kommo:sincronizar` sin anunciarlo y sigue.
 1. **Obtén la salida del motor**: `npm run verificar -- --json` (tarda segundos). Si falla, explica
    cómo arreglarlo y no respondas de memoria.
+   **Respuesta corta**: máximo 6 líneas, decisión primero, sin explicar reglas ni límites salvo que
+   lo pregunten (ver «Cómo hablas» en `CLAUDE.md`).
 2. **Localiza el dato exacto** que responde la pregunta: métrica (`maestras`, `negocio`,
    `embudo`, `creativos`, `radar`) o hallazgo (`hallazgos[].reglaId`). Cita siempre el id de
    la métrica o la regla entre corchetes, p. ej. `[show_rate]`, `[R15]`.
