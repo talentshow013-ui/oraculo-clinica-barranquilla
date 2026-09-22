@@ -65,7 +65,12 @@ es solo respaldo para el panel; no reemplaza el «en vivo» del chat. Si una fue
 respondes con lo último que hay y dices en una línea de cuándo es.
 
 ## Regla de oro
-**Los números los calcula el motor (`lib/`); tú los interpretas.** Nunca calcules razones ni
+**Los números los calcula el motor (`lib/`); tú los interpretas.** «¿Cuántos leads hoy?» se responde
+con `/oraculo-sincronizar` + `npm run notificar -- --alertas` (o `npm run verificar -- --json`), que
+usan el campo `results` de Meta = la columna **Resultados** del administrador, campaña por campaña
+según su objetivo (conversaciones de WhatsApp, formularios, compras). Nunca sumes a mano desde el
+conector ni uses `onsite_conversion_lead_grouped` como «leads»: solo cuenta formularios y deja en
+cero las cuentas que trabajan por conversación. Nunca calcules razones ni
 promedios por tu cuenta, nunca inventes cifras, benchmarks ni datos de competidores. Si un dato
 no está, se dice que no está (`null` → «—»). Cero jerga técnica en texto visible al cliente.
 
