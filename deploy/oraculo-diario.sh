@@ -22,9 +22,12 @@ if [ "$ANTES" != "$(git rev-parse HEAD)" ]; then
   npm ci --no-audit --no-fund && npm run build && sudo -n systemctl restart oraculo-panel
 fi
 
-# 2) Datos (Claude Code sin interfaz; los conectores ya están autorizados en este perfil)
+# 2) Pauta de Meta: directo a la Marketing API con el token del .env (no necesita Claude)
 ESTADO=""
-if command -v claude >/dev/null 2>&1; then
+if npm run -s meta:sincronizar -- --dias 30 >"reportes/meta-$HOY.log" 2>&1; then
+  echo "meta: ok (API directa)"
+  ESTADO="Campañas: al día"
+elif command -v claude >/dev/null 2>&1; then
   if claude -p "/oraculo-sincronizar" --permission-mode bypassPermissions --max-turns 60 >"reportes/sincronizacion-$HOY.md" 2>&1; then
     echo "sincronización: ok"; ESTADO="Campañas: sincronizadas"
   else

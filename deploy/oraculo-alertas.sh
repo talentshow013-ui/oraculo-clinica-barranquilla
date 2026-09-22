@@ -9,9 +9,7 @@ HOY=$(TZ=America/Bogota date +%F)
 mkdir -p reportes
 {
   echo "== alertas $(TZ=America/Bogota date '+%F %H:%M') =="
-  if command -v claude >/dev/null 2>&1; then
-    claude -p "/oraculo-sincronizar" --permission-mode bypassPermissions --max-turns 60 >"reportes/sincronizacion-alertas-$HOY.md" 2>&1 && echo "meta: al día" || echo "meta: falló la sincronización (se usa lo último)"
-  fi
+  npm run -s meta:sincronizar -- --dias 3 >/dev/null 2>&1 && echo "meta: al día" || echo "meta: falló (se usa lo último)"
   grep -q '^GOOGLE_ADS_REFRESH_TOKEN=.\+' .env 2>/dev/null && { npm run -s googleads:sincronizar >/dev/null 2>&1 && echo "google ads: al día" || echo "google ads: falló"; }
   if grep -q '^TELEGRAM_BOT_TOKEN=.\+' .env 2>/dev/null && grep -q '^TELEGRAM_CHAT_ID=.\+' .env 2>/dev/null; then
     npm run -s notificar -- --alertas && echo "telegram: alertas enviadas" || echo "telegram: FALLÓ"

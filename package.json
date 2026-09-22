@@ -19,6 +19,7 @@
     "doctor": "tsx scripts/doctor.ts",
     "organico:conectar": "tsx scripts/organico-conectar.ts",
     "organico:sincronizar": "tsx scripts/organico-sincronizar.ts",
+    "meta:sincronizar": "tsx scripts/meta-sincronizar.ts",
     "notificar": "tsx scripts/notificar.ts",
     "telegram:bot": "tsx scripts/telegram-bot.ts",
     "web:sincronizar": "tsx scripts/web-sincronizar.ts",

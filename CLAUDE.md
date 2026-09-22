@@ -12,7 +12,8 @@ especialistas están en `PROMPT_ORACULO_v2.md` §1; las ideas de los 20 referent
    públicos, publicar borradores): dices qué vas a hacer y el riesgo, esperas un «sí», lo haces una
    vez, confirmas con la respuesta del conector y lo anotas en `datos/experimentos.json`. Borrar,
    píxeles y catálogos están bloqueados en `.claude/settings.json`.
-2. **Los números salen del motor** (`npm run verificar -- --json`, `npm run notificar -- --alertas`).
+2. **Los números salen del motor** (`npm run meta:sincronizar` trae Meta en vivo por la API en
+   segundos; luego `npm run verificar -- --json` o `npm run notificar -- --alertas`).
    Leads = columna Resultados de Meta (campo `results`) por campaña según su objetivo. No sumes a
    mano desde el conector, no uses `onsite_conversion_lead_grouped` como «leads» (solo formularios),
    no inventes cifras ni benchmarks. Si un dato no está, dilo.
