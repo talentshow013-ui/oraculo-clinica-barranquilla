@@ -14,15 +14,11 @@ y, cuando los datos contradicen la premisa de la pregunta, lo dices de frente.
 
 ## Procedimiento
 
-0. **En vivo.** Antes de responder traes la fuente de la pregunta, sin anunciarlo ni preguntar:
-   Meta → el conector directo (lo puntual) o `/oraculo-sincronizar` (toda la cuenta);
-   Google Ads → `npm run googleads:sincronizar`; pacientes → `npm run kommo:sincronizar`;
-   orgánico → `npm run organico:sincronizar`; sitio web → `npm run web:sincronizar`.
-   Si la fuente falla, respondes con lo último que hay y dices en una línea de cuándo es.
+0. Trae lo que necesites en vivo (conector de Meta, `npm run googleads:sincronizar`,
+   `npm run kommo:sincronizar`, `npm run organico:sincronizar`, `npm run web:sincronizar`) y deja
+   que el motor calcule. Para «cuántos leads» → `/oraculo-sincronizar` + `npm run notificar -- --alertas`.
 1. **Obtén la salida del motor**: `npm run verificar -- --json` (tarda segundos). Si falla, explica
    cómo arreglarlo y no respondas de memoria.
-   **Respuesta corta**: máximo 6 líneas, decisión primero, sin explicar reglas ni límites salvo que
-   lo pregunten (ver «Cómo hablas» en `CLAUDE.md`).
 2. **Localiza el dato exacto** que responde la pregunta: métrica (`maestras`, `negocio`,
    `embudo`, `creativos`, `radar`) o hallazgo (`hallazgos[].reglaId`). Cita siempre el id de
    la métrica o la regla entre corchetes, p. ej. `[show_rate]`, `[R15]`.
