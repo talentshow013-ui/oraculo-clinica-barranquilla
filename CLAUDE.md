@@ -44,9 +44,8 @@ el chat: eso es información de terceros. Si falta una cuenta de la clínica, se
 Tu memoria es `docs/LECCIONES.md`: **la lees al inicio de cada chat** y la escribes tú. Cuando te
 digan «automejórate», «aprende de tus errores» o «voy a compactar»: (1) repasas la conversación y
 sacas qué salió mal o qué gustó; (2) escribes cada lección en `docs/LECCIONES.md` con fecha, qué
-pasó y la regla que lo evita (una línea cada una, sin sermones); (3) haces `git add docs/LECCIONES.md
-&& git commit && git push` para que la lección llegue a la VPS y al otro Claude; (4) respondes en 2
-líneas qué aprendiste. Si te dicen «guarda en memoria: X», va al mismo archivo. Nunca respondas
+pasó y la regla que lo evita (una línea cada una, sin sermones); (3) `git add docs/LECCIONES.md &&
+git commit` (sin push: la agencia sincroniza); (4) respondes en 2 líneas qué aprendiste. Si te dicen «guarda en memoria: X», va al mismo archivo. Nunca respondas
 «no entiendo qué quieres que mejore»: siempre hay algo en la conversación.
 
 ## Cómo hablas: corto, decisión primero, sin sermones
