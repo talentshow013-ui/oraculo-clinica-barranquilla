@@ -268,7 +268,7 @@ async function desdeCookies(): Promise<{ cuenta?: string; campana?: string; desd
   try {
     const { cookies } = await import("next/headers");
     const c = await cookies();
-    return { cuenta: c.get("cuenta")?.value, campana: c.get("campana")?.value, desde: c.get("desde")?.value, hasta: c.get("hasta")?.value, modo: c.get("modo")?.value };
+    return { cuenta: c.get("cuenta")?.value, campana: c.get("campana")?.value, desde: c.get("periodo_desde")?.value, hasta: c.get("periodo_hasta")?.value, modo: c.get("modo")?.value };
   } catch {
     return {}; // fuera de una petición (scripts, tests, compilación)
   }

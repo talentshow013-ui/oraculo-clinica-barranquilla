@@ -5,8 +5,10 @@ import { fechaCorta } from '@/lib/format/fechas'
 
 /**
  * EL PERIODO SE ELIGE CON CALENDARIO. Antes era texto fijo. Ahora: dos fechas, «Aplicar» y
- * «Todo el periodo». Sin API propia: viajan en dos cookies (`desde`, `hasta`) y la página se
- * refresca; el motor las lee y recalcula todo el panel. Mismo patrón que el selector de cuenta.
+ * «Todo el periodo». Sin API propia: viajan en dos cookies (`periodo_desde`, `periodo_hasta`) y
+ * la página se refresca; el motor las lee y recalcula todo el panel.
+ * EN VIVO: si el final elegido es el último día con datos, no se guarda: el panel sigue avanzando
+ * hasta hoy solo. Y las cookies duran lo que dura el navegador abierto, no un año.
  */
 export default function SelectorPeriodo({ periodo }: { periodo: { desde: string; hasta: string; elegido: boolean; minimo: string; maximo: string } }) {
   const [abierto, setAbierto] = useState(false)
@@ -37,13 +39,14 @@ export default function SelectorPeriodo({ periodo }: { periodo: { desde: string;
   }
   const aplicar = () => {
     if (!valido) return
-    document.cookie = `desde=${desde}; path=/; max-age=31536000; samesite=lax`
-    document.cookie = `hasta=${hasta}; path=/; max-age=31536000; samesite=lax`
+    document.cookie = `periodo_desde=${desde}; path=/; samesite=lax`
+    if (hasta >= periodo.maximo) document.cookie = 'periodo_hasta=; path=/; max-age=0'
+    else document.cookie = `periodo_hasta=${hasta}; path=/; samesite=lax`
     refrescar()
   }
   const todo = () => {
-    document.cookie = 'desde=; path=/; max-age=0'
-    document.cookie = 'hasta=; path=/; max-age=0'
+    document.cookie = 'periodo_desde=; path=/; max-age=0'
+    document.cookie = 'periodo_hasta=; path=/; max-age=0'
     refrescar()
   }
 
