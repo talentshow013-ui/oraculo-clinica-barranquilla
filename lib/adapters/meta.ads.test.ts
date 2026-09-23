@@ -74,6 +74,22 @@ describe("meta ads · mapear al contrato", () => {
   });
 });
 
+describe("meta ads · manda la columna «Resultados»", () => {
+  test("si Meta dice que el resultado son clics, no es un lead: resultados 0 y tipo clic", () => {
+    const r = mapearInsightMeta({ ...fila, objective: "LINK_CLICKS", results: [{ indicator: "actions:link_click", values: [{ value: "523" }] }] }, { cuentaId: "act_1", nivel: "campana", estado: "activo" });
+    expect(r.resultados).toBe(0);
+    expect(r.tipoResultado).toBe("link_click");
+  });
+  test("campaña de interacción que busca mensajes: cuenta las conversaciones que da Meta", () => {
+    const r = mapearInsightMeta({ ...fila, objective: "OUTCOME_ENGAGEMENT", results: [{ indicator: "actions:onsite_conversion.messaging_conversation_started_7d", values: [{ value: "32" }] }] }, { cuentaId: "act_1", nivel: "campana", estado: "activo" });
+    expect(r.resultados).toBe(32);
+    expect(r.conversacionesIniciadas).toBe(32);
+  });
+  test("reproducciones de 3 s = video_view", () => {
+    expect(mapearInsightMeta(fila, { cuentaId: "act_1", nivel: "anuncio", estado: "activo" }).reproducciones3s).toBe(900);
+  });
+});
+
 describe("meta ads · la petición", () => {
   test("pide día a día, con las acciones y el nivel correcto", () => {
     const u = new URL(urlInsights("act_9", "campaign", { desde: "2026-09-01", hasta: "2026-09-20" }, "TOKEN"));

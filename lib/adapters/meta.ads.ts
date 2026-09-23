@@ -8,6 +8,7 @@
  * suman acciones a mano ni se usa un campo que solo cuente formularios.
  */
 import type { Estado, InsightRow } from "./types";
+import { esFruto, resultadoMeta } from "./meta.mcp";
 
 export const VENTANA_POR_DEFECTO = "7d_click_1d_view";
 export const API = "https://graph.facebook.com/v25.0";
@@ -21,6 +22,7 @@ export const CAMPOS_INSIGHTS = [
   "ad_id",
   "ad_name",
   "objective",
+  "results",
   "spend",
   "impressions",
   "reach",
@@ -51,6 +53,8 @@ export interface FilaInsight {
   ad_id?: string;
   ad_name?: string;
   objective?: string;
+  /** La columna «Resultados» del administrador: [{ indicator, values: [{ value }] }]; null si no hubo. */
+  results?: { indicator?: string; value?: string | number; values?: { value?: string | number }[] }[] | null;
   spend?: string | number;
   impressions?: string | number;
   reach?: string | number;
@@ -143,7 +147,9 @@ export function mapearInsightMeta(f: FilaInsight, ctx: ContextoInsight): Insight
   const id = ctx.nivel === "anuncio" ? f.ad_id : ctx.nivel === "conjunto" ? f.adset_id : f.campaign_id;
   const nombre = ctx.nivel === "anuncio" ? f.ad_name : ctx.nivel === "conjunto" ? f.adset_name : f.campaign_name;
   const padreId = ctx.nivel === "anuncio" ? (f.adset_id ?? null) : ctx.nivel === "conjunto" ? (f.campaign_id ?? null) : null;
-  const res = resultadoDeObjetivo(f.objective, f.actions);
+  /* manda la columna «Resultados» de Meta; si no viene (sin resultados en el día), se deduce del objetivo */
+  const oficial = Array.isArray(f.results) && f.results[0] ? resultadoMeta(f.results[0] as Parameters<typeof resultadoMeta>[0]) : null;
+  const res = oficial?.tipo ? { valor: esFruto(oficial.tipo) ? (oficial.valor ?? 0) : 0, tipo: oficial.tipo } : resultadoDeObjetivo(f.objective, f.actions);
   const reproducciones = accion(f.video_play_actions);
   const promedio = accionDecimal(f.video_avg_time_watched_actions);
   return {
@@ -175,7 +181,7 @@ export function mapearInsightMeta(f: FilaInsight, ctx: ContextoInsight): Insight
     vistasLandingPage: accion(f.actions, "omni_landing_page_view") ?? accion(f.actions, "landing_page_view"),
     reproducciones,
     reproducciones2s: null,
-    reproducciones3s: null,
+    reproducciones3s: accion(f.actions, "video_view"), // en Meta «video_view» son las reproducciones de 3 s
     reproducciones6s: null,
     reproduccionesThru: accion(f.video_thruplay_watched_actions),
     p25: accion(f.video_p25_watched_actions),

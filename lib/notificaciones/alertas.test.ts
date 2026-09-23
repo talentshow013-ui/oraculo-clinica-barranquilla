@@ -8,7 +8,7 @@ const fila = (p: Partial<InsightRow> & { fecha: string; nivel: InsightRow["nivel
     gasto: 0, impresiones: 0, alcance: null, frecuencia: null, subastasGanadas: null, pujaPromedio: null,
     clics: 0, clicsEnlace: 0, clicsUnicos: null, interacciones: null, reacciones: null, comentarios: null, compartidos: null, guardados: null, visitasPerfil: null, seguidoresNuevos: null, vistasLandingPage: null,
     reproducciones: null, reproducciones2s: null, reproducciones3s: null, reproducciones6s: null, reproduccionesThru: null, p25: null, p50: null, p75: null, p95: null, p100: null, tiempoReproduccionTotal: null, duracionCreativoSeg: null,
-    conversacionesIniciadas: null, conversacionesRespondidas: null, resultados: 0, tipoResultado: null, ventanaAtribucion: "7d_click", valorConversion: null, moneda: "COP",
+    conversacionesIniciadas: null, conversacionesRespondidas: null, resultados: 0, tipoResultado: "conversacion", ventanaAtribucion: "7d_click", valorConversion: null, moneda: "COP",
     ...p,
   }) as InsightRow;
 
@@ -40,9 +40,9 @@ describe("alertas · umbrales de la clínica", () => {
   test("CTR bajo a nivel de conjunto (< 1,30 %)", () => {
     expect(tipos).toContain("ctr_bajo_conjunto:Mujeres 30-55 BAQ");
   });
-  test("bajo rendimiento por ventana: gancho y retención < 20 %, o > 2.000 impresiones sin resultados", () => {
-    expect(tipos).toContain("bajo_rendimiento:Foto precio"); // gancho 10 %, retención 3 %
-    expect(tipos).toContain("bajo_rendimiento:Video nuevo"); // 2.500 impresiones y 0 resultados
+  test("bajo rendimiento (regla de la clínica): > 2.000 impresiones, 0 resultados y CTR o gancho bajos", () => {
+    expect(tipos).not.toContain("bajo_rendimiento:Foto precio"); // gancho bajo, pero sí trae leads
+    expect(tipos).toContain("bajo_rendimiento:Video nuevo"); // 2.500 impresiones, 0 resultados, CTR 0,4 %
     expect(tipos).not.toContain("bajo_rendimiento:Reel antes/después");
     const v = alertas.find((x) => x.tipo === "bajo_rendimiento" && x.entidad === "Video nuevo")!;
     expect(v.ventanas).toEqual([3, 7, 15]);
@@ -85,6 +85,10 @@ describe("alertas · medición rota (gasto sin conversiones)", () => {
   test("con una sola conversión en esos días, no hay alarma", () => {
     const una = sinConv.map((f, i) => (i === 0 ? { ...f, resultados: 1 } : f));
     expect(evaluarAlertas(una, "2026-09-22", UMBRALES_CLINICA).some((x) => x.tipo === "sin_conversiones")).toBe(false);
+  });
+  test("una campaña de clics (no busca contactos) no dispara costo por lead", () => {
+    const clics = insights.map((f) => (f.id === "C1" ? { ...f, tipoResultado: "link_click", resultados: 0, conversacionesIniciadas: null } : f));
+    expect(evaluarAlertas(clics, "2026-09-21", UMBRALES_CLINICA).some((x) => x.tipo === "cpl_alto" && x.entidad === "Toxina septiembre")).toBe(false);
   });
   test("campañas que no buscan contactos (alcance) no cuentan", () => {
     const alcance = sinConv.map((f) => ({ ...f, fuente: "meta" as const, tipoResultado: null }));

@@ -46,6 +46,14 @@ async function cuentasDePauta(): Promise<{ hoy: string; cuentas: { nombre: strin
 }
 
 const RUTA_AVISADAS = "datos/alertas-avisadas.json";
+function marcarAvisadas(hoy: string, claves: string[]) {
+  let previas: string[] = [];
+  try {
+    const x = JSON.parse(readFileSync(RUTA_AVISADAS, "utf8")) as { fecha: string; claves: string[] };
+    if (x.fecha === hoy) previas = x.claves;
+  } catch {}
+  writeFileSync(RUTA_AVISADAS, JSON.stringify({ fecha: hoy, claves: [...new Set([...previas, ...claves])] }));
+}
 const horaBogota = () => Number(new Date().toLocaleString("en-US", { timeZone: "America/Bogota", hour: "numeric", hour12: false }));
 
 async function main() {
@@ -72,9 +80,16 @@ async function main() {
     const hora = horaBogota();
     const momento = arg("--alertas") && !arg("--alertas")!.startsWith("--") ? arg("--alertas")! : hora < 11 ? "6 a. m." : hora < 16 ? "12 m." : "6 p. m.";
     texto = componerAvisoPauta(cuentas, { hoy, momento, umbrales: UMBRALES_CLINICA, urlPanel: process.env.ORACULO_URL_PANEL });
+    despuesDeEnviar = () => marcarAvisadas(hoy, cuentas.flatMap((c) => evaluarAlertas(c.insights, hoy, UMBRALES_CLINICA).map((a) => claveAlerta(c.nombre, a))));
   } else if (tiene("--nuevas")) {
     const hora = horaBogota();
-    if (hora < 6 || hora >= 21) {
+    if (hora < 6 || hora >= 21 || tiene("--solo-marcar")) {
+      if (tiene("--solo-marcar")) {
+        const { hoy, cuentas } = await cuentasDePauta();
+        marcarAvisadas(hoy, cuentas.flatMap((c) => evaluarAlertas(c.insights, hoy, UMBRALES_CLINICA).map((a) => claveAlerta(c.nombre, a))));
+        console.log("· alertas actuales marcadas como avisadas (sin enviar)");
+        return;
+      }
       console.log("· de noche no se avisa; lo nuevo sale en el resumen de las 6 a. m.");
       return;
     }

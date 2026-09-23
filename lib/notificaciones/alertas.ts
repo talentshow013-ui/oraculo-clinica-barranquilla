@@ -4,8 +4,8 @@
  *   - costo por lead (conversación) por encima de $4.000,
  *   - anuncio rechazado,
  *   - CTR por debajo de 1,30 % a nivel de conjunto,
- *   - anuncio de bajo rendimiento medido a 3, 7 y 15 días: gancho < 20 %, retención < 20 %, o
- *     más de 2.000 impresiones sin resultados,
+ *   - anuncio de bajo rendimiento medido a 3, 7 y 15 días: más de 2.000 impresiones y ningún
+ *     resultado, con CTR bajo (< 1,30 %) o gancho bajo (< 20 % vio 3 s),
  *   - la cuenta lleva 2 días completos gastando y 0 conversiones (la medición se rompió),
  *   - y, siempre, cuántos leads trajo cada campaña y anuncio activo y a qué costo.
  * Todo sale de las filas del lote (`insights`); aquí no se llama a ninguna plataforma.
@@ -14,6 +14,7 @@ import type { InsightRow } from "@/lib/adapters/types";
 import { cop, num, pct } from "@/lib/format";
 import { fechaCorta, sumarDias } from "@/lib/format/fechas";
 import { agregar, ctr, hookRate, holdRate, razon, type Agregado } from "@/lib/metrics/core";
+import { esFruto } from "@/lib/adapters/meta.mcp";
 
 export interface Umbrales {
   /** Costo por lead máximo (COP). */
@@ -46,6 +47,9 @@ export interface Alerta {
   ventanas: number[];
   texto: string;
 }
+
+/** ¿Busca contactos (conversación o lead)? Google siempre; en Meta, según su columna «Resultados». Compras y clics, no. */
+const buscaContactos = (f: InsightRow) => f.fuente === "google" || (f.tipoResultado != null && esFruto(f.tipoResultado) && !/compra|purchase/i.test(f.tipoResultado));
 
 /** Leads = conversaciones iniciadas si la fuente las trae; si no, resultados. */
 const leads = (a: Agregado) => a.conversacionesIniciadas ?? a.resultados;
@@ -91,7 +95,7 @@ export function evaluarAlertas(filas: ReadonlyArray<InsightRow>, hoy: string, u:
 
   /* medición rota: los dos últimos días completos con gasto y ni una conversión, contando solo las
      campañas que buscan contactos (Google siempre; en Meta las de mensajes, clientes potenciales o ventas) */
-  const buscan = filas.filter((f) => f.nivel === "campana" && (f.fuente === "google" || f.tipoResultado != null));
+  const buscan = filas.filter((f) => f.nivel === "campana" && buscaContactos(f));
   const dia = (d: string) => agregar(buscan.filter((f) => f.fecha === d));
   const [a1, a2] = [dia(sumarDias(hoy, -1)), dia(sumarDias(hoy, -2))];
   if (a1.gasto >= u.gastoMinimoSinConversiones && a2.gasto >= u.gastoMinimoSinConversiones && leads(a1) === 0 && leads(a2) === 0) {
@@ -109,8 +113,10 @@ export function evaluarAlertas(filas: ReadonlyArray<InsightRow>, hoy: string, u:
     const a3 = enVentana(e, hasta, v3);
     const activoReciente = e.estado === "activo" && a3.gasto > 0;
     if (!activoReciente) continue;
+    /* costo por lead y bajo rendimiento solo tienen sentido en lo que busca contactos */
+    const contactos = e.filas.some(buscaContactos);
 
-    if (e.nivel === "campana" || e.nivel === "anuncio") {
+    if (contactos && (e.nivel === "campana" || e.nivel === "anuncio")) {
       const c = cpl(a3);
       const l = leads(a3);
       if (c != null && c > u.cplMaximo) {
@@ -127,24 +133,20 @@ export function evaluarAlertas(filas: ReadonlyArray<InsightRow>, hoy: string, u:
       }
     }
 
-    if (e.nivel === "anuncio") {
-      const motivos = new Map<string, number[]>();
+    if (contactos && e.nivel === "anuncio") {
+      /* regla de la clínica: más de 2.000 impresiones y ningún resultado, con CTR bajo o gancho bajo */
+      const ventanas: number[] = [];
       for (const d of u.ventanas) {
         const a = enVentana(e, hasta, d);
-        if (a.impresiones === 0) continue;
+        if (a.impresiones <= u.impresionesSinResultado || leads(a) !== 0) continue;
+        const t = ctr(a);
         const h = hookRate(a);
-        const r = holdRate(a);
-        if (h != null && h < u.hookMinimo) motivos.set("gancho", [...(motivos.get("gancho") ?? []), d]);
-        if (r != null && r < u.holdMinimo) motivos.set("retención", [...(motivos.get("retención") ?? []), d]);
-        if (a.impresiones > u.impresionesSinResultado && leads(a) === 0) motivos.set("sin resultados", [...(motivos.get("sin resultados") ?? []), d]);
+        if ((t != null && t < u.ctrMinimoConjunto) || (h != null && h < u.hookMinimo)) ventanas.push(d);
       }
-      if (motivos.size) {
-        const ventanas = [...new Set([...motivos.values()].flat())].sort((x, y) => x - y);
+      if (ventanas.length) {
         const aMax = enVentana(e, hasta, ventanas[ventanas.length - 1]!);
-        const partes: string[] = [];
-        if (motivos.has("gancho")) partes.push(`gancho ${pct(hookRate(aMax))} (mínimo ${pct(u.hookMinimo, 0)})`);
-        if (motivos.has("retención")) partes.push(`retención ${pct(holdRate(aMax))} (mínimo ${pct(u.holdMinimo, 0)})`);
-        if (motivos.has("sin resultados")) partes.push(`${num(aMax.impresiones)} impresiones y ningún lead`);
+        const partes = [`${num(aMax.impresiones)} impresiones y ningún lead`, `CTR ${pct(ctr(aMax), 2)}`];
+        if (hookRate(aMax) != null) partes.push(`gancho ${pct(hookRate(aMax))}`);
         salida.push({ tipo: "bajo_rendimiento", nivel: e.nivel, entidad: nombre, ventanas, texto: `Anuncio «${nombre}» viene flojo a ${ventanas.join("/")} días: ${partes.join(" · ")}. Mejor cambiar el gancho o pausarlo.` });
       }
     }
