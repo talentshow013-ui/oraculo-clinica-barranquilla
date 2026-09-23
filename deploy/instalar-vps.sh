@@ -68,6 +68,9 @@ systemctl enable --now oraculo-panel >/dev/null
 cp /home/oraculo/oraculo/deploy/oraculo-telegram.service /etc/systemd/system/oraculo-telegram.service
 systemctl daemon-reload
 systemctl enable oraculo-telegram >/dev/null  # arranca solo cuando .env tenga las claves de Telegram y Gemini
+cp /home/oraculo/oraculo/deploy/oraculo-vivo.service /etc/systemd/system/oraculo-vivo.service
+systemctl daemon-reload
+systemctl enable --now oraculo-vivo >/dev/null  # datos en vivo todo el día
 chmod +x /home/oraculo/oraculo/deploy/oraculo-diario.sh /home/oraculo/oraculo/deploy/oraculo-alertas.sh
 # 6:30 el resumen diario; 6:00, 12:00 y 18:00 las alertas (hora de Bogotá). Con /bin/bash delante:
 # si un git pull le quita el permiso de ejecución al script, el reloj sigue corriendo igual.

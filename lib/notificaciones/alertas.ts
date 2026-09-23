@@ -6,6 +6,7 @@
  *   - CTR por debajo de 1,30 % a nivel de conjunto,
  *   - anuncio de bajo rendimiento medido a 3, 7 y 15 días: gancho < 20 %, retención < 20 %, o
  *     más de 2.000 impresiones sin resultados,
+ *   - la cuenta lleva 2 días completos gastando y 0 conversiones (la medición se rompió),
  *   - y, siempre, cuántos leads trajo cada campaña y anuncio activo y a qué costo.
  * Todo sale de las filas del lote (`insights`); aquí no se llama a ninguna plataforma.
  */
@@ -29,11 +30,13 @@ export interface Umbrales {
   ventanas: number[];
   /** Un anuncio es «nuevo» si su primer día con datos está dentro de estos días. */
   diasNuevo: number;
+  /** Gasto diario mínimo para que «0 conversiones» signifique medición rota y no un día flojo. */
+  gastoMinimoSinConversiones: number;
 }
 
-export const UMBRALES_CLINICA: Umbrales = { cplMaximo: 4000, ctrMinimoConjunto: 0.013, impresionesMinimasCtr: 1000, hookMinimo: 0.2, holdMinimo: 0.2, impresionesSinResultado: 2000, ventanas: [3, 7, 15], diasNuevo: 3 };
+export const UMBRALES_CLINICA: Umbrales = { cplMaximo: 4000, ctrMinimoConjunto: 0.013, impresionesMinimasCtr: 1000, hookMinimo: 0.2, holdMinimo: 0.2, impresionesSinResultado: 2000, ventanas: [3, 7, 15], diasNuevo: 3, gastoMinimoSinConversiones: 20000 };
 
-export type TipoAlerta = "cpl_alto" | "rechazado" | "ctr_bajo_conjunto" | "bajo_rendimiento";
+export type TipoAlerta = "sin_conversiones" | "cpl_alto" | "rechazado" | "ctr_bajo_conjunto" | "bajo_rendimiento";
 
 export interface Alerta {
   tipo: TipoAlerta;
@@ -86,6 +89,15 @@ export function evaluarAlertas(filas: ReadonlyArray<InsightRow>, hoy: string, u:
   const salida: Alerta[] = [];
   const v3 = u.ventanas[0] ?? 3;
 
+  /* medición rota: los dos últimos días completos con gasto y ni una conversión, contando solo las
+     campañas que buscan contactos (Google siempre; en Meta las de mensajes, clientes potenciales o ventas) */
+  const buscan = filas.filter((f) => f.nivel === "campana" && (f.fuente === "google" || f.tipoResultado != null));
+  const dia = (d: string) => agregar(buscan.filter((f) => f.fecha === d));
+  const [a1, a2] = [dia(sumarDias(hoy, -1)), dia(sumarDias(hoy, -2))];
+  if (a1.gasto >= u.gastoMinimoSinConversiones && a2.gasto >= u.gastoMinimoSinConversiones && leads(a1) === 0 && leads(a2) === 0) {
+    salida.push({ tipo: "sin_conversiones", nivel: "cuenta", entidad: "la cuenta", ventanas: [2], texto: `Dos días gastando (${cop(a1.gasto + a2.gasto)}) y ni una conversión registrada. Si por WhatsApp sí están llegando mensajes, la medición se rompió: hay que revisar la etiqueta hoy.` });
+  }
+
   for (const e of ents) {
     if (e.nivel === "cuenta") continue;
     const nombre = e.nombre;
@@ -137,7 +149,7 @@ export function evaluarAlertas(filas: ReadonlyArray<InsightRow>, hoy: string, u:
       }
     }
   }
-  const orden: Record<TipoAlerta, number> = { rechazado: 0, cpl_alto: 1, bajo_rendimiento: 2, ctr_bajo_conjunto: 3 };
+  const orden: Record<TipoAlerta, number> = { sin_conversiones: 0, rechazado: 1, cpl_alto: 2, bajo_rendimiento: 3, ctr_bajo_conjunto: 4 };
   return salida.sort((a, b) => orden[a.tipo] - orden[b.tipo] || a.entidad.localeCompare(b.entidad, "es"));
 }
 
@@ -193,7 +205,7 @@ export function estadoPauta(filas: ReadonlyArray<InsightRow>, hoy: string, dias 
 }
 
 const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const ICONO: Record<TipoAlerta, string> = { rechazado: "⛔", cpl_alto: "💸", bajo_rendimiento: "📉", ctr_bajo_conjunto: "🎯" };
+const ICONO: Record<TipoAlerta, string> = { sin_conversiones: "🚨", rechazado: "⛔", cpl_alto: "💸", bajo_rendimiento: "📉", ctr_bajo_conjunto: "🎯" };
 
 /** El mensaje de las 6 / 12 / 18: por cuenta, alertas primero y luego el estado de todo lo activo. HTML de Telegram. */
 export function componerAvisoPauta(cuentas: ReadonlyArray<{ nombre: string; insights: ReadonlyArray<InsightRow> }>, o: { hoy: string; momento: string; umbrales: Umbrales; urlPanel?: string }): string {
@@ -219,6 +231,26 @@ export function componerAvisoPauta(cuentas: ReadonlyArray<{ nombre: string; insi
   }
   if (L.length === 1) L.push("", "Sin pauta activa ni alertas.");
   if (o.urlPanel) L.push("", `Panel: ${esc(o.urlPanel)}`);
+  const t = L.join("\n");
+  const c = Array.from(t);
+  return c.length > 4000 ? c.slice(0, 3999).join("") + "…" : t;
+}
+
+/** Clave de una alerta para no repetirla en el día: misma cuenta, mismo tipo, misma campaña o anuncio. */
+export function claveAlerta(cuenta: string, a: Pick<Alerta, "tipo" | "entidad">): string {
+  return `${cuenta}|${a.tipo}|${a.entidad}`;
+}
+
+/** Aviso en el momento: solo las alertas que aparecieron desde el último aviso, agrupadas por cuenta. */
+export function componerAlertasNuevas(items: ReadonlyArray<{ cuenta: string; alerta: Alerta }>, hora: string, urlPanel?: string): string {
+  const L: string[] = [`🔔 <b>Alerta nueva · ${esc(hora)}</b>`];
+  const porCuenta = new Map<string, Alerta[]>();
+  for (const x of items) porCuenta.set(x.cuenta, [...(porCuenta.get(x.cuenta) ?? []), x.alerta]);
+  for (const [cuenta, alertas] of porCuenta) {
+    L.push("", `<b>${esc(cuenta)}</b>`);
+    for (const a of alertas.slice(0, 8)) L.push(`${ICONO[a.tipo]} ${esc(a.texto)}`);
+  }
+  if (urlPanel) L.push("", `Panel: ${esc(urlPanel)}`);
   const t = L.join("\n");
   const c = Array.from(t);
   return c.length > 4000 ? c.slice(0, 3999).join("") + "…" : t;

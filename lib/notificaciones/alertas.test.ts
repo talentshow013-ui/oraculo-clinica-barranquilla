@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { InsightRow } from "@/lib/adapters/types";
-import { UMBRALES_CLINICA, componerAvisoPauta, estadoPauta, evaluarAlertas } from "./alertas";
+import { UMBRALES_CLINICA, claveAlerta, componerAlertasNuevas, componerAvisoPauta, estadoPauta, evaluarAlertas } from "./alertas";
 
 const fila = (p: Partial<InsightRow> & { fecha: string; nivel: InsightRow["nivel"]; id: string }): InsightRow =>
   ({
@@ -72,5 +72,34 @@ describe("alertas · estado de la pauta (6 a. m., 12 m., 6 p. m.)", () => {
     expect(t).toMatch(/Alertas/);
     expect(t).toMatch(/rechazado/i);
     expect(t.length).toBeLessThan(4000);
+  });
+});
+
+describe("alertas · medición rota (gasto sin conversiones)", () => {
+  const sinConv: InsightRow[] = ["2026-09-20", "2026-09-21"].map((f) => fila({ fecha: f, nivel: "campana", id: "G1", nombre: "Búsqueda", fuente: "google", tipoResultado: "conversion", gasto: 50_000, impresiones: 3_000, clics: 60, clicsEnlace: 60, resultados: 0 }));
+  test("dos días completos gastando y cero conversiones → alarma de medición", () => {
+    const a = evaluarAlertas(sinConv, "2026-09-22", UMBRALES_CLINICA);
+    expect(a[0]).toMatchObject({ tipo: "sin_conversiones", nivel: "cuenta" });
+    expect(a[0]!.texto).toMatch(/medición/);
+  });
+  test("con una sola conversión en esos días, no hay alarma", () => {
+    const una = sinConv.map((f, i) => (i === 0 ? { ...f, resultados: 1 } : f));
+    expect(evaluarAlertas(una, "2026-09-22", UMBRALES_CLINICA).some((x) => x.tipo === "sin_conversiones")).toBe(false);
+  });
+  test("campañas que no buscan contactos (alcance) no cuentan", () => {
+    const alcance = sinConv.map((f) => ({ ...f, fuente: "meta" as const, tipoResultado: null }));
+    expect(evaluarAlertas(alcance, "2026-09-22", UMBRALES_CLINICA).some((x) => x.tipo === "sin_conversiones")).toBe(false);
+  });
+});
+
+describe("alertas · aviso en el momento (solo lo nuevo)", () => {
+  test("clave estable por cuenta, tipo y entidad", () => {
+    expect(claveAlerta("Vivante", { tipo: "rechazado", entidad: "Testimonio" })).toBe("Vivante|rechazado|Testimonio");
+  });
+  test("el mensaje junta las alertas nuevas por cuenta", () => {
+    const t = componerAlertasNuevas([{ cuenta: "F3 Corporal", alerta: { tipo: "rechazado", nivel: "anuncio", entidad: "X", ventanas: [], texto: "Anuncio rechazado: «X»." } }], "10:40");
+    expect(t).toMatch(/Alerta nueva · 10:40/);
+    expect(t).toMatch(/F3 Corporal/);
+    expect(t).toMatch(/⛔/);
   });
 });

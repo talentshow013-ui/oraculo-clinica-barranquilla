@@ -7,14 +7,17 @@
  *   npm run notificar -- --estado "texto"     → el resumen, con una línea de estado arriba
  *   npm run notificar -- --archivo ruta.md    → manda el contenido de un archivo (informe del lunes)
  *   npm run notificar -- --texto "mensaje"    → manda ese texto tal cual
- *   npm run notificar -- --alertas [momento]  → alertas de la clínica (CPL > 4.000, rechazados, CTR bajo, bajo rendimiento) y estado de todo lo activo
+ *   npm run notificar -- --alertas [momento]  → alertas de la clínica (CPL > 4.000, rechazados, CTR bajo, bajo rendimiento) y estado de todo lo activo (Meta y Google)
+ *   npm run notificar -- --nuevas             → solo las alertas que aparecieron desde el último aviso (lo corre el servicio en vivo); de 9 p. m. a 6 a. m. calla
  *
  * Necesita en .env: TELEGRAM_BOT_TOKEN (de @BotFather) y TELEGRAM_CHAT_ID (uno o varios, separados por coma). Opcional: ORACULO_URL_PANEL.
  */
 import { readFileSync } from "node:fs";
 import { cargarEnv } from "@/lib/adapters/env";
 import { chatsRecientes, componerResumenDiario, enviarTelegram, recortar, type ResumenCuenta } from "@/lib/notificaciones/telegram";
-import { UMBRALES_CLINICA, componerAvisoPauta } from "@/lib/notificaciones/alertas";
+import { UMBRALES_CLINICA, claveAlerta, componerAlertasNuevas, componerAvisoPauta, evaluarAlertas } from "@/lib/notificaciones/alertas";
+import type { InsightRow } from "@/lib/adapters/types";
+import { existsSync, writeFileSync } from "node:fs";
 
 cargarEnv();
 const arg = (n: string) => {
@@ -24,6 +27,26 @@ const arg = (n: string) => {
 const tiene = (n: string) => process.argv.includes(n);
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const chat = process.env.TELEGRAM_CHAT_ID;
+
+/** Cada cuenta de pauta (Meta, TikTok y Google Ads) con sus filas, recién leídas de los archivos. */
+async function cuentasDePauta(): Promise<{ hoy: string; cuentas: { nombre: string; insights: InsightRow[] }[] }> {
+  const { correrMotor } = await import("@/lib/datos");
+  const cuentas: { nombre: string; insights: InsightRow[] }[] = [];
+  let hoy = "";
+  for (const plataforma of ["pauta", "google"] as const) {
+    const base = await correrMotor(undefined, { plataforma });
+    hoy = base.hoy;
+    for (const c of base.cuentas) {
+      if (c.id === "sin_cuenta") continue;
+      const r = c.id === base.cuenta.id ? base : await correrMotor(undefined, { plataforma, cuentaId: c.id });
+      cuentas.push({ nombre: c.nombre, insights: r.loteCuenta.insights });
+    }
+  }
+  return { hoy, cuentas };
+}
+
+const RUTA_AVISADAS = "datos/alertas-avisadas.json";
+const horaBogota = () => Number(new Date().toLocaleString("en-US", { timeZone: "America/Bogota", hour: "numeric", hour12: false }));
 
 async function main() {
   if (!token) {
@@ -41,19 +64,34 @@ async function main() {
     process.exit(1);
   }
   let texto: string;
+  let despuesDeEnviar: (() => void) | null = null;
   if (tiene("--prueba")) texto = "🔮 Oráculo conectado. Cada mañana llega aquí el resumen del día.";
   else if (arg("--texto")) texto = arg("--texto")!;
   else if (tiene("--alertas")) {
-    const { motor } = await import("@/lib/datos");
-    const base = await motor();
-    const cuentas: { nombre: string; insights: typeof base.loteCuenta.insights }[] = [];
-    for (const c of base.cuentas) {
-      const r = c.id === base.cuenta.id ? base : await motor(c.id);
-      cuentas.push({ nombre: c.nombre, insights: r.loteCuenta.insights });
-    }
-    const hora = Number(new Date().toLocaleString("en-US", { timeZone: "America/Bogota", hour: "numeric", hour12: false }));
+    const { hoy, cuentas } = await cuentasDePauta();
+    const hora = horaBogota();
     const momento = arg("--alertas") && !arg("--alertas")!.startsWith("--") ? arg("--alertas")! : hora < 11 ? "6 a. m." : hora < 16 ? "12 m." : "6 p. m.";
-    texto = componerAvisoPauta(cuentas, { hoy: base.hoy, momento, umbrales: UMBRALES_CLINICA, urlPanel: process.env.ORACULO_URL_PANEL });
+    texto = componerAvisoPauta(cuentas, { hoy, momento, umbrales: UMBRALES_CLINICA, urlPanel: process.env.ORACULO_URL_PANEL });
+  } else if (tiene("--nuevas")) {
+    const hora = horaBogota();
+    if (hora < 6 || hora >= 21) {
+      console.log("· de noche no se avisa; lo nuevo sale en el resumen de las 6 a. m.");
+      return;
+    }
+    const { hoy, cuentas } = await cuentasDePauta();
+    let avisadas: { fecha: string; claves: string[] } = { fecha: hoy, claves: [] };
+    try {
+      if (existsSync(RUTA_AVISADAS)) avisadas = JSON.parse(readFileSync(RUTA_AVISADAS, "utf8"));
+    } catch {}
+    const ya = new Set(avisadas.fecha === hoy ? avisadas.claves : []);
+    const nuevas = cuentas.flatMap((c) => evaluarAlertas(c.insights, hoy, UMBRALES_CLINICA).map((alerta) => ({ cuenta: c.nombre, alerta }))).filter((x) => !ya.has(claveAlerta(x.cuenta, x.alerta)));
+    if (!nuevas.length) {
+      console.log("· sin alertas nuevas");
+      return;
+    }
+    const reloj = new Date().toLocaleTimeString("es-CO", { timeZone: "America/Bogota", hour: "2-digit", minute: "2-digit", hour12: false });
+    texto = componerAlertasNuevas(nuevas, reloj, process.env.ORACULO_URL_PANEL);
+    despuesDeEnviar = () => writeFileSync(RUTA_AVISADAS, JSON.stringify({ fecha: hoy, claves: [...ya, ...nuevas.map((x) => claveAlerta(x.cuenta, x.alerta))] }));
   } else if (arg("--archivo")) texto = recortar(readFileSync(arg("--archivo")!, "utf8").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]!));
   else {
     const { motor } = await import("@/lib/datos");
@@ -67,6 +105,7 @@ async function main() {
     const id = await enviarTelegram(token, c, texto);
     console.log(`✓ Enviado a Telegram (chat ${c}, mensaje ${id}).`);
   }
+  despuesDeEnviar?.();
 }
 
 main().catch((e) => {

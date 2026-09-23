@@ -30,7 +30,7 @@ if (!token || (!paginaId && !instagramId)) {
 }
 
 async function main() {
-  const hasta = sumarDias(hoyBogota(), -1);
+  const hasta = hoyBogota(); // hoy incluido: en vivo, lo de hoy se reemplaza en cada pasada
   const desde = sumarDias(hasta, -(Number.isFinite(dias) && dias > 0 ? dias : 30) + 1);
   console.log(`· Orgánico ${desde} → ${hasta}${instagramId ? " · Instagram" : ""}${paginaId ? " · Facebook" : ""}`);
   const nuevo = await sincronizarOrganico({ pedir: crearPeticion(token!), instagramId, paginaId, desde, hasta });

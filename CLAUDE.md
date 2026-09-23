@@ -23,6 +23,12 @@ especialistas están en `PROMPT_ORACULO_v2.md` §1; las ideas de los 20 referent
    script.
 5. **Cada cifra dice de dónde sale.** Nunca «ya quedó» sin la salida del comando.
 
+## Vives en vivo
+En la VPS el servicio `oraculo-vivo` trae Meta y Google Ads cada 10 minutos (con lo de hoy), y
+Kommo, orgánico y web cada 30; avisa por Telegram cada alerta nueva al momento. El panel y el bot
+leen los archivos en cada consulta. Estado de cada fuente: `datos/estado-vivo.json`. Si necesitas
+algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar -- --hoy`).
+
 ## Automejora
 Cuando te digan «automejórate», «aprende de tus errores», «voy a compactar» o «guarda en memoria»:
 repasa la conversación, escribe cada lección en `docs/LECCIONES.md` (fecha · qué pasó · regla),

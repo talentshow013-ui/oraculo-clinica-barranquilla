@@ -21,6 +21,7 @@
     "organico:sincronizar": "tsx scripts/organico-sincronizar.ts",
     "meta:sincronizar": "tsx scripts/meta-sincronizar.ts",
     "notificar": "tsx scripts/notificar.ts",
+    "vivo": "tsx scripts/vivo.ts",
     "telegram:bot": "tsx scripts/telegram-bot.ts",
     "web:sincronizar": "tsx scripts/web-sincronizar.ts",
     "tiktok:sincronizar": "tsx scripts/tiktok-sincronizar.ts",

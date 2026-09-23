@@ -23,7 +23,7 @@ if (!e.GOOGLE_ADS_DEVELOPER_TOKEN || !e.GOOGLE_ADS_CLIENT_ID || !e.GOOGLE_ADS_CL
 
 async function main() {
   const cred = { developerToken: e.GOOGLE_ADS_DEVELOPER_TOKEN!, clientId: e.GOOGLE_ADS_CLIENT_ID!, clientSecret: e.GOOGLE_ADS_CLIENT_SECRET!, refreshToken: e.GOOGLE_ADS_REFRESH_TOKEN!, loginCustomerId: e.GOOGLE_ADS_LOGIN_CUSTOMER_ID || undefined };
-  const hasta = sumarDias(hoyBogota(), -1);
+  const hasta = hoyBogota(); // hoy incluido: en vivo, lo de hoy se reemplaza en cada pasada
   const desde = sumarDias(hasta, -(Number.isFinite(dias) && dias > 0 ? dias : 30) + 1);
   console.log(`· Google Ads ${desde} → ${hasta} · cuenta ${e.GOOGLE_ADS_CUSTOMER_ID}`);
   const token = await tokenDeAcceso(cred);

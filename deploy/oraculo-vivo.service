@@ -1,0 +1,18 @@
+# Oráculo en vivo: trae Meta y Google cada 10 min, Kommo, orgánico y web cada 30, y avisa alertas nuevas al momento.
+#   cp deploy/oraculo-vivo.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now oraculo-vivo
+[Unit]
+Description=Oráculo · datos en vivo todo el día
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=oraculo
+WorkingDirectory=/home/oraculo/oraculo
+Environment=TZ=America/Bogota
+ExecStart=/usr/bin/npm run -s vivo
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -29,7 +29,7 @@ if (!propiedadId || !existsSync(rutaLlave)) {
 async function main() {
   const llave = JSON.parse(readFileSync(rutaLlave, "utf8")) as LlaveServicio;
   if (!llave.client_email || !llave.private_key) throw new Error("La llave no es de una cuenta de servicio de Google (faltan client_email / private_key).");
-  const hasta = sumarDias(hoyBogota(), -1);
+  const hasta = hoyBogota(); // hoy incluido: en vivo, lo de hoy se reemplaza en cada pasada
   const desde = sumarDias(hasta, -(Number.isFinite(dias) && dias > 0 ? dias : 30) + 1);
   console.log(`· Sitio web ${desde} → ${hasta} · propiedad ${propiedadId} · ${llave.client_email}`);
   const token = await pedirToken(llave);
