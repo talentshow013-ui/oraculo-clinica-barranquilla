@@ -49,7 +49,7 @@ export interface Alerta {
 }
 
 /** ¿Busca contactos (conversación o lead)? Google siempre; en Meta, según su columna «Resultados». Compras y clics, no. */
-const buscaContactos = (f: InsightRow) => f.fuente === "google" || (f.tipoResultado != null && esFruto(f.tipoResultado) && !/compra|purchase/i.test(f.tipoResultado));
+export const buscaContactos = (f: InsightRow) => f.fuente === "google" || (f.tipoResultado != null && esFruto(f.tipoResultado) && !/compra|purchase/i.test(f.tipoResultado));
 
 /** Leads = conversaciones iniciadas si la fuente las trae; si no, resultados. */
 const leads = (a: Agregado) => a.conversacionesIniciadas ?? a.resultados;

@@ -87,7 +87,7 @@ fi
 
 # 5) Avisos por Telegram (si está configurado): resumen de la mañana y, los lunes, el informe
 if grep -q '^TELEGRAM_BOT_TOKEN=.\+' .env 2>/dev/null && grep -q '^TELEGRAM_CHAT_ID=.\+' .env 2>/dev/null; then
-  if npm run -s notificar -- --estado "$ESTADO" >/dev/null 2>"reportes/telegram-$HOY.log"; then echo "telegram: resumen enviado"; else echo "telegram: FALLÓ (ver reportes/telegram-$HOY.log)"; fi
+  # el resumen del día lo manda oraculo-alertas.sh (6, 12 y 18): aquí solo el informe de los lunes
   if [ "$(date +%u)" = "1" ] && [ -s "reportes/semana-$HOY.md" ]; then
     npm run -s notificar -- --archivo "reportes/semana-$HOY.md" >/dev/null 2>>"reportes/telegram-$HOY.log" && echo "telegram: informe semanal enviado"
   fi

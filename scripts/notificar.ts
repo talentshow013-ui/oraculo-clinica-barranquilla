@@ -7,15 +7,18 @@
  *   npm run notificar -- --estado "texto"     → el resumen, con una línea de estado arriba
  *   npm run notificar -- --archivo ruta.md    → manda el contenido de un archivo (informe del lunes)
  *   npm run notificar -- --texto "mensaje"    → manda ese texto tal cual
- *   npm run notificar -- --alertas [momento]  → alertas de la clínica (CPL > 4.000, rechazados, CTR bajo, bajo rendimiento) y estado de todo lo activo (Meta y Google)
- *   npm run notificar -- --nuevas             → solo las alertas que aparecieron desde el último aviso (lo corre el servicio en vivo); de 9 p. m. a 6 a. m. calla
+ *   npm run notificar -- --alertas [momento]  → resumen corto: gasto, leads, costo por lead, 3 oportunidades y 3 riesgos (Meta y Google)
+ *   npm run notificar -- --alertas --detalle  → la lista completa de alertas y de todo lo activo
+ *   npm run notificar -- --nuevas             → al momento, solo lo urgente nuevo (anuncio rechazado, medición rota); de 9 p. m. a 6 a. m. calla
  *
  * Necesita en .env: TELEGRAM_BOT_TOKEN (de @BotFather) y TELEGRAM_CHAT_ID (uno o varios, separados por coma). Opcional: ORACULO_URL_PANEL.
  */
 import { readFileSync } from "node:fs";
 import { cargarEnv } from "@/lib/adapters/env";
 import { chatsRecientes, componerResumenDiario, enviarTelegram, recortar, type ResumenCuenta } from "@/lib/notificaciones/telegram";
-import { UMBRALES_CLINICA, claveAlerta, componerAlertasNuevas, componerAvisoPauta, evaluarAlertas } from "@/lib/notificaciones/alertas";
+import { UMBRALES_CLINICA, claveAlerta, componerAlertasNuevas, componerAvisoPauta, evaluarAlertas, type TipoAlerta } from "@/lib/notificaciones/alertas";
+import { componerResumenConciso, resumenConciso } from "@/lib/notificaciones/resumen";
+import { sumarDias } from "@/lib/format/fechas";
 import type { InsightRow } from "@/lib/adapters/types";
 import { existsSync, writeFileSync } from "node:fs";
 
@@ -79,7 +82,14 @@ async function main() {
     const { hoy, cuentas } = await cuentasDePauta();
     const hora = horaBogota();
     const momento = arg("--alertas") && !arg("--alertas")!.startsWith("--") ? arg("--alertas")! : hora < 11 ? "6 a. m." : hora < 16 ? "12 m." : "6 p. m.";
-    texto = componerAvisoPauta(cuentas, { hoy, momento, umbrales: UMBRALES_CLINICA, urlPanel: process.env.ORACULO_URL_PANEL });
+    if (tiene("--detalle")) texto = componerAvisoPauta(cuentas, { hoy, momento, umbrales: UMBRALES_CLINICA, urlPanel: process.env.ORACULO_URL_PANEL });
+    else {
+      /* lo que pidió la clínica: gasto, leads, costo por lead, 3 oportunidades y 3 riesgos. A las 6 a. m. el día completo de ayer; después, hoy hasta ahora */
+      const manana = hora < 11;
+      const reloj = new Date().toLocaleTimeString("es-CO", { timeZone: "America/Bogota", hour: "numeric", minute: "2-digit" });
+      const r = resumenConciso(cuentas, manana ? sumarDias(hoy, -1) : hoy, hoy, UMBRALES_CLINICA);
+      texto = componerResumenConciso(r, { momento, etiquetaDia: manana ? "Ayer (día completo)" : `Hoy hasta las ${reloj}`, urlPanel: process.env.ORACULO_URL_PANEL });
+    }
     despuesDeEnviar = () => marcarAvisadas(hoy, cuentas.flatMap((c) => evaluarAlertas(c.insights, hoy, UMBRALES_CLINICA).map((a) => claveAlerta(c.nombre, a))));
   } else if (tiene("--nuevas")) {
     const hora = horaBogota();
@@ -99,7 +109,11 @@ async function main() {
       if (existsSync(RUTA_AVISADAS)) avisadas = JSON.parse(readFileSync(RUTA_AVISADAS, "utf8"));
     } catch {}
     const ya = new Set(avisadas.fecha === hoy ? avisadas.claves : []);
-    const nuevas = cuentas.flatMap((c) => evaluarAlertas(c.insights, hoy, UMBRALES_CLINICA).map((alerta) => ({ cuenta: c.nombre, alerta }))).filter((x) => !ya.has(claveAlerta(x.cuenta, x.alerta)));
+    /* al momento solo lo urgente: anuncio rechazado o medición rota. Lo demás va en el resumen de 6, 12 y 18 */
+    const URGENTES: TipoAlerta[] = ["rechazado", "sin_conversiones"];
+    const nuevas = cuentas
+      .flatMap((c) => evaluarAlertas(c.insights, hoy, UMBRALES_CLINICA).map((alerta) => ({ cuenta: c.nombre, alerta })))
+      .filter((x) => URGENTES.includes(x.alerta.tipo) && !ya.has(claveAlerta(x.cuenta, x.alerta)));
     if (!nuevas.length) {
       console.log("· sin alertas nuevas");
       return;
