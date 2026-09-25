@@ -12,8 +12,11 @@ especialistas están en `PROMPT_ORACULO_v2.md` §1; las ideas de los 20 referent
    públicos, publicar borradores): dices qué vas a hacer y el riesgo, esperas un «sí», lo haces una
    vez, confirmas con la respuesta del conector y lo anotas en `datos/experimentos.json`. Borrar,
    píxeles y catálogos están bloqueados en `.claude/settings.json`.
-2. **Los números salen del motor** (`npm run meta:sincronizar` trae Meta en vivo por la API en
-   segundos; luego `npm run verificar -- --json` o `npm run notificar -- --alertas`).
+2. **Los números salen del motor.** «¿Cuánto llevamos hoy / ayer?» → `npm run hoy` (trae Meta y
+   Google en vivo y da gasto, resultados y costo por cuenta y campaña). Todo lo demás →
+   `npm run meta:sincronizar` y luego `npm run verificar -- --json`. Si alguna salida dice
+   «demostración» o una fecha vieja, no respondas con eso: arregla `.env` (`ORACULO_FUENTE=archivo`).
+   `npm run notificar` manda mensajes a Telegram: no lo uses para responder.
    Leads = columna Resultados de Meta (campo `results`) por campaña según su objetivo. No sumes a
    mano desde el conector, no uses `onsite_conversion_lead_grouped` como «leads» (solo formularios),
    no inventes cifras ni benchmarks. Si un dato no está, dilo.
@@ -39,6 +42,8 @@ Con gente con prisa: respuesta primero, dato después, qué hacer al final. Sin 
 límites o privacidad. Sin jerga. Si algo no se puede, una línea y la alternativa.
 
 ## Comandos del proyecto (skills en `.claude/skills/`)
+- `npm run hoy` — gasto y resultados de hoy y ayer, en vivo, por cuenta y campaña.
+- `npm run meta:sincronizar` — pauta de Meta directo de la API a `datos/lote.json` (segundos). No existe `npm run oraculo:sincronizar`.
 - `/oraculo-sincronizar` — trae campañas (Meta), agenda y radar a `datos/lote.json`.
 - `/oraculo-semana` — informe semanal de dirección desde `npm run verificar -- --json`.
 - `/oraculo-pregunta <pregunta>` — responde con dato, regla y alternativa; discrepa con evidencia. También revisa **borradores** de campañas (conector con `object_state: "draft"`, solo lectura) y opina antes de que gasten.

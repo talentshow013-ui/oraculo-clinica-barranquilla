@@ -4,7 +4,11 @@
  *   npm run verificar            → salida legible
  *   npm run verificar -- --json  → JSON completo (lo consumen los skills del asistente)
  */
+import { cargarEnv } from "@/lib/adapters/env";
 import { correrMotor } from "@/lib/datos";
+
+/* sin esto el motor no ve ORACULO_FUENTE=archivo y responde con la demostración */
+cargarEnv();
 import { cop, pct, ratio } from "@/lib/format";
 import { NOMBRE_REGLA } from "@/lib/diagnostics/rules";
 import { ETIQUETA_PASO } from "@/lib/format/etiquetas";
@@ -12,6 +16,7 @@ import { ETIQUETA_PASO } from "@/lib/format/etiquetas";
 async function main() {
   const json = process.argv.includes("--json");
   const r = await correrMotor();
+  if (r.lote.meta.origen === "seed") process.stderr.write("⚠ OJO: estos son DATOS DE DEMOSTRACIÓN, no los de la clínica. Pon ORACULO_FUENTE=archivo en .env y corre npm run meta:sincronizar.\n");
 
   if (json) {
     const salida = {

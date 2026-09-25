@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "seed": "tsx scripts/seed.ts",
     "verificar": "tsx scripts/verificar.ts",
+    "hoy": "tsx scripts/hoy.ts",
     "validar-lote": "tsx scripts/validar-lote.ts",
     "importar-meta": "tsx scripts/importar-meta.ts",
     "importar-radar": "tsx scripts/importar-radar.ts",
