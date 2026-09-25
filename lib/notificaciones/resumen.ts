@@ -63,7 +63,8 @@ export function resumenConciso(cuentas: ReadonlyArray<{ nombre: string; insights
   const todasAnt: InsightRow[] = [];
   const oportunidades: Punto[] = [];
   const riesgos: Punto[] = [];
-  const porCuenta = cuentas.map(({ nombre, insights }) => {
+  const porCuenta = cuentas.map(({ nombre: nombreCompleto, insights }) => {
+    const nombre = nombreCorto(nombreCompleto, 40);
     const d = campDia(insights, dia);
     todasDia.push(...d);
     todasAnt.push(...campDia(insights, anteriorDia));
@@ -119,7 +120,7 @@ export function componerResumenConciso(r: ResumenConciso, o: { momento: string; 
     `📊 Costo por lead: ${cplTxt(r.dia)}  <i>(día anterior ${cplTxt(r.anterior)} · ${num(r.anterior.leads)} leads)</i>`,
     "",
   ];
-  for (const c of r.cuentas.filter((x) => x.gasto > 0)) L.push(`• ${esc(nombreCorto(c.nombre, 30))}: ${num(c.leads)} leads · ${cplTxt(c)} c/u`);
+  for (const c of r.cuentas.filter((x) => x.gasto > 0)) L.push(`• ${esc(c.nombre)}: ${num(c.leads)} leads · ${cplTxt(c)} c/u`);
   L.push("", "✅ <b>Oportunidades</b>");
   if (r.oportunidades.length) r.oportunidades.forEach((x, i) => L.push(`${i + 1}. ${esc(x.texto)}`));
   else L.push("Nada que escalar hoy.");
