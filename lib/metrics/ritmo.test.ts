@@ -23,6 +23,14 @@ describe("ritmo del día contra los días anteriores a la misma hora", () => {
     expect(r.horaMasFloja).toMatchObject({ hora: 8, hoy: 0, promedio: 2 });
     expect(r.enCurso).toMatchObject({ hora: 10, leads: 3 });
   });
+  test("lo normal es la mediana (un día atípico no la infla) y se compara con el mismo día de la semana", () => {
+    const atipico = [...historico.filter((x) => x.fecha !== "2026-09-24" && x.fecha !== "2026-09-21"), ...Array.from({ length: 24 }, (_, hora) => h("2026-09-24", hora, 50_000, 20))];
+    const hoy = [h("2026-09-28", 7, 5_000, 2), h("2026-09-28", 8, 5_000, 2), h("2026-09-28", 9, 5_000, 2)];
+    const r = ritmoDelDia([...atipico, ...hoy, ...[7, 8, 9].map((hora) => h("2026-09-21", hora, 5_000, 1))], "2026-09-28", 10);
+    expect(r.promedio.leads).toBe(6); // mediana de 3, 6, 6, 60
+    expect(r.mismoDia).toMatchObject({ leads: 3, dias: 1 }); // lunes 21
+    expect(r.diferenciaMismoDia).toBeCloseTo(1, 5);
+  });
   test("sin días anteriores no inventa comparación", () => {
     const r = ritmoDelDia([h("2026-09-25", 8, 1_000, 1)], "2026-09-25", 10);
     expect(r.diferencia).toBeNull();

@@ -1,6 +1,7 @@
 /**
  * «¿Hoy viene lento?» en vivo: por cada cuenta de Meta, los leads y el gasto de hoy hasta la última
- * hora completa contra el promedio de los últimos 7 días hasta esa misma hora, y la hora más floja.
+ * hora completa contra lo normal a esa misma hora (mediana de 14 días) y contra el mismo día de la
+ * semana, y la hora más floja.
  * Directo de la API de Meta (no usa el conector ni manda nada a Telegram).
  *
  *   npm run ritmo              → las 4 cuentas
@@ -27,7 +28,7 @@ interface Fila { date_start: string; hourly_stats_aggregated_by_advertiser_time_
 async function horasDe(cuentaId: string): Promise<HoraPauta[]> {
   const p = new URLSearchParams({
     level: "account",
-    time_range: JSON.stringify({ since: sumarDias(hoy, -7), until: hoy }),
+    time_range: JSON.stringify({ since: sumarDias(hoy, -14), until: hoy }),
     time_increment: "1",
     breakdowns: "hourly_stats_aggregated_by_advertiser_time_zone",
     fields: "spend,actions",
@@ -56,16 +57,20 @@ async function main() {
     process.stdout.write(JSON.stringify(salida, null, 2));
     return;
   }
-  console.log(`\nRITMO DE HOY hasta las ${horaTxt(horaActual)} (horas completas) contra el promedio de los 7 días anteriores a la misma hora · API de Meta`);
-  const tot = { hoy: 0, prom: 0, gHoy: 0, gProm: 0 };
+  const diaSemana = new Date(`${hoy}T12:00:00Z`).toLocaleDateString("es-CO", { weekday: "long", timeZone: "UTC" });
+  console.log(`\nRITMO DE HOY (${diaSemana}) hasta las ${horaTxt(horaActual)}, horas completas · contra lo normal a esa hora (mediana de 14 días) y contra otros ${diaSemana} · API de Meta`);
+  const tot = { hoy: 0, prom: 0, gHoy: 0, gProm: 0, mismo: 0 };
   for (const { cuenta, ritmo: r } of salida) {
-    tot.hoy += r.hoy.leads; tot.prom += r.promedio.leads; tot.gHoy += r.hoy.gasto; tot.gProm += r.promedio.gasto;
-    const dif = r.diferencia == null ? "sin días para comparar" : `${pctTxt(r.diferencia)} ${r.diferencia < -0.15 ? "⚠️ viene lento" : r.diferencia > 0.15 ? "✅ viene mejor" : "normal"}`;
-    console.log(`\n${cuenta}\n  hoy: ${num(r.hoy.leads)} leads con ${cop(r.hoy.gasto)} · promedio a esta hora: ${num(Math.round(r.promedio.leads))} leads con ${cop(Math.round(r.promedio.gasto))} · ${dif}`);
+    tot.hoy += r.hoy.leads; tot.prom += r.promedio.leads; tot.gHoy += r.hoy.gasto; tot.gProm += r.promedio.gasto; tot.mismo += r.mismoDia?.leads ?? 0;
+    /* el veredicto sale del mismo día de la semana si lo hay (los lunes arrancan distinto) */
+    const base = r.diferenciaMismoDia ?? r.diferencia;
+    const dif = base == null ? "sin días para comparar" : base < -0.15 ? "⚠️ viene lento" : base > 0.15 ? "✅ viene mejor" : "normal";
+    console.log(`\n${cuenta} · ${dif}\n  hoy: ${num(r.hoy.leads)} leads con ${cop(r.hoy.gasto)}\n  lo normal a esta hora: ${num(Math.round(r.promedio.leads))} leads con ${cop(Math.round(r.promedio.gasto))}${r.diferencia == null ? "" : ` (${pctTxt(r.diferencia)})`}`);
+    if (r.mismoDia) console.log(`  otros ${diaSemana} a esta hora: ${num(Math.round(r.mismoDia.leads))} leads con ${cop(Math.round(r.mismoDia.gasto))}${r.diferenciaMismoDia == null ? "" : ` (${pctTxt(r.diferenciaMismoDia)})`}`);
     if (r.horaMasFloja) console.log(`  hora más floja: ${horaTxt(r.horaMasFloja.hora)} (${num(r.horaMasFloja.hoy)} leads; normalmente ${num(Math.round(r.horaMasFloja.promedio * 10) / 10, 1)})`);
     if (r.enCurso) console.log(`  en curso (${horaTxt(r.enCurso.hora)}): ${num(r.enCurso.leads)} leads con ${cop(r.enCurso.gasto)}`);
   }
-  if (tot.prom > 0) console.log(`\nTOTAL: ${num(tot.hoy)} leads con ${cop(tot.gHoy)} · promedio a esta hora ${num(Math.round(tot.prom))} con ${cop(Math.round(tot.gProm))} · ${pctTxt(tot.hoy / tot.prom - 1)}`);
+  if (tot.prom > 0) console.log(`\nTOTAL: ${num(tot.hoy)} leads con ${cop(tot.gHoy)} · lo normal a esta hora ${num(Math.round(tot.prom))} (${pctTxt(tot.hoy / tot.prom - 1)})${tot.mismo > 0 ? ` · otros ${diaSemana} ${num(Math.round(tot.mismo))} (${pctTxt(tot.hoy / tot.mismo - 1)})` : ""}`);
   console.log("Leads por hora = conversaciones iniciadas + formularios (Meta no da «Resultados» por hora).");
 }
 
