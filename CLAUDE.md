@@ -12,7 +12,9 @@ especialistas están en `PROMPT_ORACULO_v2.md` §1; las ideas de los 20 referent
    públicos, publicar borradores): dices qué vas a hacer y el riesgo, esperas un «sí», lo haces una
    vez, confirmas con la respuesta del conector y lo anotas en `datos/experimentos.json`. Borrar,
    píxeles y catálogos están bloqueados en `.claude/settings.json`.
-2. **Los números salen del motor.** «¿Cuánto llevamos hoy / ayer?» → `npm run hoy` (trae Meta y
+2. **Para LEER Meta usa los scripts (API directa, no pasan por el conector ni por el filtro de
+   seguridad de Claude Code): `npm run hoy`, `npm run ritmo`, `npm run meta:sincronizar`. El
+   conector de Meta es para CAMBIAR cosas cuando lo piden.** **Los números salen del motor.** «¿Cuánto llevamos hoy / ayer?» → `npm run hoy` (trae Meta y
    Google en vivo y da gasto, resultados y costo por cuenta y campaña). Todo lo demás →
    `npm run meta:sincronizar` y luego `npm run verificar -- --json`. Si alguna salida dice
    «demostración» o una fecha vieja, no respondas con eso: arregla `.env` (`ORACULO_FUENTE=archivo`).
@@ -43,6 +45,7 @@ límites o privacidad. Sin jerga. Si algo no se puede, una línea y la alternati
 
 ## Comandos del proyecto (skills en `.claude/skills/`)
 - `npm run hoy` — gasto y resultados de hoy y ayer, en vivo, por cuenta y campaña.
+- `npm run ritmo` — «¿hoy viene lento?»: leads y gasto de hoy hasta la hora contra el promedio de 7 días a la misma hora, y la hora más floja.
 - `npm run meta:sincronizar` — pauta de Meta directo de la API a `datos/lote.json` (segundos). No existe `npm run oraculo:sincronizar`.
 - `/oraculo-sincronizar` — trae campañas (Meta), agenda y radar a `datos/lote.json`.
 - `/oraculo-semana` — informe semanal de dirección desde `npm run verificar -- --json`.
