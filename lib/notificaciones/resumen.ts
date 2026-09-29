@@ -9,7 +9,7 @@
  */
 import type { InsightRow } from "@/lib/adapters/types";
 import { cop, num } from "@/lib/format";
-import { sumarDias } from "@/lib/format/fechas";
+import { fechaCorta, sumarDias } from "@/lib/format/fechas";
 import { agregar, razon } from "@/lib/metrics/core";
 import { buscaContactos, evaluarAlertas, type Umbrales } from "./alertas";
 
@@ -71,6 +71,11 @@ export function resumenConciso(cuentas: ReadonlyArray<{ nombre: string; insights
 
     /* anuncios activos que buscan contactos, últimos `ventana` días */
     const ultimo = insights.reduce((m, f) => (f.fecha > m ? f.fecha : m), "");
+    /* sin datos de ayer ni de hoy: no se opina con cifras viejas, se avisa que la fuente no está llegando */
+    if (ultimo && ultimo < sumarDias(hoy, -1)) {
+      riesgos.push({ peso: 1e9, texto: `${nombre}: no llegan datos desde el ${fechaCorta(ultimo)}. Hay que revisar la conexión.` });
+      return { nombre, ...cifras(d) };
+    }
     const desde = sumarDias(ultimo, -(ventana - 1));
     const grupos = new Map<string, InsightRow[]>();
     for (const f of insights) if (f.nivel === "anuncio" && f.fecha >= desde) grupos.set(f.id, [...(grupos.get(f.id) ?? []), f]);

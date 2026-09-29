@@ -47,6 +47,13 @@ describe("resumen conciso (lo que pidió la clínica)", () => {
     expect(r.riesgos.some((x) => /rechaz/i.test(x.texto))).toBe(true);
     expect(r.riesgos.length).toBeLessThanOrEqual(3);
   });
+  test("una cuenta sin datos recientes no opina con cifras viejas: avisa que no llegan datos", () => {
+    const viejo = insights.map((f) => ({ ...f, fecha: f.fecha.replace("2026-09-2", "2026-09-1") }));
+    const r2 = resumenConciso([{ nombre: "Google Ads", insights: viejo }], "2026-09-25", "2026-09-25", UMBRALES_CLINICA);
+    expect(r2.oportunidades).toHaveLength(0);
+    expect(r2.riesgos).toHaveLength(1);
+    expect(r2.riesgos[0]!.texto).toMatch(/no llegan datos desde/);
+  });
   test("el mensaje es corto y en lenguaje de dueño", () => {
     const t = componerResumenConciso(r, { momento: "12 m.", etiquetaDia: "Hoy hasta ahora", urlPanel: "https://x/panel" });
     expect(t).toMatch(/Gasto/);
