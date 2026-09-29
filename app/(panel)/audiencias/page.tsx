@@ -57,6 +57,7 @@ export default async function Audiencias() {
         <Aviso tono="ojo" className="mb-3">Estás mirando la campaña «{r.campanaActiva.nombre}», pero los datos de audiencias vienen por cuenta completa, no por campaña. Elige «Todas las campañas» arriba para verlos, o pide en la próxima sincronización los desgloses por campaña.</Aviso>
       )}
       <Titulo rotulo="Audiencias · edad, zona, franja horaria" extra={<p className="text-[12.5px] text-texto-2">{r.privacidad.segmentosOcultos} segmentos ocultos por privacidad (menos de {r.privacidad.k} registros)</p>}>Qué excluir y a qué hora pautar</Titulo>
+      {r.periodo.elegido && <Aviso tono="neutro" className="mb-3">El calendario no cambia esta pantalla: Meta entrega los segmentos (edad, zona, horario) sumados de los últimos 28 días, no día por día. Las demás pantallas sí muestran el periodo elegido.</Aviso>}
       <Grid cols={4}>
         <Kpi nombre="Inversión fuera del radio" valor={fueraRadio / totalZona} unidad="porcentaje" tono="mal" formula={`Gasto a más de ${r.cliente.radioKm} km ÷ total con zona conocida`} porQueImporta="Nadie viene desde Bogotá a una sesión" retraso={40} />
         <Kpi nombre="Inversión fuera de horario" valor={fueraHorario / totalHora} unidad="porcentaje" tono="mal" formula="Gasto de 6 p. m. a 8 a. m. ÷ total con hora conocida" porQueImporta="Escriben y nadie contesta hasta el día siguiente" retraso={80} />

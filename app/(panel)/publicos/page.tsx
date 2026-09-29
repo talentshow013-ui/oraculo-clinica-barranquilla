@@ -44,6 +44,7 @@ export default async function Publicos() {
   return (
     <>
       <Titulo rotulo="Públicos · a quién se le muestra la pauta y quién responde" extra={p.sinDatos ? undefined : <p className="num text-[12.5px] text-texto-2">{num(p.conjuntos)} conjuntos · {p.desde && p.hasta ? `${fechaCorta(p.desde)} – ${fechaCorta(p.hasta)}` : ''} · referencia {cop0(p.referencia)} por resultado</p>}>¿A quién le funciona la pauta?</Titulo>
+      {r.periodo.elegido && <Aviso tono="neutro" className="mb-3">El calendario no cambia esta pantalla: Meta entrega los públicos de cada conjunto sumados de los últimos 28 días, no día por día. Las demás pantallas sí muestran el periodo elegido.</Aviso>}
 
       {p.sinDatos ? (
         <>
