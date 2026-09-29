@@ -130,10 +130,18 @@ async function main() {
     texto = componerResumenDiario(cuentas, { hoy: base.hoy, urlPanel: process.env.ORACULO_URL_PANEL, estado: arg("--estado") });
   }
   /* varias personas: TELEGRAM_CHAT_ID=111,222 (cada una habló con el bot al menos una vez) */
+  /* si una persona no ha abierto el bot todavía, a las demás les llega igual */
+  let enviados = 0;
   for (const c of chat.split(",").map((x) => x.trim()).filter(Boolean)) {
-    const id = await enviarTelegram(token, c, texto);
-    console.log(`✓ Enviado a Telegram (chat ${c}, mensaje ${id}).`);
+    try {
+      const id = await enviarTelegram(token, c, texto);
+      enviados++;
+      console.log(`✓ Enviado a Telegram (chat ${c}, mensaje ${id}).`);
+    } catch (e) {
+      console.error(`✗ Chat ${c}: ${e instanceof Error ? e.message : String(e)} (¿ya abrió el bot y pulsó «Iniciar»?)`);
+    }
   }
+  if (!enviados) throw new Error("no se pudo enviar a ningún chat");
   despuesDeEnviar?.();
 }
 
