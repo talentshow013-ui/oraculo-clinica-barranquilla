@@ -362,7 +362,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
   const anunciosCompetencia = datos.anunciosCompetencia.map((a) => ({ ...a, puntuacionLongevidad: puntuacionLongevidad(a) }));
   const loteMotor: LoteDatos = { ...datos, anunciosCompetencia };
 
-  const ctx = construirContexto(loteMotor, cfg, b, hoy);
+  const ctx = construirContexto(loteMotor, cfg, b, hoy, periodoElegido ? datosCampana : undefined);
   const diag = ejecutarReglas(ctx, REGLAS);
   const radar = analizarRadar(anunciosCompetencia, loteMotor.creativos, cfg, b, hoy, loteMotor.competidores);
   const oportunidades = generarOportunidades({

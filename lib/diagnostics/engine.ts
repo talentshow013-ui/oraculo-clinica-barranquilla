@@ -139,6 +139,9 @@ export function construirContexto(
   cliente: ConfigCliente,
   benchmarks: Benchmarks,
   hoy: string,
+  /** Con un periodo elegido en el calendario, el lote llega recortado: la ventana previa se toma de
+   *  aquí (los datos sin recortar) para no comparar contra días vacíos. */
+  sinRecortar?: Pick<LoteDatos, "insights" | "embudo">,
 ): ContextoDiagnostico {
   const rango = { desde: lote.meta.desde, hasta: lote.meta.hasta };
   const hasta = lote.meta.hasta < hoy ? lote.meta.hasta : hoy;
@@ -154,7 +157,9 @@ export function construirContexto(
 
   const total = agregar(base);
   const recienteAgg = agregar(filtrarRango(base, reciente));
-  const previaAgg = agregar(filtrarRango(base, previa));
+  const nivelUsado = base[0]?.nivel;
+  const baseAnterior = sinRecortar && nivelUsado ? sinRecortar.insights.filter((f) => f.nivel === nivelUsado) : base;
+  const previaAgg = agregar(filtrarRango(baseAnterior, previa));
 
   const creativos: Creativo[] = lote.creativos;
   const { visibles, ocultas } = filtrarPorK(lote.desgloses);
@@ -179,7 +184,7 @@ export function construirContexto(
     serie: serieDiaria(base),
     embudo: construirEmbudo(lote.embudo, total.gasto, cliente),
     embudoReciente: construirEmbudo(registrosEnRango(lote.embudo, reciente), recienteAgg.gasto, cliente),
-    embudoPrevio: construirEmbudo(registrosEnRango(lote.embudo, previa), previaAgg.gasto, cliente),
+    embudoPrevio: construirEmbudo(registrosEnRango(sinRecortar?.embudo ?? lote.embudo, previa), previaAgg.gasto, cliente),
     negocio: metricasNegocio(lote.embudo, total.gasto, cliente),
     creativos: evaluarCreativos(creativos, filasAnuncio.length ? filasAnuncio : base, benchmarks, lote.rankings ?? []),
     desglosesVisibles: visibles,

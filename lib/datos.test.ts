@@ -341,6 +341,13 @@ describe("periodo elegido con calendario (desde/hasta)", () => {
     expect(r.insights.every((i) => i.fecha >= "2026-08-01")).toBe(true);
     expect(r.insights.length).toBeLessThan(lote.insights.length);
   });
+  test("con periodo elegido, los 14 días de comparación salen de antes del periodo (no quedan recortados en cero)", async () => {
+    const r = await correrMotor(lote, { desde: "2026-08-15", hasta: "2026-08-28" });
+    const nivel = r.contexto.nivelBase;
+    const esperado = lote.insights.filter((i) => i.cuentaId === r.cuenta.id && i.nivel === nivel && i.fecha >= "2026-08-01" && i.fecha <= "2026-08-14").reduce((a, i) => a + i.gasto, 0);
+    expect(esperado).toBeGreaterThan(0);
+    expect(r.previa.gasto).toBeCloseTo(esperado, 2);
+  });
   test("el motor con solo «desde» marca el periodo como elegido", async () => {
     const r = await correrMotor(lote, { desde: "2026-08-01" });
     expect(r.periodo).toMatchObject({ desde: "2026-08-01", hasta: lote.meta.hasta, elegido: true });
