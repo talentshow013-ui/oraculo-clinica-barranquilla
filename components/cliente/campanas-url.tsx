@@ -20,14 +20,16 @@ function useIrCon() {
 }
 
 const PERIODOS: { v: PeriodoCampanas; t: string }[] = [{ v: '14', t: '14 días' }, { v: '30', t: '30 días' }, { v: '90', t: '90 días' }, { v: 'todo', t: 'Todo' }]
+/* con un periodo elegido en el calendario de arriba aparece su pastilla y viene marcada */
+const CALENDARIO: { v: PeriodoCampanas; t: string } = { v: 'calendario', t: 'Calendario' }
 export function SelectorPeriodo({ actual }: { actual: PeriodoCampanas }) {
   const ir = useIrCon()
   return (
     <div role="radiogroup" aria-label="Periodo" className="inline-flex items-center gap-0.5 rounded-full bg-superficie-2 p-1 ring-1 ring-borde">
-      {PERIODOS.map((p) => {
+      {(actual === 'calendario' ? [CALENDARIO, ...PERIODOS] : PERIODOS).map((p) => {
         const activo = p.v === actual
         return (
-          <button key={p.v} type="button" role="radio" aria-checked={activo} onClick={() => ir({ periodo: p.v === 'todo' ? null : p.v })} className={`rounded-full px-3 py-1 text-[12.5px] font-medium transition-[background-color,color,box-shadow] duration-300 ${activo ? 'bg-marino text-white shadow-[0_8px_18px_-10px_rgba(11,29,58,0.7)]' : 'text-texto-2 hover:bg-white hover:text-texto'}`}>
+          <button key={p.v} type="button" role="radio" aria-checked={activo} onClick={() => ir({ periodo: p.v === 'calendario' ? null : p.v })} className={`rounded-full px-3 py-1 text-[12.5px] font-medium transition-[background-color,color,box-shadow] duration-300 ${activo ? 'bg-marino text-white shadow-[0_8px_18px_-10px_rgba(11,29,58,0.7)]' : 'text-texto-2 hover:bg-white hover:text-texto'}`}>
             {p.t}
           </button>
         )

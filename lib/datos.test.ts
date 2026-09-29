@@ -192,6 +192,16 @@ describe("campañas con cara propia — vivas y terminadas en la misma lista", (
     expect(campanasEnPeriodo(r, "loquesea").periodo).toBe("todo");
   });
 
+  test("campanasEnPeriodo sigue el calendario de la cabecera cuando no se tocó una pastilla", async () => {
+    const r = await correrMotor(lote, { desde: "2026-08-01", hasta: "2026-08-14" });
+    const v = campanasEnPeriodo(r, undefined);
+    expect(v).toMatchObject({ periodo: "calendario", desde: "2026-08-01", hasta: "2026-08-14" });
+    const gasto = v.campanas.reduce((a, c) => a + c.total.gasto, 0);
+    const todo = campanasEnPeriodo(r, "todo").campanas.reduce((a, c) => a + c.total.gasto, 0);
+    expect(gasto).toBeGreaterThan(0);
+    expect(gasto).toBeLessThan(todo);
+  });
+
   test("las campañas de una cuenta no se mezclan con las de otra", async () => {
     const norte = await correrMotor(lote, { cuentaId: CUENTAS_SEED[1]! });
     expect(norte.campanas.map((c) => c.id).sort()).toEqual(["camp_corporal", "camp_laser"]);

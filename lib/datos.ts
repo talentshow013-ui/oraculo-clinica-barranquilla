@@ -470,12 +470,17 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
 
 /** Periodos que ofrece la pantalla de campañas. `todo` = todo lo que tiene el lote. */
 export const PERIODOS_CAMPANAS = ["14", "30", "90", "todo"] as const;
-export type PeriodoCampanas = (typeof PERIODOS_CAMPANAS)[number];
+export type PeriodoCampanas = (typeof PERIODOS_CAMPANAS)[number] | "calendario";
 
 /** Las campañas de la cuenta analizada recortadas a un periodo (contado hacia atrás desde `hoy`). */
-export function campanasEnPeriodo(r: Pick<ResultadoMotor, "loteCuenta" | "hoy" | "campanas">, periodo: string | undefined): { periodo: PeriodoCampanas; desde: string; hasta: string; campanas: ResumenCampana[] } {
-  const p: PeriodoCampanas = (PERIODOS_CAMPANAS as ReadonlyArray<string>).includes(periodo ?? "") ? (periodo as PeriodoCampanas) : "todo";
+export function campanasEnPeriodo(r: Pick<ResultadoMotor, "loteCuenta" | "hoy" | "campanas"> & { periodo?: PeriodoElegido }, periodo: string | undefined): { periodo: PeriodoCampanas; desde: string; hasta: string; campanas: ResumenCampana[] } {
   const lote = r.loteCuenta;
+  /* sin pastilla elegida manda el calendario de la cabecera */
+  if (!(PERIODOS_CAMPANAS as ReadonlyArray<string>).includes(periodo ?? "") && r.periodo?.elegido) {
+    const { desde, hasta } = r.periodo;
+    return { periodo: "calendario", desde, hasta, campanas: resumirCampanas(lote.insights, { desde, hasta }, lote.embudo) };
+  }
+  const p: PeriodoCampanas = (PERIODOS_CAMPANAS as ReadonlyArray<string>).includes(periodo ?? "") ? (periodo as PeriodoCampanas) : "todo";
   const hasta = lote.meta.hasta < r.hoy ? lote.meta.hasta : r.hoy;
   if (p === "todo") return { periodo: p, desde: lote.meta.desde, hasta, campanas: r.campanas };
   const desde = sumarDias(hasta, -(Number(p) - 1));
@@ -521,7 +526,7 @@ export function comoNosFue(r: Pick<ResultadoMotor, "campanas" | "benchmarks" | "
 }
 
 /** Las campañas que uno escoja (ids), lado a lado, en el periodo elegido. */
-export function compararSeleccion(r: Pick<ResultadoMotor, "loteCuenta" | "hoy" | "campanas">, ids: ReadonlyArray<string>, periodo: string | undefined): ComparacionVarias {
+export function compararSeleccion(r: Pick<ResultadoMotor, "loteCuenta" | "hoy" | "campanas"> & { periodo?: PeriodoElegido }, ids: ReadonlyArray<string>, periodo: string | undefined): ComparacionVarias {
   const { campanas } = campanasEnPeriodo(r, periodo);
   const elegidas = ids.map((id) => campanas.find((c) => c.id === id)).filter((c): c is ResumenCampana => c !== undefined);
   return compararVarias(elegidas);
