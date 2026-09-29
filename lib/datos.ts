@@ -236,10 +236,14 @@ const ES_FECHA = /^\d{4}-\d{2}-\d{2}$/;
 /**
  * Recorta un lote a un periodo (calendario de la cabecera). Insights y embudo se filtran por fecha;
  * los desgloses NO: son los últimos 28 días agregados y no se pueden repartir. Sin fechas válidas
- * devuelve el mismo objeto.
+ * devuelve el mismo objeto. Si falta una punta, es la del lote: solo «desde» = hasta hoy (el
+ * calendario no guarda el final cuando es el último día, para que el panel siga avanzando).
  */
-export function filtrarPorRango(lote: LoteDatos, desde: string | undefined, hasta: string | undefined): LoteDatos {
-  if (!desde || !hasta || !ES_FECHA.test(desde) || !ES_FECHA.test(hasta)) return lote;
+export function filtrarPorRango(lote: LoteDatos, desdeElegido: string | undefined, hastaElegido: string | undefined): LoteDatos {
+  const valida = (f: string | undefined) => !!f && ES_FECHA.test(f);
+  if (!valida(desdeElegido) && !valida(hastaElegido)) return lote;
+  const desde = valida(desdeElegido) ? desdeElegido! : lote.meta.desde;
+  const hasta = valida(hastaElegido) ? hastaElegido! : lote.meta.hasta;
   let [d, h] = desde <= hasta ? [desde, hasta] : [hasta, desde];
   if (d < lote.meta.desde) d = lote.meta.desde;
   if (h > lote.meta.hasta) h = lote.meta.hasta;

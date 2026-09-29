@@ -334,6 +334,17 @@ describe("periodo elegido con calendario (desde/hasta)", () => {
     expect(inv.meta.desde).toBe("2026-08-01");
     expect(filtrarPorRango(lote, undefined, undefined)).toBe(lote);
   });
+  test("solo «desde» (el final es hoy y sigue avanzando): recorta desde esa fecha hasta el último día con datos", () => {
+    const r = filtrarPorRango(lote, "2026-08-01", undefined);
+    expect(r.meta.desde).toBe("2026-08-01");
+    expect(r.meta.hasta).toBe(lote.meta.hasta);
+    expect(r.insights.every((i) => i.fecha >= "2026-08-01")).toBe(true);
+    expect(r.insights.length).toBeLessThan(lote.insights.length);
+  });
+  test("el motor con solo «desde» marca el periodo como elegido", async () => {
+    const r = await correrMotor(lote, { desde: "2026-08-01" });
+    expect(r.periodo).toMatchObject({ desde: "2026-08-01", hasta: lote.meta.hasta, elegido: true });
+  });
   test("el motor con desde/hasta analiza solo ese periodo: hoy = hasta, ventanas dentro del rango, y lo dice en r.periodo", async () => {
     const r = await correrMotor(lote, { desde: "2026-08-01", hasta: "2026-08-28" });
     expect(r.periodo).toEqual({ desde: "2026-08-01", hasta: "2026-08-28", elegido: true, minimo: lote.meta.desde, maximo: lote.meta.hasta });
