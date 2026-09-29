@@ -75,6 +75,18 @@ describe("meta ads · mapear al contrato", () => {
 });
 
 describe("meta ads · manda la columna «Resultados»", () => {
+  test("anuncio de formulario sin columna Resultados: cuenta los formularios, no los chats (27 leads, no 7)", () => {
+    const acciones = [{ action_type: "lead", value: "27" }, { action_type: "onsite_conversion.messaging_conversation_started_7d", value: "7" }];
+    const r = mapearInsightMeta({ ...fila, objective: "OUTCOME_LEADS", optimization_goal: "LEAD_GENERATION", results: null, actions: acciones }, { cuentaId: "act_1", nivel: "anuncio", estado: "activo" });
+    expect(r.resultados).toBe(27);
+    expect(r.tipoResultado).toBe("lead");
+  });
+  test("anuncio de conversaciones sin columna Resultados: cuenta los chats", () => {
+    const acciones = [{ action_type: "lead", value: "3" }, { action_type: "onsite_conversion.messaging_conversation_started_7d", value: "12" }];
+    const r = mapearInsightMeta({ ...fila, objective: "OUTCOME_LEADS", optimization_goal: "CONVERSATIONS", results: null, actions: acciones }, { cuentaId: "act_1", nivel: "anuncio", estado: "activo" });
+    expect(r.resultados).toBe(12);
+    expect(r.conversacionesIniciadas).toBe(12);
+  });
   test("si Meta dice que el resultado son clics, no es un lead: resultados 0 y tipo clic", () => {
     const r = mapearInsightMeta({ ...fila, objective: "LINK_CLICKS", results: [{ indicator: "actions:link_click", values: [{ value: "523" }] }] }, { cuentaId: "act_1", nivel: "campana", estado: "activo" });
     expect(r.resultados).toBe(0);

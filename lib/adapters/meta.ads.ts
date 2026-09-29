@@ -22,6 +22,7 @@ export const CAMPOS_INSIGHTS = [
   "ad_id",
   "ad_name",
   "objective",
+  "optimization_goal",
   "results",
   "spend",
   "impressions",
@@ -53,6 +54,8 @@ export interface FilaInsight {
   ad_id?: string;
   ad_name?: string;
   objective?: string;
+  /** Para qué optimiza el conjunto (LEAD_GENERATION = formulario, CONVERSATIONS = chat…). */
+  optimization_goal?: string;
   /** La columna «Resultados» del administrador: [{ indicator, values: [{ value }] }]; null si no hubo. */
   results?: { indicator?: string; value?: string | number; values?: { value?: string | number }[] }[] | null;
   spend?: string | number;
@@ -113,11 +116,15 @@ const COMPRA = ["purchase", "offsite_conversion.fb_pixel_purchase", "omni_purcha
  * potenciales, el que aparezca (conversación o formulario); si busca ventas, las compras. Tráfico,
  * alcance e interacción no son frutos: `null` para que el motor no los mezcle.
  */
-export function resultadoDeObjetivo(objetivo: string | null | undefined, acciones: ReadonlyArray<AccionMeta> | undefined): { valor: number | null; tipo: string | null } {
+export function resultadoDeObjetivo(objetivo: string | null | undefined, acciones: ReadonlyArray<AccionMeta> | undefined, optimizacion?: string | null): { valor: number | null; tipo: string | null } {
   const o = String(objetivo ?? "").toUpperCase();
   const conv = primeraDe(acciones, CONVERSACION);
   const lead = primeraDe(acciones, LEAD);
   const compra = primeraDe(acciones, COMPRA);
+  /* lo que el conjunto busca manda: un formulario cuenta formularios aunque también lleguen chats */
+  const opt = String(optimizacion ?? "").toUpperCase();
+  if (/LEAD_GENERATION|QUALITY_LEAD/.test(opt)) return { valor: lead?.valor ?? 0, tipo: "lead" };
+  if (/CONVERSATIONS|REPLIES/.test(opt)) return { valor: conv?.valor ?? 0, tipo: "conversacion" };
   if (/MESSAGES|MESSAGING/.test(o)) return { valor: conv?.valor ?? 0, tipo: "conversacion" };
   if (/SALES|CONVERSIONS|CATALOG/.test(o)) {
     if (compra) return { valor: compra.valor, tipo: "compra" };
@@ -149,7 +156,7 @@ export function mapearInsightMeta(f: FilaInsight, ctx: ContextoInsight): Insight
   const padreId = ctx.nivel === "anuncio" ? (f.adset_id ?? null) : ctx.nivel === "conjunto" ? (f.campaign_id ?? null) : null;
   /* manda la columna «Resultados» de Meta; si no viene (sin resultados en el día), se deduce del objetivo */
   const oficial = Array.isArray(f.results) && f.results[0] ? resultadoMeta(f.results[0] as Parameters<typeof resultadoMeta>[0]) : null;
-  const res = oficial?.tipo ? { valor: esFruto(oficial.tipo) ? (oficial.valor ?? 0) : 0, tipo: oficial.tipo } : resultadoDeObjetivo(f.objective, f.actions);
+  const res = oficial?.tipo ? { valor: esFruto(oficial.tipo) ? (oficial.valor ?? 0) : 0, tipo: oficial.tipo } : resultadoDeObjetivo(f.objective, f.actions, f.optimization_goal);
   const reproducciones = accion(f.video_play_actions);
   const promedio = accionDecimal(f.video_avg_time_watched_actions);
   return {
