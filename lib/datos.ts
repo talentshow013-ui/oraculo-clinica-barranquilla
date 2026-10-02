@@ -38,6 +38,7 @@ import { analizarOrganico, type ResultadoOrganico } from "@/lib/organico";
 import { cargarWeb } from "@/lib/adapters/web.archivo";
 import { analizarWeb, type ResultadoWeb } from "@/lib/web";
 import { cargarKommo } from "@/lib/adapters/kommo.archivo";
+import { cargarAgenda, combinarConKommo } from "@/lib/adapters/agendapro";
 import { analizarPacientes, type ResultadoPacientes } from "@/lib/pacientes";
 import { estudiarReferencias, type EstudioReferencias } from "@/lib/audiences/referencias";
 import { analizarPublicos, type ResultadoPublicos } from "@/lib/audiences";
@@ -460,7 +461,7 @@ export async function correrMotor(lote?: LoteDatos, opciones: OpcionesMotor = {}
     referencias: estudiarReferencias(cargarReferencias(), hoy, cfg.radar),
     organico: analizarOrganico(lote ? null : cargarOrganico(), { desde: periodo.desde, hasta: periodo.hasta }, hoy),
     web: analizarWeb(lote ? null : cargarWeb(), { desde: periodo.desde, hasta: periodo.hasta }, cfg.ciudad.split(",")[0]!.trim()),
-    pacientes: analizarPacientes(lote ? null : cargarKommo(), { desde: periodo.desde, hasta: periodo.hasta }),
+    pacientes: analizarPacientes(lote ? null : combinarConKommo(cargarKommo(), cargarAgenda(), hoyBogota()), { desde: periodo.desde, hasta: periodo.hasta }),
     bitacora: loteMotor.bitacora?.length ? { reciente: resumirBitacora(loteMotor.bitacora, ctx.ventanas.reciente), periodo: resumirBitacora(loteMotor.bitacora, ctx.rango) } : null,
     comparativa: construirComparativa(ctx.nivelBase === "anuncio" ? ctx.filasAnuncio : ctx.nivelBase === "conjunto" ? ctx.filasConjunto : ctx.filasCampana, ctx.ventanas, loteMotor.rankings ?? []),
     maestras,

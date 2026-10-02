@@ -54,6 +54,7 @@ límites o privacidad. Sin jerga. Si algo no se puede, una línea y la alternati
 - `npm run tiktok:sincronizar` — pauta de TikTok (solo lectura) a `datos/tiktok.json`, fusionada con Meta al leer; `npm run organico:importar-tiktok -- <csv>` mete el orgánico de TikTok (CSV de TikTok Studio) en `datos/organico.json`.
 - `npm run googleads:conectar` (una vez) y `npm run googleads:sincronizar` — pauta de Google Ads (solo lectura) a `datos/googleads.json`, fusionada como cuenta «Google Ads · <id>».
 - `npm run kommo:sincronizar` — embudo de pacientes desde Kommo (CRM), solo lectura y agregado: leads, citas, asistencia y ventas por día a `datos/kommo.json`, sumados al embudo del panel.
+- `npm run agendapro:sincronizar` — la agenda real (AgendaPro): citas, asistencia, servicio, profesional y precio a `datos/agendapro.json`, sin datos de pacientes. Manda en citas y asistencia (reemplaza lo que Kommo deducía); Kommo sigue en leads.
 - `npm run web:sincronizar` — trae el sitio web (Google Analytics 4, solo lectura) a `datos/web.json`; pantalla `/web`, motor `lib/web/`.
 
 ## Comandos npm

@@ -5,6 +5,7 @@
  *
  *   Meta y Google Ads ........ cada 10 minutos (ayer y hoy)
  *   Kommo, orgánico y web .... cada 30 minutos
+ *   AgendaPro ................ cada hora
  *
  * El panel y el bot de Telegram leen los archivos en cada consulta: quedan en vivo solos.
  * El estado de cada fuente queda en `datos/estado-vivo.json` (última vez bien, último error).
@@ -37,6 +38,8 @@ const TAREAS: Tarea[] = [
   { nombre: "Meta", script: "meta:sincronizar", args: ["--dias", "2"], cadaMin: 10, activa: !!e.META_ORGANICO_TOKEN, alertas: true },
   { nombre: "Google Ads", script: "googleads:sincronizar", args: ["--dias", "2"], cadaMin: 10, activa: !!e.GOOGLE_ADS_REFRESH_TOKEN, alertas: true },
   { nombre: "Kommo", script: "kommo:sincronizar", args: ["--dias", "2"], cadaMin: 30, activa: !!e.KOMMO_TOKEN, alertas: false },
+  /* la agenda: citas creadas en 45 días (≈115 consultas), cada hora para no pasar el límite diario de AgendaPro */
+  { nombre: "AgendaPro", script: "agendapro:sincronizar", args: ["--dias", "45"], cadaMin: 60, activa: !!e.AGENDAPRO_USUARIO && !!e.AGENDAPRO_CLAVE, alertas: false },
   { nombre: "Orgánico", script: "organico:sincronizar", args: ["--dias", "3"], cadaMin: 30, activa: !!e.META_ORGANICO_TOKEN, alertas: false },
   { nombre: "Sitio web", script: "web:sincronizar", args: ["--dias", "3"], cadaMin: 30, activa: !!e.GA4_PROPIEDAD_ID, alertas: false },
 ];
