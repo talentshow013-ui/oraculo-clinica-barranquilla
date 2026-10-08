@@ -74,7 +74,7 @@ systemctl enable --now oraculo-vivo >/dev/null  # datos en vivo todo el día
 chmod +x /home/oraculo/oraculo/deploy/oraculo-diario.sh /home/oraculo/oraculo/deploy/oraculo-alertas.sh
 # 6:30 el resumen diario; 6:00, 12:00 y 18:00 las alertas (hora de Bogotá). Con /bin/bash delante:
 # si un git pull le quita el permiso de ejecución al script, el reloj sigue corriendo igual.
-sudo -u oraculo bash -c '( crontab -l 2>/dev/null | grep -v oraculo-diario | grep -v oraculo-alertas | grep -v CRON_TZ ; echo "CRON_TZ=America/Bogota"; echo "30 6 * * * /bin/bash /home/oraculo/oraculo/deploy/oraculo-diario.sh"; echo "0 6,12,18 * * * /bin/bash /home/oraculo/oraculo/deploy/oraculo-alertas.sh" ) | crontab -'
+sudo -u oraculo bash -c '( crontab -l 2>/dev/null | grep -v oraculo-diario | grep -v oraculo-alertas | grep -v oraculo-radar | grep -v CRON_TZ ; echo "CRON_TZ=America/Bogota"; echo "30 6 * * * /bin/bash /home/oraculo/oraculo/deploy/oraculo-diario.sh"; echo "0 6,12,18 * * * /bin/bash /home/oraculo/oraculo/deploy/oraculo-alertas.sh"; echo "0 3 * * 0 /bin/bash /home/oraculo/oraculo/deploy/oraculo-radar.sh" ) | crontab -'
 sleep 3
 curl -s -o /dev/null -w "  panel local: HTTP %{http_code} (401 = candado activo, correcto)\n" http://127.0.0.1:3000/panel
 
