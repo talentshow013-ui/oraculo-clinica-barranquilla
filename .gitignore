@@ -42,3 +42,7 @@ datos/alertas-avisadas.json
 datos/estado-vivo.json
 datos/mensajes.json
 datos/mensajes-por-avisar.json
+
+# llaves OAuth de Google (Drive): fuera del repositorio
+client_secret_*.json
+datos/drive-oauth.json
