@@ -8,6 +8,9 @@ import Cuadrantes from '@/components/graficas/cuadrantes'
 import { ES_INFERIOR, rankingEnPalabras } from '@/lib/adapters/meta.rankings'
 import Link from 'next/link'
 import { rutaAnuncio, urlAnuncioEnMeta } from '@/lib/format/rutas'
+import { cargarMensajes } from '@/lib/adapters/mensajes.archivo'
+import { buscarMensaje, esGenerico } from '@/lib/adapters/meta.mensajes'
+import { fechaHora } from '@/lib/format/fechas'
 
 const TONO: Record<string, Tono> = { escalar: 'bien', arreglar_gancho: 'ojo', arreglar_oferta: 'acento', matar: 'mal', sin_senal: 'neutro' }
 const PRIMERAS = 20
@@ -17,8 +20,8 @@ const PRIMERAS = 20
  * matriz; abajo una tabla de 7 columnas —las demás cifras van en un renglón chico bajo el
  * nombre— con las primeras 20 filas y «Ver los N». Antes eran 11 columnas y 95 filas.
  */
-export default async function Creativos({ searchParams }: { searchParams: Promise<{ anuncio?: string }> }) {
-  const { anuncio } = await searchParams
+export default async function Creativos({ searchParams }: { searchParams: Promise<{ anuncio?: string; mensaje?: string }> }) {
+  const { anuncio, mensaje } = await searchParams
   const r = await motor()
   const lista = [...r.creativos].sort((a, b) => (a.puesto ?? Infinity) - (b.puesto ?? Infinity))
   // Un hallazgo puede señalar un anuncio concreto (?anuncio=id): se muestra arriba, con todo su detalle, para que el enlace aterrice en él.
@@ -111,6 +114,45 @@ export default async function Creativos({ searchParams }: { searchParams: Promis
           {(['escalar', 'arreglar_gancho', 'arreglar_oferta', 'matar', 'sin_senal'] as const).map((c) => <li key={c} className="flex gap-2"><Etiqueta tono={TONO[c]} className="shrink-0">{CUADRANTES[c].nombre}</Etiqueta><span>{CUADRANTES[c].accion}</span></li>)}
         </ul>
       </Panel>
+      <MensajesWhatsApp buscado={mensaje} />
     </>
+  )
+}
+
+/**
+ * MENSAJES PREDETERMINADOS: lo que la persona envía con un toque al abrir WhatsApp desde el anuncio.
+ * Es lo primero que ve la asesora en Kommo: con el buscador se sabe de qué anuncio vino (entre todos,
+ * también los viejos y pausados). Se actualiza cada hora en la VPS.
+ */
+function MensajesWhatsApp({ buscado }: { buscado?: string }) {
+  const { capturadoEn, anuncios } = cargarMensajes()
+  if (!anuncios.length) return null
+  const activos = anuncios.filter((a) => a.estado === 'ACTIVE').sort((a, b) => a.cuenta.localeCompare(b.cuenta) || a.campana.localeCompare(b.campana))
+  const veces = new Map<string, number>()
+  for (const a of activos) if (a.predeterminado) veces.set(a.predeterminado, (veces.get(a.predeterminado) ?? 0) + 1)
+  const hallados = buscado ? buscarMensaje(anuncios, buscado).sort((a, b) => (a.estado === 'ACTIVE' ? -1 : 0) - (b.estado === 'ACTIVE' ? -1 : 0) || b.creado.localeCompare(a.creado)).slice(0, 20) : []
+  return (
+    <Panel id="mensajes" rotulo="WhatsApp · mensaje predeterminado de cada anuncio" titulo="¿De qué anuncio vino este mensaje de Kommo?" className="mt-3" retraso={240} extra={capturadoEn ? <p className="num text-[12px] text-texto-2">{anuncios.length.toLocaleString('es-CO')} anuncios revisados · traído {fechaHora(capturadoEn)}</p> : undefined}>
+      <form method="get" action="/creativos#mensajes" className="flex flex-wrap gap-2">
+        <input name="mensaje" defaultValue={buscado ?? ''} placeholder="Pega aquí el primer mensaje que llegó a Kommo" className="min-w-[260px] flex-1 rounded-[12px] bg-superficie-2 px-3 py-2 text-[13px] ring-1 ring-borde focus:outline-none focus:ring-2 focus:ring-acento" />
+        <button type="submit" className="rounded-full bg-marino px-4 py-2 text-[12.5px] font-medium text-white">Buscar</button>
+      </form>
+      {buscado && (
+        <div className="mt-3">
+          {hallados.length === 0 ? <p className="text-[13px] text-texto-2">Ningún anuncio tiene un mensaje parecido a «{buscado}». Prueba con menos palabras.</p> : (
+            <ul className="flex flex-col gap-1.5">{hallados.map((a) => <li key={a.id} className="rounded-[12px] bg-hielo px-3 py-2 text-[12.5px] ring-1 ring-borde"><span className="font-medium">{a.anuncio}</span> <span className="text-texto-3">· {a.cuenta} · campaña «{a.campana}» · {a.estado === 'ACTIVE' ? 'activo' : 'no activo'}{a.creado ? ` · creado ${a.creado}` : ''}</span><br /><span className="text-texto-2">«{a.predeterminado}»</span></li>)}</ul>
+          )}
+        </div>
+      )}
+      <details className="mt-3">
+        <summary className="cursor-pointer text-[12.5px] font-medium text-acento">Ver el mensaje de los {activos.length} anuncios activos</summary>
+        <ul className="mt-2 grid grid-cols-1 gap-1.5 md:grid-cols-2">
+          {activos.map((a) => {
+            const nota = !a.predeterminado ? 'sin mensaje predeterminado (hecho desde una publicación)' : esGenerico(a.predeterminado) ? 'genérico: no dice de qué anuncio viene' : (veces.get(a.predeterminado) ?? 0) > 1 ? `repetido en ${veces.get(a.predeterminado)} anuncios` : null
+            return <li key={a.id} className="rounded-[12px] bg-superficie-2 px-3 py-2 text-[12px] ring-1 ring-borde"><span className="font-medium">{a.anuncio}</span> <span className="text-texto-3">· {a.cuenta}</span><br />{a.predeterminado && <span className="text-texto-2">«{a.predeterminado}»</span>}{nota && <span className="ml-1"><Etiqueta tono={a.predeterminado ? 'ojo' : 'neutro'}>{nota}</Etiqueta></span>}</li>
+          })}
+        </ul>
+      </details>
+    </Panel>
   )
 }

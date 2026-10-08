@@ -40,3 +40,5 @@ datos/radar/
 datos/agendapro.json
 datos/alertas-avisadas.json
 datos/estado-vivo.json
+datos/mensajes.json
+datos/mensajes-por-avisar.json

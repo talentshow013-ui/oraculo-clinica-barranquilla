@@ -15,6 +15,8 @@
     "hoy": "tsx scripts/hoy.ts",
     "ritmo": "tsx scripts/ritmo.ts",
     "radios": "tsx scripts/radios.ts",
+    "mensajes": "tsx scripts/mensajes.ts",
+    "mensajes:sincronizar": "tsx scripts/mensajes-sincronizar.ts",
     "validar-lote": "tsx scripts/validar-lote.ts",
     "importar-meta": "tsx scripts/importar-meta.ts",
     "importar-radar": "tsx scripts/importar-radar.ts",
