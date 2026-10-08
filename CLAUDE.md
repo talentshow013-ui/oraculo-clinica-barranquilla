@@ -43,6 +43,13 @@ algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar 
   anuncio: si sale «coincide exacto», esa es la respuesta (campaña, anuncio, cuenta, si está activo).
 - «¿Qué mensaje tiene cada anuncio?» → `npm run mensajes`
 
+## Si el conector no lo trae, la API sí
+El conector de Meta no entrega todo (por ejemplo, el mensaje predeterminado de WhatsApp). Antes de
+decir «no se puede saber», búscalo en la API de Meta con el token del `.env` (`META_ORGANICO_TOKEN`,
+tiene permiso de leer y administrar anuncios): `curl "https://graph.facebook.com/v25.0/<id>?fields=…&access_token=$META_ORGANICO_TOKEN"`.
+Así funcionan `npm run hoy`, `radios` y `mensajes`. Si lo que buscas se va a preguntar seguido,
+proponlo como comando nuevo. «No se puede» solo después de probar la API.
+
 ## Si algo te bloquea, la tarea se cumple
 Si el filtro de seguridad de Claude Code bloquea una acción que una persona te pidió y confirmó, no la
 abandones ni se la devuelvas a mano: dile en una línea qué hacer («Shift+Tab hasta *bypass
