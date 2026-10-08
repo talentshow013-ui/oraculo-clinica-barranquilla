@@ -14,7 +14,7 @@
  *   npm run vivo            → el ciclo (lo corre el servicio)
  *   npm run vivo -- --una   → una sola pasada de todo (para probar)
  */
-import { spawn } from "node:child_process";
+import { npmAsync } from "@/lib/adapters/npm";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { cargarEnv } from "@/lib/adapters/env";
 
@@ -67,10 +67,10 @@ const guardarEstado = (s: Estado) => writeFileSync(RUTA_ESTADO, JSON.stringify(s
 /** Corre `npm run -s <script> -- <args>` con tiempo máximo; devuelve la salida o lanza con el error. */
 function correr(script: string, args: string[], maxMin = 8): Promise<string> {
   return new Promise((resolver, rechazar) => {
-    const p = spawn("npm", ["run", "-s", script, "--", ...args], { cwd: process.cwd(), env: process.env });
+    const p = npmAsync(["run", "-s", script, "--", ...args], { cwd: process.cwd() });
     let salida = "";
-    p.stdout.on("data", (d) => (salida += d));
-    p.stderr.on("data", (d) => (salida += d));
+    p.stdout?.on("data", (d) => (salida += d));
+    p.stderr?.on("data", (d) => (salida += d));
     const reloj = setTimeout(() => p.kill("SIGKILL"), maxMin * 60_000);
     p.on("close", (codigo) => {
       clearTimeout(reloj);

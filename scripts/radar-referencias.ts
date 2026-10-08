@@ -8,7 +8,7 @@
  *   npm run radar:referencias -- --max 40         → anuncios por consulta (40 por defecto)
  *   npm run radar:referencias -- --solo-importar  → no captura; importa lo que ya hay en datos/radar/
  */
-import { spawnSync } from "node:child_process";
+import { npmSync } from "@/lib/adapters/npm";
 import { mkdirSync } from "node:fs";
 import { CIUDADES_REFERENTES } from "@/config/radar-referencias";
 
@@ -22,7 +22,7 @@ const slug = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCa
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function npm(args: string[]): number {
-  const r = spawnSync("npm", ["run", "-s", ...args], { stdio: "inherit", env: process.env });
+  const r = npmSync(["run", "-s", ...args], { stdio: "inherit" });
   return r.status ?? 1;
 }
 

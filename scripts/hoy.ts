@@ -7,7 +7,7 @@
  *   npm run hoy -- --sin-traer → solo muestra lo que ya hay
  *   npm run hoy -- --json      → lo mismo en JSON
  */
-import { spawnSync } from "node:child_process";
+import { npmSync } from "@/lib/adapters/npm";
 import { cargarEnv } from "@/lib/adapters/env";
 import type { InsightRow } from "@/lib/adapters/types";
 import { cop, num } from "@/lib/format";
@@ -20,8 +20,8 @@ const json = process.argv.includes("--json");
 const aviso = (t: string) => (json ? process.stderr.write(`${t}\n`) : console.log(t));
 
 function traer(script: string, args: string[]): string {
-  const r = spawnSync("npm", ["run", "-s", script, "--", ...args], { encoding: "utf8", env: process.env });
-  return r.status === 0 ? "al día" : `falló (${(r.stderr || r.stdout).trim().split("\n").pop()?.slice(0, 120)})`;
+  const r = npmSync(["run", "-s", script, "--", ...args], { encoding: "utf8" });
+  return r.status === 0 ? "al día" : `falló (${String(r.stderr || r.stdout || r.error?.message || "").trim().split("\n").pop()?.slice(0, 120)})`;
 }
 
 async function main() {

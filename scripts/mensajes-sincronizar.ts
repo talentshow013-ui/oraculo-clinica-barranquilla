@@ -10,7 +10,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { cargarEnv } from "@/lib/adapters/env";
 import { cliente } from "@/config/cliente";
-import { componerAvisoMensajes, esGenerico, fusionarMensajes, mensajeDeCreativo, type AnuncioMensaje } from "@/lib/adapters/meta.mensajes";
+import { componerAvisoMensajes, esGenerico, fusionarMensajes, type AnuncioMensaje } from "@/lib/adapters/meta.mensajes";
+import { ESTADOS_TODOS, traerAnuncios } from "@/lib/adapters/meta.mensajes.api";
 import { enviarTelegram } from "@/lib/notificaciones/telegram";
 import { hoyBogota } from "@/lib/format/fechas";
 
@@ -22,46 +23,10 @@ if (!token) {
 }
 const RUTA_MENSAJES = "datos/mensajes.json";
 const RUTA_PENDIENTES = "datos/mensajes-por-avisar.json";
-const ESTADOS = ["ACTIVE", "PAUSED", "CAMPAIGN_PAUSED", "ADSET_PAUSED", "ARCHIVED", "DISAPPROVED", "WITH_ISSUES", "IN_PROCESS", "PENDING_REVIEW", "PREAPPROVED"];
-
-interface AnuncioApi {
-  id: string;
-  name: string;
-  effective_status: string;
-  created_time?: string;
-  campaign?: { name?: string };
-  creative?: Parameters<typeof mensajeDeCreativo>[0] & { effective_object_story_id?: string };
-}
-
-async function deCuenta(cuentaId: string, cuenta: string): Promise<AnuncioMensaje[]> {
-  const salida: AnuncioMensaje[] = [];
-  const p = new URLSearchParams({ fields: "name,effective_status,created_time,campaign{name},creative{object_story_id,effective_object_story_id,object_story_spec}", effective_status: JSON.stringify(ESTADOS), limit: "100", access_token: token! });
-  let url: string | undefined = `https://graph.facebook.com/v25.0/${cuentaId}/ads?${p}`;
-  for (let i = 0; url && i < 200; i++) {
-    let j: { data?: AnuncioApi[]; paging?: { next?: string }; error?: { message: string } } = {};
-    for (let intento = 1; intento <= 3; intento++) {
-      j = (await (await fetch(url)).json()) as typeof j;
-      if (!j.error) break;
-      await new Promise((r) => setTimeout(r, 3000 * intento));
-    }
-    if (j.error) throw new Error(`${cuenta}: ${j.error.message}`);
-    for (const a of j.data ?? []) {
-      const m = mensajeDeCreativo(a.creative);
-      salida.push({ id: a.id, cuenta, cuentaId, campana: a.campaign?.name ?? "", anuncio: a.name, estado: a.effective_status, creado: (a.created_time ?? "").slice(0, 10), predeterminado: m?.predeterminado ?? null, bienvenida: m?.bienvenida ?? null, desdePublicacion: !m && !!(a.creative?.object_story_id || a.creative?.effective_object_story_id), vistoPrimeraVez: "" });
-    }
-    url = j.paging?.next;
-  }
-  return salida;
-}
-
 async function main() {
   const hoy = hoyBogota();
-  const recientes: AnuncioMensaje[] = [];
-  for (const c of cliente.cuentasPublicitarias.filter((x) => (x.plataforma ?? "meta") === "meta")) {
-    const de = await deCuenta(c.id, c.nombre);
-    console.log(`  ${c.nombre}: ${de.length} anuncios · ${de.filter((a) => a.predeterminado).length} con mensaje`);
-    recientes.push(...de);
-  }
+  const cuentas = cliente.cuentasPublicitarias.filter((x) => (x.plataforma ?? "meta") === "meta");
+  const recientes = await traerAnuncios(token!, cuentas, ESTADOS_TODOS, (t) => console.log(t));
   const viejo = existsSync(RUTA_MENSAJES) ? (JSON.parse(readFileSync(RUTA_MENSAJES, "utf8")) as { anuncios: AnuncioMensaje[] }).anuncios : null;
   const { todos, nuevos } = fusionarMensajes(viejo, recientes, hoy);
   mkdirSync("datos", { recursive: true });
