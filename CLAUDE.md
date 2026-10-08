@@ -69,6 +69,7 @@ límites o privacidad. Sin jerga. Si algo no se puede, una línea y la alternati
 - `npm run hoy` — gasto y resultados de hoy y ayer, en vivo, por cuenta y campaña.
 - `npm run radios` — el «kilometraje» y la segmentación de cada conjunto activo (km, quiénes, edad, género, Advantage+), en vivo. Úsalo ANTES y DESPUÉS de cambiar un radio: nunca digas «ya quedó» sin mostrar esta salida.
 - `npm run mensajes` — el mensaje predeterminado de WhatsApp de cada anuncio activo (lo que la persona envía con un toque y la asesora ve primero en Kommo). `npm run mensajes -- --buscar "texto"` dice de qué anuncio viene un mensaje que llegó a Kommo; `--archivo` lo guarda para compartir.
+- `npm run drive -- listar | buscar "texto" | leer <id|enlace>` — Google Drive de solo lectura (guiones, precios, protocolos). Se conecta una vez con `npm run drive:conectar`. Nunca leas ni repitas datos de pacientes que aparezcan en un archivo.
 - `npm run radar:referencias` — rehace el radar de mercado con las ciudades de referencia (Medellín, Santa Marta, Cartagena, Miami, Los Ángeles, Houston, Nueva York; config/radar-referencias.ts). Barranquilla no entra.
 - `npm run ritmo` — «¿hoy viene lento?»: leads y gasto de hoy hasta la hora contra el promedio de 7 días a la misma hora, y la hora más floja.
 - `npm run meta:sincronizar` — pauta de Meta directo de la API a `datos/lote.json` (segundos). No existe `npm run oraculo:sincronizar`.
