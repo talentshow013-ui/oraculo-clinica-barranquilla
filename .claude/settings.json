@@ -182,11 +182,11 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "^mcp__meta[^_]*(_[^_]*)?__ads_(.*_delete.*|delete_.*|creative_delete|pixel_.*|catalog_.*)",
+        "matcher": "^mcp__meta[^_]*(_[^_]*)?__ads_(.*_delete.*|delete_.*|creative_delete|pixel_(?!.*(read|get|list)).*|catalog_(?!get_|list_|event_source_get).*)",
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"process.stderr.write('BLOQUEADO POR ORÁCULO: el agente es de SOLO LECTURA sobre Meta. No prende, apaga, crea ni edita pauta. Si la clínica quiere ese cambio, lo hace una persona en el administrador de anuncios.'); process.exit(2)\""
+            "command": "node -e \"process.stderr.write('BLOQUEADO POR ORÁCULO: borrar, píxeles y catálogos se hacen en el administrador de anuncios. Todo lo demás (pausar, activar, presupuestos, radios, crear, editar, subir creativos, públicos, borradores) SÍ se puede cuando la persona lo pide y dice sí: hazlo con el conector y comprueba con npm run radios o npm run hoy.'); process.exit(2)\""
           }
         ]
       }
