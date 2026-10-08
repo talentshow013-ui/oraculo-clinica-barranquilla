@@ -17,7 +17,8 @@ import { urlAnuncioBiblioteca } from '@/lib/competitive/enlaces'
 const TOPE_GANADORES = 12
 const TOPE_PERFILES = 15
 
-export default async function Competencia() {
+export default async function Competencia({ searchParams }: { searchParams: Promise<{ ciudad?: string }> }) {
+  const { ciudad } = await searchParams
   const r = await motor()
   const ra = r.radar
   if (ra.sinDatos) {
@@ -29,8 +30,15 @@ export default async function Competencia() {
     )
   }
   const activos = ra.perfiles.reduce((s, p) => s + p.anunciosActivos, 0)
-  const ganadores = [...ra.ganadores].sort((a, b) => b.diasCorriendo - a.diasCorriendo)
-  const perfiles = [...ra.perfiles].sort((a, b) => b.anuncios60 - a.anuncios60 || b.anunciosActivos - a.anunciosActivos || b.anunciosTotales - a.anunciosTotales)
+  /* referentes por ciudad: cada competidor sabe de dónde es; el filtro `?ciudad=` deja solo una */
+  const ciudadDe = new Map(r.lote.competidores.map((c) => [c.id, c.ciudad]))
+  const porCiudad = new Map<string, number>()
+  for (const p of ra.perfiles) porCiudad.set(ciudadDe.get(p.id) ?? 'Sin ciudad', (porCiudad.get(ciudadDe.get(p.id) ?? 'Sin ciudad') ?? 0) + 1)
+  const ciudades = [...porCiudad.entries()].sort((a, b) => b[1] - a[1])
+  const elegida = ciudad && porCiudad.has(ciudad) ? ciudad : null
+  const deLaCiudad = (id: string) => !elegida || (ciudadDe.get(id) ?? 'Sin ciudad') === elegida
+  const ganadores = ra.ganadores.filter((a) => deLaCiudad(a.competidorId)).sort((a, b) => b.diasCorriendo - a.diasCorriendo)
+  const perfiles = ra.perfiles.filter((p) => deLaCiudad(p.id)).sort((a, b) => b.anuncios60 - a.anuncios60 || b.anunciosActivos - a.anunciosActivos || b.anunciosTotales - a.anunciosTotales)
   // Cadencia = anuncios nuevos por semana en las últimas 4 semanas: el mercado entero contra la clínica.
   const cadenciaMercado = ra.cadencia.total
   const nombreServicio = (id: string) => r.cliente.servicios.find((s) => s.id === id)?.nombre ?? id
@@ -38,7 +46,14 @@ export default async function Competencia() {
   return (
     <>
       <Titulo rotulo="Radar de mercado · se ordena por longevidad, nunca por métricas estimadas" extra={<p className="num text-[12.5px] text-texto-2">{ra.perfiles.length} competidores · {r.lote.anunciosCompetencia.length} anuncios</p>}>Qué sostiene el mercado y dónde hay espacio</Titulo>
-      <Aviso tono="neutro" className="mb-3">Todo lo que se dice aquí sale de la Biblioteca de anuncios de Meta, que es pública. Cada anuncio, cada competidor y cada espacio vacío tiene su enlace «Verificar ↗» para abrirlo allá y comprobarlo. Del competidor solo se sabe cuánto lleva al aire y qué estructura usa; nunca su gasto ni su retorno.</Aviso>
+      <Aviso tono="neutro" className="mb-3">Todo lo que se dice aquí sale de la Biblioteca de anuncios de Meta, que es pública. Son referentes de otras ciudades (Medellín, Santa Marta, Cartagena, Miami y más de EE. UU.), no los vecinos: sirve para ver qué sostienen al aire las clínicas que van un paso adelante. Cada anuncio, cada competidor y cada espacio vacío tiene su enlace «Verificar ↗» para abrirlo allá y comprobarlo. Del competidor solo se sabe cuánto lleva al aire y qué estructura usa; nunca su gasto ni su retorno.</Aviso>
+      {ciudades.length > 1 && (
+        <nav aria-label="Ciudad de los referentes" className="mb-3 flex flex-wrap items-center gap-1.5">
+          <span className="rotulo mr-1">Referentes de</span>
+          <a href="/competencia" className={`rounded-full px-3 py-1 text-[12.5px] font-medium ring-1 ${!elegida ? 'bg-marino text-white ring-marino' : 'bg-superficie-2 text-texto-2 ring-borde hover:text-texto'}`}>Todas · {ra.perfiles.length}</a>
+          {ciudades.map(([c, n]) => <a key={c} href={`/competencia?ciudad=${encodeURIComponent(c)}`} className={`rounded-full px-3 py-1 text-[12.5px] font-medium ring-1 ${elegida === c ? 'bg-marino text-white ring-marino' : 'bg-superficie-2 text-texto-2 ring-borde hover:text-texto'}`}>{c} · {n}</a>)}
+        </nav>
+      )}
       <Grid cols={4}>
         <Kpi nombre="Ganadores probados (60+ días)" valor={ra.ganadores.length} unidad="numero" tono="acento" formula="Anuncios con 60 días o más al aire" porQueImporta="Nadie sostiene 60 días lo que no deja plata" retraso={40} />
         <Kpi nombre="Competidores activos" valor={ra.perfiles.filter((p) => p.anunciosActivos > 0).length} unidad="numero" formula={`Con al menos un anuncio al aire · ${num(activos)} anuncios activos en total`} retraso={80} />
@@ -51,7 +66,7 @@ export default async function Competencia() {
       </Grid>
 
       <Panel id="ganadores" className="mt-3" rotulo="Ganadores probados" titulo="Lo que lleva 60+ días al aire: cópiales la estructura, nunca el copy" retraso={200}>
-        <VerTodos total={ganadores.length} primeros={<Galeria lista={ganadores.slice(0, TOPE_GANADORES)} />} resto={ganadores.length > TOPE_GANADORES ? <Galeria lista={ganadores.slice(TOPE_GANADORES)} className="mt-3" /> : null} className={ganadores.length > TOPE_GANADORES ? '' : 'hidden'} />
+        <VerTodos total={ganadores.length} primeros={<Galeria lista={ganadores.slice(0, TOPE_GANADORES)} ciudadDe={ciudadDe} />} resto={ganadores.length > TOPE_GANADORES ? <Galeria lista={ganadores.slice(TOPE_GANADORES)} className="mt-3" ciudadDe={ciudadDe} /> : null} className={ganadores.length > TOPE_GANADORES ? '' : 'hidden'} />
       </Panel>
 
       <Panel id="perfiles" className="mt-3" rotulo="Quién pauta" titulo="Los competidores, por lo que sostienen al aire" retraso={260}>
@@ -89,7 +104,7 @@ export default async function Competencia() {
   )
 }
 
-function Galeria({ lista, className = '' }: { lista: AnuncioCompetidor[]; className?: string }) {
+function Galeria({ lista, className = '', ciudadDe }: { lista: AnuncioCompetidor[]; className?: string; ciudadDe: Map<string, string> }) {
   return (
     <div className={`grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6 ${className}`}>
       {lista.map((a, i) => (
@@ -100,7 +115,7 @@ function Galeria({ lista, className = '' }: { lista: AnuncioCompetidor[]; classN
             {!a.activo && <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10.5px] font-semibold text-texto-2">ya no corre</span>}
           </div>
           <div className="flex flex-1 flex-col gap-1 p-3">
-            <p className="truncate text-[12.5px] font-medium">{a.nombreAnunciante}</p>
+            <p className="truncate text-[12.5px] font-medium">{a.nombreAnunciante}{ciudadDe.get(a.competidorId) && <span className="font-normal text-texto-3"> · {ciudadDe.get(a.competidorId)}</span>}</p>
             <p className="line-clamp-2 text-[12px] leading-snug text-texto-2">{a.copy}</p>
             {/* el enlace se ve sin pasar el mouse; si no cabe junto al ángulo, baja a una segunda línea */}
             <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-1"><Etiqueta tono="acento">{ANGULOS[a.anguloDetectado]}</Etiqueta><a href={urlAnuncioBiblioteca(a.anuncioId)} target="_blank" rel="noopener noreferrer" className="shrink-0 whitespace-nowrap rounded-full bg-acento/[0.08] px-2 py-0.5 text-[11.5px] font-medium text-acento ring-1 ring-acento/20 transition hover:bg-acento/[0.14]" title="Abrir este anuncio en la Biblioteca de anuncios de Meta">Verificar ↗</a></div>
@@ -118,7 +133,7 @@ function Perfiles({ lista, sinCabecera = false }: { lista: PerfilCompetidor[]; s
       <tbody>
         {lista.map((p) => (
           <tr key={p.id}>
-            <Celda><span className="font-medium">{p.nombre}</span></Celda>
+            <Celda><span className="font-medium">{p.nombre}</span>{p.ciudad && <span className="ml-1.5 rounded-full bg-superficie-2 px-2 py-0.5 text-[10.5px] text-texto-2 ring-1 ring-borde">{p.ciudad}</span>}</Celda>
             <Celda num>{num(p.anunciosActivos)}</Celda>
             <Celda num tono={p.anuncios60 ? 'acento' : undefined}>{num(p.anuncios60)}</Celda>
             <Celda>{p.angulos[0] ? ANGULOS[p.angulos[0]] : '—'}</Celda>

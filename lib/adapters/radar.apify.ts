@@ -47,19 +47,19 @@ export interface ItemApify {
 
 /** Palabras clave → id de servicio de la configuración. Determinista y auditable. */
 const SERVICIOS: ReadonlyArray<[string, RegExp]> = [
-  ["toxina", /toxina|botox|bot[oó]x|botul/i],
-  ["acido", /[aá]cido hialur|hialur[oó]nico|labios|rinomodelaci/i],
+  ["toxina", /toxina|botox|bot[oó]x|botul|dysport|xeomin|neurotoxin|wrinkle relaxer/i],
+  ["acido", /[aá]cido hialur|hialur[oó]nico|labios|rinomodelaci|filler|hyaluronic|juvederm|restylane|lip flip/i],
   ["limpieza", /limpieza facial/i],
-  ["peeling", /peeling/i],
+  ["peeling", /peeling|chemical peel|hydrafacial/i],
   ["laser_facial", /l[aá]ser facial|rejuvenec.*l[aá]ser|manchas|trilaser|ultral[aá]ser/i],
-  ["depilacion", /depilaci[oó]n/i],
-  ["criolipolisis", /criolip|grasa localizada|lipo ?en ?fr[ií]o|lipoenfrio/i],
+  ["depilacion", /depilaci[oó]n|laser hair removal|hair removal/i],
+  ["criolipolisis", /criolip|grasa localizada|lipo ?en ?fr[ií]o|lipoenfrio|coolsculpting|cryolipolysis|fat freezing|fat freeze|body contouring|emsculpt|stubborn fat/i],
   ["lipoz360", /lipoz/i],
-  ["hifu", /hifu/i],
+  ["hifu", /hifu|ultherapy|ultraformer|ultrasound skin tightening/i],
   ["packdual", /pack ?dual/i],
   ["tensapro", /tensa ?pro/i],
-  ["radiofrecuencia", /radiofrecuencia|flacidez corporal/i],
-  ["prp", /plasma rico|prp\b|plaquetas/i],
+  ["radiofrecuencia", /radiofrecuencia|flacidez corporal|radiofrequency|radio frequency|morpheus8|rf microneedling/i],
+  ["prp", /plasma rico|prp\b|plaquetas|platelet|vampire facial/i],
 ];
 
 function fecha(iso: string | null | undefined, epoch: number | null | undefined): string | null {

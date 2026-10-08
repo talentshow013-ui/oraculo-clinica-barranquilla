@@ -13,8 +13,8 @@ function normalizar(texto: string): string {
     .toLowerCase();
 }
 
-/** Palabras/expresiones por ángulo. Se buscan sobre texto normalizado sin acentos. */
-export const DICCIONARIO_ANGULOS: Record<Exclude<Angulo, "sin_clasificar">, ReadonlyArray<string>> = {
+/** Español. Se buscan sobre texto normalizado sin acentos. */
+const DICCIONARIO_ES: Record<Exclude<Angulo, "sin_clasificar">, ReadonlyArray<string>> = {
   autoridad_medica: ["medico", "medica", "doctor", "doctora", "dr.", "dra.", "certificad", "especialista", "anos de experiencia", "dermatolog", "cirujano", "profesional de la salud", "avalado", "invima"],
   prueba_social: ["pacientes atendidos", "mas de", "miles de", "cientos de", "nos eligen", "recomendad", "calificacion", "estrellas", "resenas", "opiniones", "clientes felices"],
   aspiracional: ["rejuvenec", "luce", "radiante", "la mejor version", "sientete", "piel de porcelana", "cuerpo que", "confianza", "brilla", "renuev", "transforma"],
@@ -29,6 +29,31 @@ export const DICCIONARIO_ANGULOS: Record<Exclude<Angulo, "sin_clasificar">, Read
   testimonio: ["nos cuenta", "su experiencia", "testimonio", "me cambio", "volveria", "recomiendo", "\"", "'", "dice", "opinion de"],
   detras_de_camara: ["detras de camara", "asi trabajamos", "nuestro equipo", "un dia en", "conoce la clinica", "nuestras instalaciones", "en vivo", "backstage", "asi se hace"],
 };
+
+/**
+ * Inglés: los referentes de Miami y otras ciudades de EE. UU. anuncian en inglés. Frases completas
+ * (no palabras sueltas) para no confundir ángulos.
+ */
+const DICCIONARIO_EN: Record<Exclude<Angulo, "sin_clasificar">, ReadonlyArray<string>> = {
+  autoridad_medica: ["board-certified", "board certified", "licensed", "medical director", "md ", "years of experience", "physician", "dermatologist", "plastic surgeon", "fda-cleared", "fda cleared", "medical grade", "our doctors", "nurse practitioner"],
+  prueba_social: ["thousands of", "hundreds of", "happy clients", "happy patients", "5-star", "five star", "reviews", "rated", "trusted by", "voted best", "best in"],
+  aspiracional: ["glow", "glowing", "radiant", "youthful", "confidence", "feel confident", "best version", "turn back time", "look younger", "rejuvenat", "transform your", "sculpt your"],
+  objecion_seguridad: ["safe and", "non-invasive", "noninvasive", "minimally invasive", "without surgery", "no surgery", "surgery-free", "fda approved", "fda-approved", "sterile", "side effects"],
+  objecion_dolor: ["painless", "no pain", "pain-free", "pain free", "no needles", "comfortable", "gentle", "numbing"],
+  objecion_tiempo: ["no downtime", "zero downtime", "back to your routine", "same day", "lunch break", "lunchtime", "results in minutes", "quick session", "30 minute", "in just one session"],
+  objecion_precio: ["financing", "payment plan", "0% interest", "affordable", "starting at $", "as low as", "pay over time", "monthly payments", "klarna", "cherry", "care credit", "carecredit"],
+  educativo: ["did you know", "how it works", "what is", "what to expect", "myths", "the truth about", "learn", "difference between", "why "],
+  promocion: ["% off", "percent off", "discount", "special offer", "free consultation", "free consult", "bogo", "buy one", "deal", "package", "giveaway", "gift card", "promo", "save $", "$"],
+  urgencia: ["limited spots", "limited time", "book now", "last chance", "ends soon", "ends this", "only this week", "hurry", "while supplies last", "few spots", "today only", "act now", "spots left"],
+  antes_despues: ["before and after", "before & after", "before/after", "real results", "see the difference", "see the transformation", "results speak"],
+  testimonio: ["her story", "his story", "client story", "testimonial", "i love", "changed my", "i feel", "recommend", "says", "review from"],
+  detras_de_camara: ["behind the scenes", "meet our team", "meet the team", "a day at", "our clinic", "our studio", "tour our", "inside our", "live from"],
+};
+
+/** Palabras por ángulo en español e inglés, juntas. */
+export const DICCIONARIO_ANGULOS: Record<Exclude<Angulo, "sin_clasificar">, ReadonlyArray<string>> = Object.fromEntries(
+  (Object.keys(DICCIONARIO_ES) as Exclude<Angulo, "sin_clasificar">[]).map((a) => [a, [...DICCIONARIO_ES[a], ...DICCIONARIO_EN[a]]]),
+) as unknown as Record<Exclude<Angulo, "sin_clasificar">, ReadonlyArray<string>>;
 
 export interface ResultadoAngulo {
   angulo: Angulo;
@@ -78,10 +103,10 @@ export function clasificarAngulo(texto: string): ResultadoAngulo {
 export function nivelConscienciaTexto(texto: string): 1 | 2 | 3 | 4 | 5 {
   const t = normalizar(texto);
   const tiene = (...xs: string[]) => xs.some((x) => t.includes(normalizar(x)));
-  if (tiene("$", "descuento", "promocion", "solo hoy", "agenda ya", "cupos")) return 5;
-  if (tiene("toxina", "botox", "acido hialuronico", "laser", "criolipolisis", "radiofrecuencia", "plasma", "peeling")) return 4;
-  if (tiene("tratamiento", "procedimiento", "solucion", "valoracion", "consulta")) return 3;
-  if (tiene("sabias que", "te explicamos", "por que", "arrugas", "manchas", "flacidez", "lineas de expresion")) return 2;
+  if (tiene("$", "descuento", "promocion", "solo hoy", "agenda ya", "cupos", "% off", "book now", "limited", "special offer", "today only")) return 5;
+  if (tiene("toxina", "botox", "acido hialuronico", "laser", "criolipolisis", "radiofrecuencia", "plasma", "peeling", "filler", "coolsculpting", "cryolipolysis", "hifu", "ultherapy", "fat freezing", "body contouring")) return 4;
+  if (tiene("tratamiento", "procedimiento", "solucion", "valoracion", "consulta", "treatment", "procedure", "consultation", "solution")) return 3;
+  if (tiene("sabias que", "te explicamos", "por que", "arrugas", "manchas", "flacidez", "lineas de expresion", "did you know", "wrinkles", "sagging", "dark spots", "stubborn fat")) return 2;
   return 1;
 }
 

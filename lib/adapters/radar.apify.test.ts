@@ -111,3 +111,18 @@ describe("mapearRadarApify", () => {
     expect(r.competidores[0]?.serviciosConocidos).toContain("toxina");
   });
 });
+
+describe("detectarServicio en inglés", () => {
+  test("los servicios de la clínica por su nombre en EE. UU.", async () => {
+    const { detectarServicio } = await import("./radar.apify");
+    expect(detectarServicio("CoolSculpting fat freezing in Miami")).toBe("criolipolisis");
+    expect(detectarServicio("Cryolipolysis body contouring")).toBe("criolipolisis");
+    expect(detectarServicio("Ultherapy and HIFU skin tightening")).toBe("hifu");
+    expect(detectarServicio("Laser hair removal, all summer")).toBe("depilacion");
+    expect(detectarServicio("Lip filler and dermal fillers")).toBe("acido");
+    expect(detectarServicio("Botox $10 a unit")).toBe("toxina");
+    expect(detectarServicio("Chemical peel for glowing skin")).toBe("peeling");
+    expect(detectarServicio("Radiofrequency skin tightening for the body")).toBe("radiofrecuencia");
+    expect(detectarServicio("Great new restaurant")).toBeNull();
+  });
+});

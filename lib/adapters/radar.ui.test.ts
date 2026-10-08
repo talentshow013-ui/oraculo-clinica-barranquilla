@@ -186,3 +186,18 @@ describe("mapearRadarUI — agrupa competidores desde tarjetas de la interfaz", 
     expect(r.excluidos).toBe(1);
   });
 });
+
+describe("varias ciudades de referencia en un solo radar", () => {
+  const t = (id: string, pagina: string, anunciante: string, copy: string) => ({
+    texto: `Identificador de la biblioteca: ${id}\nInició la publicación el 1 sept 2026\nPublicidad\n${anunciante}\n${copy}\nEnviar mensaje de WhatsApp`,
+    imagenes: [], videosPoster: [], enlaces: [], paginaHref: `https://www.facebook.com/${pagina}/`, plataformas: ["facebook"],
+  });
+  test("cada captura pone su ciudad; el mismo anunciante en dos ciudades se queda una vez", async () => {
+    const { mapearRadarUI, combinarRadares } = await import("./radar.ui");
+    const med = mapearRadarUI([t("111111111", "clinicamed", "Clínica Med", "Criolipólisis en Medellín con 30 % de descuento"), t("222222222", "otra", "Otra", "Hifu facial en Medellín")], "2026-10-08", {}, "Medellín");
+    const mia = mapearRadarUI([t("333333333", "miamispa", "Miami Spa", "CoolSculpting in Miami, 50% off"), t("111111111", "clinicamed", "Clínica Med", "Criolipólisis en Medellín con 30 % de descuento")], "2026-10-08", {}, "Miami");
+    const r = combinarRadares([med, mia]);
+    expect(r.competidores.map((c) => `${c.id}:${c.ciudad}`).sort()).toEqual(["clinicamed:Medellín", "miamispa:Miami", "otra:Medellín"]);
+    expect(r.anunciosCompetencia.map((a) => a.anuncioId).sort()).toEqual(["111111111", "222222222", "333333333"]);
+  });
+});

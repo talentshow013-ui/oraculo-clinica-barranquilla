@@ -34,3 +34,9 @@ public/organico/
 # embudo de pacientes (Kommo)
 datos/kommo.json
 config/kommo.json
+
+# capturas del radar por ciudad (anuncios públicos de terceros)
+datos/radar/
+datos/agendapro.json
+datos/alertas-avisadas.json
+datos/estado-vivo.json

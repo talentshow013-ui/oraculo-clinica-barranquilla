@@ -5,6 +5,7 @@
  *   npm run radar:capturar -- --q "clínica estética barranquilla"          (descubrir quién pauta)
  *   npm run radar:capturar -- --pagina 123456789012345 --nombre "Dermalux"  (seguir a un competidor)
  *   opciones: --pais CO --estado active|inactive|all --max 60 --salida datos/radar-ui.json --sin-imagenes --visible
+ *             --ciudad "Medellín"   (la ciudad que se anota en el archivo; el importador la pone en cada competidor)
  *
  * Por qué así: la API oficial no expone comerciales fuera de la UE; Apify cobra por resultado.
  * Este capturador es gratis y guarda los creativos en public/radar/ para que el panel los muestre.
@@ -27,6 +28,7 @@ const flag = (nombre: string) => process.argv.includes(nombre);
 const q = arg("--q");
 const pagina = arg("--pagina");
 const pais = (arg("--pais", "CO") ?? "CO").toUpperCase();
+const ciudad = arg("--ciudad");
 const estado = arg("--estado", "active") ?? "active";
 const max = Number(arg("--max", "60"));
 const salida = resolve(process.cwd(), arg("--salida", "datos/radar-ui.json") ?? "datos/radar-ui.json");
@@ -192,7 +194,7 @@ async function main() {
   const hoy = hoyBogota();
   const anuncios = tarjetas.map((t) => mapearTarjetaUI(t, hoy)).filter((a) => a.anuncioId);
   const paginas = new Set(anuncios.map((a) => a.competidorId));
-  const previo = existsSync(salida) ? (JSON.parse(readFileSync(salida, "utf8")) as { tarjetas?: TarjetaCruda[] }) : {};
+  const previo = existsSync(salida) ? (JSON.parse(readFileSync(salida, "utf8")) as { tarjetas?: TarjetaCruda[]; ciudad?: string }) : {};
   const fusion = new Map<string, TarjetaCruda>();
   for (const t of previo.tarjetas ?? []) {
     const id = t.texto.match(/(?:identificador de la biblioteca|library id)\s*:?\s*(\d{6,})/i)?.[1];
@@ -202,7 +204,7 @@ async function main() {
     const id = t.texto.match(/(?:identificador de la biblioteca|library id)\s*:?\s*(\d{6,})/i)?.[1];
     if (id) fusion.set(id, t);
   }
-  writeFileSync(salida, JSON.stringify({ capturadoEn: `${hoy}`, consulta: { q, pagina, pais, estado }, tarjetas: [...fusion.values()] }, null, 2), "utf8");
+  writeFileSync(salida, JSON.stringify({ capturadoEn: `${hoy}`, ciudad: ciudad ?? previo.ciudad ?? null, pais, consulta: { q, pagina, pais, estado }, tarjetas: [...fusion.values()] }, null, 2), "utf8");
   console.log(`OK · ${anuncios.length} anuncios de ${paginas.size} páginas en esta corrida · ${fusion.size} acumulados → ${salida}`);
   console.log(`Siguiente: npm run importar-radar -- ${salida.replace(process.cwd() + "\\", "").replace(/\\/g, "/")}`);
   for (const a of anuncios.slice(0, 8)) {

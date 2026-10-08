@@ -280,3 +280,22 @@ export function mapearRadarUI(tarjetas: ReadonlyArray<TarjetaCruda>, hoy: string
   }));
   return { competidores, anunciosCompetencia: anuncios, descartados, excluidos };
 }
+
+/**
+ * Junta varias capturas (una por ciudad) en un solo radar. Cada competidor conserva la ciudad de la
+ * captura donde apareció primero; un anuncio que sale en dos búsquedas se cuenta una vez.
+ */
+export function combinarRadares(radares: ReadonlyArray<RadarUIMapeado>): RadarUIMapeado {
+  const competidores = new Map<string, Competidor>();
+  const anuncios = new Map<string, AnuncioCompetidor>();
+  let descartados = 0;
+  let excluidos = 0;
+  for (const r of radares) {
+    descartados += r.descartados;
+    excluidos += r.excluidos;
+    for (const c of r.competidores) if (!competidores.has(c.id)) competidores.set(c.id, c);
+    for (const a of r.anunciosCompetencia) if (!anuncios.has(a.anuncioId)) anuncios.set(a.anuncioId, a);
+  }
+  /* un anunciante que solo quedó con anuncios repetidos de otra ciudad no se pierde: sus anuncios ya están */
+  return { competidores: [...competidores.values()], anunciosCompetencia: [...anuncios.values()], descartados, excluidos };
+}

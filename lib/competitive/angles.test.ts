@@ -67,3 +67,30 @@ describe("riesgoPolitica — publicidad de salud", () => {
     expect(riesgoPolitica("Te explicamos cómo funciona la toxina botulínica y qué esperar de la valoración").riesgo).toBe(false);
   });
 });
+
+describe("anuncios en inglés (referentes de Miami y otras ciudades de EE. UU.)", () => {
+  test("promoción", () => {
+    expect(clasificarAngulo("50% off CoolSculpting this month only. Special offer, free consultation").angulo).toBe("promocion");
+  });
+  test("urgencia", () => {
+    expect(clasificarAngulo("Limited spots left! Book now before this week ends, last chance").angulo).toBe("urgencia");
+  });
+  test("antes y después", () => {
+    expect(clasificarAngulo("Before and after: see the real results of our fat freezing patients").angulo).toBe("antes_despues");
+  });
+  test("objeción de dolor", () => {
+    expect(clasificarAngulo("Painless treatment, no needles, comfortable and gentle").angulo).toBe("objecion_dolor");
+  });
+  test("objeción de tiempo", () => {
+    expect(clasificarAngulo("No downtime. Back to your routine the same day, results in minutes").angulo).toBe("objecion_tiempo");
+  });
+  test("autoridad médica", () => {
+    expect(clasificarAngulo("Board-certified doctors with 15 years of experience, FDA-cleared technology").angulo).toBe("autoridad_medica");
+  });
+  test("nivel de consciencia en inglés", () => {
+    expect(nivelConscienciaTexto("Only $99 today, book now")).toBe(5);
+    expect(nivelConscienciaTexto("Botox and fillers by experts")).toBe(4);
+    expect(nivelConscienciaTexto("Free consultation for your treatment")).toBe(3);
+    expect(nivelConscienciaTexto("Tired of wrinkles and sagging skin?")).toBe(2);
+  });
+});

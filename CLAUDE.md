@@ -34,6 +34,12 @@ Kommo, orgánico y web cada 30; avisa por Telegram cada alerta nueva al momento.
 leen los archivos en cada consulta. Estado de cada fuente: `datos/estado-vivo.json`. Si necesitas
 algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar -- --hoy`).
 
+## Si algo te bloquea, la tarea se cumple
+Si el filtro de seguridad de Claude Code bloquea una acción que una persona te pidió y confirmó, no la
+abandones ni se la devuelvas a mano: dile en una línea qué hacer («Shift+Tab hasta *bypass
+permissions* y repito») y, cuando lo haga, la ejecutas y la compruebas con el comando de lectura
+(`npm run radios`, `npm run hoy`). Una tarea pedida termina con la comprobación, no con una disculpa.
+
 ## Automejora
 Cuando te digan «automejórate», «aprende de tus errores», «voy a compactar» o «guarda en memoria»:
 repasa la conversación, escribe cada lección en `docs/LECCIONES.md` (fecha · qué pasó · regla),
@@ -45,6 +51,8 @@ límites o privacidad. Sin jerga. Si algo no se puede, una línea y la alternati
 
 ## Comandos del proyecto (skills en `.claude/skills/`)
 - `npm run hoy` — gasto y resultados de hoy y ayer, en vivo, por cuenta y campaña.
+- `npm run radios` — el «kilometraje» y la segmentación de cada conjunto activo (km, quiénes, edad, género, Advantage+), en vivo. Úsalo ANTES y DESPUÉS de cambiar un radio: nunca digas «ya quedó» sin mostrar esta salida.
+- `npm run radar:referencias` — rehace el radar de mercado con las ciudades de referencia (Medellín, Santa Marta, Cartagena, Miami, Los Ángeles, Houston, Nueva York; config/radar-referencias.ts). Barranquilla no entra.
 - `npm run ritmo` — «¿hoy viene lento?»: leads y gasto de hoy hasta la hora contra el promedio de 7 días a la misma hora, y la hora más floja.
 - `npm run meta:sincronizar` — pauta de Meta directo de la API a `datos/lote.json` (segundos). No existe `npm run oraculo:sincronizar`.
 - `/oraculo-sincronizar` — trae campañas (Meta), agenda y radar a `datos/lote.json`.

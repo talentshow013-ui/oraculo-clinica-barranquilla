@@ -171,6 +171,8 @@ export interface PerfilCompetidor {
   anuncios60: number;
   seguidoresPagina: number | null;
   urlPagina: string | null;
+  /** Ciudad de referencia donde se encontró (Medellín, Miami…); null si la captura no la trae. */
+  ciudad: string | null;
   angulos: Angulo[];
   servicios: string[];
   usaPrecio: number;
@@ -195,6 +197,7 @@ export function perfilar(competidorId: string, anuncios: ReadonlyArray<AnuncioCo
     anuncios60: ganadores,
     seguidoresPagina: ficha?.seguidoresPagina ?? null,
     urlPagina: ficha?.urlPagina ?? null,
+    ciudad: ficha?.ciudad ?? null,
     angulos: [...new Set(propios.map((a) => a.anguloDetectado))],
     servicios: [...new Set(propios.map((a) => a.servicioDetectado).filter((s): s is string => s !== null))],
     usaPrecio: propios.filter((a) => a.usaPrecio).length,
