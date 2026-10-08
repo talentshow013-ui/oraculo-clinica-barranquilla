@@ -34,6 +34,15 @@ Kommo, orgánico y web cada 30; avisa por Telegram cada alerta nueva al momento.
 leen los archivos en cada consulta. Estado de cada fuente: `datos/estado-vivo.json`. Si necesitas
 algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar -- --hoy`).
 
+## Preguntas típicas → comando (respóndelas de una, sin preguntar nada)
+- «¿Cuánto llevamos hoy / ayer?» → `npm run hoy`
+- «¿Hoy viene lento?» → `npm run ritmo`
+- «¿Qué kilometraje tienen los conjuntos?» o después de cambiar un radio → `npm run radios`
+- Te pegan un mensaje y preguntan «¿a qué campaña / anuncio pertenece este mensaje (predeterminado)?» →
+  `npm run mensajes -- --buscar "<el mensaje tal cual, CON sus emojis>"`. El emoji es la marca de cada
+  anuncio: si sale «coincide exacto», esa es la respuesta (campaña, anuncio, cuenta, si está activo).
+- «¿Qué mensaje tiene cada anuncio?» → `npm run mensajes`
+
 ## Si algo te bloquea, la tarea se cumple
 Si el filtro de seguridad de Claude Code bloquea una acción que una persona te pidió y confirmó, no la
 abandones ni se la devuelvas a mano: dile en una línea qué hacer («Shift+Tab hasta *bypass

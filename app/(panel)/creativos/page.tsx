@@ -9,7 +9,7 @@ import { ES_INFERIOR, rankingEnPalabras } from '@/lib/adapters/meta.rankings'
 import Link from 'next/link'
 import { rutaAnuncio, urlAnuncioEnMeta } from '@/lib/format/rutas'
 import { cargarMensajes } from '@/lib/adapters/mensajes.archivo'
-import { buscarMensaje, esGenerico } from '@/lib/adapters/meta.mensajes'
+import { buscarMensajeExacto, esGenerico } from '@/lib/adapters/meta.mensajes'
 import { fechaHora } from '@/lib/format/fechas'
 
 const TONO: Record<string, Tono> = { escalar: 'bien', arreglar_gancho: 'ojo', arreglar_oferta: 'acento', matar: 'mal', sin_senal: 'neutro' }
@@ -130,7 +130,9 @@ function MensajesWhatsApp({ buscado }: { buscado?: string }) {
   const activos = anuncios.filter((a) => a.estado === 'ACTIVE').sort((a, b) => a.cuenta.localeCompare(b.cuenta) || a.campana.localeCompare(b.campana))
   const veces = new Map<string, number>()
   for (const a of activos) if (a.predeterminado) veces.set(a.predeterminado, (veces.get(a.predeterminado) ?? 0) + 1)
-  const hallados = buscado ? buscarMensaje(anuncios, buscado).sort((a, b) => (a.estado === 'ACTIVE' ? -1 : 0) - (b.estado === 'ACTIVE' ? -1 : 0) || b.creado.localeCompare(a.creado)).slice(0, 20) : []
+  const busqueda = buscado ? buscarMensajeExacto(anuncios, buscado) : { exactos: [], parecidos: [] }
+  const exacto = busqueda.exactos.length > 0
+  const hallados = (exacto ? busqueda.exactos : busqueda.parecidos).sort((a, b) => (a.estado === 'ACTIVE' ? -1 : 0) - (b.estado === 'ACTIVE' ? -1 : 0) || b.creado.localeCompare(a.creado)).slice(0, 20)
   return (
     <Panel id="mensajes" rotulo="WhatsApp · mensaje predeterminado de cada anuncio" titulo="¿De qué anuncio vino este mensaje de Kommo?" className="mt-3" retraso={240} extra={capturadoEn ? <p className="num text-[12px] text-texto-2">{anuncios.length.toLocaleString('es-CO')} anuncios revisados · traído {fechaHora(capturadoEn)}</p> : undefined}>
       <form method="get" action="/creativos#mensajes" className="flex flex-wrap gap-2">
@@ -139,6 +141,7 @@ function MensajesWhatsApp({ buscado }: { buscado?: string }) {
       </form>
       {buscado && (
         <div className="mt-3">
+          {hallados.length > 0 && <p className="mb-2 text-[12.5px] text-texto-2">{exacto ? <>Coincide <b>exacto</b>, con sus emojis.</> : <>No hay uno exacto: copia el mensaje con sus emojis, que son la marca de cada anuncio. Estos se parecen:</>}</p>}
           {hallados.length === 0 ? <p className="text-[13px] text-texto-2">Ningún anuncio tiene un mensaje parecido a «{buscado}». Prueba con menos palabras.</p> : (
             <ul className="flex flex-col gap-1.5">{hallados.map((a) => <li key={a.id} className="rounded-[12px] bg-hielo px-3 py-2 text-[12.5px] ring-1 ring-borde"><span className="font-medium">{a.anuncio}</span> <span className="text-texto-3">· {a.cuenta} · campaña «{a.campana}» · {a.estado === 'ACTIVE' ? 'activo' : 'no activo'}{a.creado ? ` · creado ${a.creado}` : ''}</span><br /><span className="text-texto-2">«{a.predeterminado}»</span></li>)}</ul>
           )}

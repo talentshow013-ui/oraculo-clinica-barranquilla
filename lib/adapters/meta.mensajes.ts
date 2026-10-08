@@ -115,3 +115,19 @@ export function componerAvisoMensajes(nuevos: ReadonlyArray<{ anuncio: string; c
   if (nuevos.length > 15) L.push(`… y ${nuevos.length - 15} más (npm run mensajes).`);
   return L.join("\n");
 }
+
+/** Los emojis del mensaje, en orden (sin modificadores invisibles): la marca que distingue un anuncio de otro. */
+export function emojisDe(t: string): string {
+  return (t.match(/\p{Extended_Pictographic}/gu) ?? []).join("");
+}
+
+/**
+ * Busca primero el mensaje EXACTO (mismo texto y mismos emojis; espacios, tildes y mayúsculas no
+ * importan): los anuncios de la clínica se distinguen por el emoji. Si no hay exacto, los parecidos.
+ */
+export function buscarMensajeExacto<T extends { predeterminado: string | null }>(anuncios: ReadonlyArray<T>, texto: string): { exactos: T[]; parecidos: T[] } {
+  const firma = (t: string) => `${normalizarMensaje(t)}|${emojisDe(t)}`;
+  const buscada = firma(texto);
+  const exactos = anuncios.filter((a) => a.predeterminado && firma(a.predeterminado) === buscada);
+  return { exactos, parecidos: exactos.length ? [] : buscarMensaje(anuncios, texto) };
+}

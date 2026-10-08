@@ -11,7 +11,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { cargarEnv } from "@/lib/adapters/env";
-import { buscarMensaje, esGenerico, type AnuncioMensaje } from "@/lib/adapters/meta.mensajes";
+import { buscarMensajeExacto, esGenerico, type AnuncioMensaje } from "@/lib/adapters/meta.mensajes";
 import { hoyBogota, sumarDias } from "@/lib/format/fechas";
 
 cargarEnv();
@@ -38,8 +38,11 @@ function main() {
   const todos = cargar();
   const buscar = arg("--buscar");
   if (buscar) {
-    const r = buscarMensaje(todos, buscar).sort((a, b) => (a.estado === "ACTIVE" ? -1 : 0) - (b.estado === "ACTIVE" ? -1 : 0) || b.creado.localeCompare(a.creado));
-    console.log(r.length ? `«${buscar}» es el mensaje de ${r.length} anuncio(s) (de ${todos.length} revisados):` : `Ningún anuncio (de ${todos.length}) tiene un mensaje parecido a «${buscar}». Prueba con menos palabras.`);
+    const orden = (a: AnuncioMensaje, b: AnuncioMensaje) => (a.estado === "ACTIVE" ? -1 : 0) - (b.estado === "ACTIVE" ? -1 : 0) || b.creado.localeCompare(a.creado);
+    const { exactos, parecidos } = buscarMensajeExacto(todos, buscar);
+    const r = (exactos.length ? exactos : parecidos).sort(orden);
+    /* el emoji es la marca del anuncio: el exacto (texto + emojis) es la respuesta; los parecidos, solo una pista */
+    console.log(exactos.length ? `Coincide EXACTO (con sus emojis) con ${r.length} anuncio(s) de ${todos.length}:` : r.length ? `No hay uno exacto (revisa que se copien los emojis, que son la marca de cada anuncio). Parecidos sin contar emojis: ${r.length} de ${todos.length}:` : `Ningún anuncio (de ${todos.length}) tiene un mensaje parecido a «${buscar}». Prueba con menos palabras.`);
     for (const a of r.slice(0, 30)) console.log(`  · ${linea(a)}\n    mensaje: ${a.predeterminado}`);
     if (r.length > 30) console.log(`  … y ${r.length - 30} más`);
     return;

@@ -58,3 +58,22 @@ describe("archivo de mensajes: todos los anuncios, con los nuevos marcados", () 
     expect(t).toMatch(/sin mensaje predeterminado/);
   });
 });
+
+describe("el emoji es la marca de cada anuncio", () => {
+  const anuncios = [
+    { anuncio: "Efecto lipo", predeterminado: "¡Hola, Vivante! ✨ Quiero información sobre Criolipólisis🔝 ✨" },
+    { anuncio: "Liposucción no", predeterminado: "¡Hola, Vivante! ✨ Quiero información sobre CRIOLIPOLISIS🧬✨" },
+    { anuncio: "Testeo", predeterminado: "¡Hola, Vivante!  Quiero información sobre CRIOLIPOLISIS 💙🟥" },
+  ];
+  test("con el emoji, sale solo el anuncio exacto (aunque cambien espacios o mayúsculas)", async () => {
+    const { buscarMensajeExacto } = await import("./meta.mensajes");
+    const r = buscarMensajeExacto(anuncios, "¡Hola, Vivante! ✨ Quiero información sobre Criolipólisis 🔝 ✨");
+    expect(r.exactos.map((x) => x.anuncio)).toEqual(["Efecto lipo"]);
+  });
+  test("sin coincidencia exacta, devuelve los parecidos (sin contar emojis)", async () => {
+    const { buscarMensajeExacto } = await import("./meta.mensajes");
+    const r = buscarMensajeExacto(anuncios, "Hola Vivante quiero informacion sobre criolipolisis");
+    expect(r.exactos).toEqual([]);
+    expect(r.parecidos).toHaveLength(3);
+  });
+});
