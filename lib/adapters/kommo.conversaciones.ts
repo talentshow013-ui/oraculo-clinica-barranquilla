@@ -67,6 +67,10 @@ export interface MensajeKommo {
   /** Id de la asesora que escribió (solo mensajes salientes de una persona). */
   asesoraId: string | null;
   origen: string | null;
+  /** text, picture, voice… */
+  tipo?: string | null;
+  /** Saliente automático (Salesbot / bot de Kommo: llega sin usuario o con usuario 0). */
+  bot?: boolean;
 }
 
 const texto1 = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.trim() : typeof v === "number" ? String(v) : null);
@@ -92,14 +96,19 @@ export function extraerMensajes(raiz: unknown): MensajeKommo[] {
       const conv = texto1(nodo.talk_id) ?? texto1(nodo.chat_id);
       if (conv) {
         const t = Number(nodo.created_at);
+        /* el bot de Kommo escribe como usuario 0: no es una asesora */
+        const usuario = texto1(nodo.author?.user_id);
+        const asesoraId = saliente && usuario && usuario !== "0" ? usuario : null;
         salida.push({
           direccion: saliente ? "saliente" : "entrante",
           conversacion: conv,
           lead: String(nodo.entity_type ?? "") === "lead" ? texto1(nodo.entity_id) : null,
           texto: typeof nodo.text === "string" ? nodo.text : "",
           creadoEn: Number.isFinite(t) && t > 0 ? t : Math.floor(Date.now() / 1000),
-          asesoraId: saliente ? texto1(nodo.author?.user_id) : null,
+          asesoraId,
           origen: texto1(nodo.origin),
+          tipo: texto1(nodo.message_type),
+          bot: saliente && !asesoraId,
         });
       }
       return;

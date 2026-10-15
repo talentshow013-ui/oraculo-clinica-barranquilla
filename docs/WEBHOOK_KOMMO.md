@@ -23,6 +23,7 @@ Diseño «leer y olvidar» (`lib/adapters/kommo.conversaciones.ts`):
 - Un aviso de otra cuenta de Kommo (otro subdominio) se ignora.
 - Kommo exige respuesta 2xx en menos de 2 s; si falla reintenta (5 min, 15 min, 15 min, 1 h). Si manda
   más de 100 respuestas inválidas en 2 horas, Kommo desactiva el webhook.
+- El bot de Kommo escribe como usuario 0: no cuenta como respuesta de una asesora.
 - Prueba sin guardar nada: cabecera `x-oraculo-prueba: 1` → responde qué entendió (dirección, anuncio).
 - Consulta: `npm run conversaciones` (7 días) · `-- --hoy` · `-- --dias 30`.
 
@@ -40,6 +41,19 @@ Lo activó el equipo de ITERIA por API con la orden expresa del responsable del 
 3. Con la primera conversación: `npm run conversaciones -- --hoy` y revisar `datos/kommo-webhook-forma.json`
    (debe listar campos como `message[add][0][text]`).
 
+## El texto de las conversaciones (desde el 15-oct-2026, autorizado por el responsable del proyecto)
+Para poder decir «revisa las conversaciones de ayer» o «las que vienen de este anuncio», el texto se
+guarda (`lib/adapters/chats.ts`), solo si hay `CHATS_LLAVE` en la configuración de la VPS:
+- `datos/chats/AAAA-MM-DD.chat`, una línea cifrada (AES-256-GCM) por mensaje, archivos modo 600, fuera de git.
+- Antes de guardar se quitan teléfonos, correos y números de documento (`[número]`, `[correo]`). Los
+  precios y horas se quedan. Lo que la persona escriba de sí misma (su nombre, su caso) sí queda en el
+  texto: por eso solo vive cifrado en la VPS y se borra a los 30 días.
+- No se guarda el nombre ni el teléfono del contacto ni el id de Kommo: la conversación va por su huella.
+- Leer: `npm run chats -- --ayer` (filtros `--anuncio`, `--asesora`, `--resultado`, `--sin-respuesta`). En
+  otro equipo pide el texto a la VPS (`GET /api/chats`, detrás del usuario y clave del panel).
+- Apagar: quitar `CHATS_LLAVE` y reiniciar `oraculo-panel` (deja de guardar); borrar `datos/chats/`.
+  Si la llave se pierde, lo guardado no se puede leer.
+
 ## Qué se hace con eso (desde el 15-oct-2026)
 - **Cruce con el embudo** (`npm run conversaciones:cruzar`, cada hora en `oraculo-vivo`): lee los leads de Kommo
   tocados desde la primera conversación, los convierte en huella y guarda solo los que coinciden con una
@@ -49,7 +63,7 @@ Lo activó el equipo de ITERIA por API con la orden expresa del responsable del 
   conversación, cita y venta de cada anuncio; primera respuesta por asesora. Sigue el calendario. El gasto se
   cuenta solo desde el primer día con conversaciones.
 - **Telegram**: bloque de WhatsApp en el resumen de 6, 12 y 18; y `notificar --sin-respuesta` (cada 10 min en
-  `oraculo-vivo`): un mensaje agrupado cuando hay conversaciones con más de 1 h sin respuesta de una persona,
+  `oraculo-vivo`, APAGADO salvo `WHATSAPP_AVISO_SIN_RESPUESTA=1`): un mensaje agrupado cuando hay conversaciones con más de 1 h sin respuesta de una persona,
   empezadas entre 7 a. m. y 7 p. m., no cerradas en Kommo y de menos de 12 h. Como mucho uno por hora; de 9 p. m.
   a 6 a. m. calla. Las conversaciones que la asesora cierra en Kommo (evento `update_talk`) no se avisan.
 - **Otros equipos** (PC de la clínica, Mac): `npm run conversaciones` pide el resumen a la VPS

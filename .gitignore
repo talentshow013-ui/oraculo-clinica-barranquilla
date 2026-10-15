@@ -50,6 +50,8 @@ datos/kommo-webhook-forma.json
 datos/conversaciones-embudo.json
 datos/conversaciones-embudo.json.tmp
 datos/sin-respuesta-avisadas.json
+# texto de las conversaciones de WhatsApp (cifrado, 30 días): NUNCA al repositorio
+datos/chats/
 
 # llaves OAuth de Google (Drive): fuera del repositorio
 client_secret_*.json

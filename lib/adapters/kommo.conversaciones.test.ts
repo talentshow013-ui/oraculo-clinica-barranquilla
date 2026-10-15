@@ -94,7 +94,7 @@ describe("Kommo webhook · extraer mensajes", () => {
       message: { add: [{ id: "m1", chat_id: "c-1", talk_id: "77", contact_id: "5", text: "Hola 🔥", created_at: String(T0), element_type: "2", entity_type: "lead", element_id: "9001", entity_id: "9001", type: "incoming", origin: "waba", author: { id: "x", type: "external", name: "Persona" } }] },
     };
     const [m] = extraerMensajes(raiz);
-    expect(m).toEqual({ direccion: "entrante", conversacion: "77", lead: "9001", texto: "Hola 🔥", creadoEn: T0, asesoraId: null, origen: "waba" });
+    expect(m).toEqual({ direccion: "entrante", conversacion: "77", lead: "9001", texto: "Hola 🔥", creadoEn: T0, asesoraId: null, origen: "waba", tipo: null, bot: false });
   });
   test("mensaje saliente de una asesora: lleva su id y no su nombre", () => {
     const raiz = { message: { add: [{ chat_id: "c-1", talk_id: "77", text: "Listo", created_at: String(T0 + 90), type: "outgoing", entity_type: "lead", entity_id: "9001", author: { type: "internal", user_id: "55", name: "Asesora Uno" } }] } };
@@ -146,6 +146,12 @@ describe("Kommo webhook · extraer mensajes", () => {
   test("un saliente sin user_id (bot o automatización) no tiene asesora", () => {
     const [m] = extraerMensajes({ outgoing_message: { add: [{ talk_id: "1", text: "Hola", created_at: String(T0), type: "outgoing", author: { type: "internal", user_id: "" } }] } });
     expect(m!.asesoraId).toBeNull();
+  });
+  test("el bot de Kommo llega con user_id 0: es bot, no una asesora (visto en la VPS: «asesora 0» respondía en 3 s)", () => {
+    const [m] = extraerMensajes({ outgoing_message: { add: [{ talk_id: "1", text: "¡Hola! Soy el asistente", created_at: String(T0), type: "outgoing", message_type: "text", author: { type: "internal", user_id: "0" } }] } });
+    expect(m).toMatchObject({ asesoraId: null, bot: true, tipo: "text" });
+    const e = aplicarMensaje(aplicarMensaje(vacio(), entrante("1", "Hola"), ctx).estado, m!, ctx);
+    expect(e.efecto).toBe("ignorado");
   });
 });
 

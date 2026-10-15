@@ -47,7 +47,8 @@ const TAREAS: Tarea[] = [
   { nombre: "Sitio web", script: "web:sincronizar", args: ["--dias", "3"], cadaMin: 30, activa: !!e.GA4_PROPIEDAD_ID, alertas: false },
   /* WhatsApp: las conversaciones llegan solas por el webhook; aquí se cruzan con el embudo de Kommo y se vigila lo que lleva > 1 h sin respuesta */
   { nombre: "WhatsApp · embudo", script: "conversaciones:cruzar", args: [], cadaMin: 60, activa: !!e.KOMMO_TOKEN && !!e.KOMMO_WEBHOOK_SECRETO, alertas: false },
-  { nombre: "WhatsApp · sin respuesta", script: "notificar", args: ["--sin-respuesta"], cadaMin: 10, activa: !!e.KOMMO_WEBHOOK_SECRETO && !!e.TELEGRAM_BOT_TOKEN && !!e.TELEGRAM_CHAT_ID, alertas: false },
+  /* apagado mientras no lo pidan: WHATSAPP_AVISO_SIN_RESPUESTA=1 lo prende */
+  { nombre: "WhatsApp · sin respuesta", script: "notificar", args: ["--sin-respuesta"], cadaMin: 10, activa: e.WHATSAPP_AVISO_SIN_RESPUESTA === "1" && !!e.KOMMO_WEBHOOK_SECRETO && !!e.TELEGRAM_BOT_TOKEN && !!e.TELEGRAM_CHAT_ID, alertas: false },
 ];
 
 interface EstadoFuente {

@@ -1,10 +1,11 @@
-import { mkdtempSync, readFileSync, existsSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import type { AnuncioMensaje } from "./meta.mensajes";
 import { cargarConversaciones } from "./conversaciones.archivo";
 import { procesarAviso, secretoValido } from "./kommo.webhook";
+import { leerChats } from "./chats";
 
 const T0 = 1_790_000_000;
 const ANUNCIOS: AnuncioMensaje[] = [
@@ -91,6 +92,31 @@ describe("Kommo webhook · conversación cerrada (talk[update])", () => {
     const a = await procesarAviso({ ...base(r), contentType: FORM, cuerpo: formulario({ "account[subdomain]": "vivante", "talk[update][0][talk_id]": "77", "talk[update][0][is_in_work]": "0" }) });
     expect(a).toMatchObject({ recibidos: 0, talks: 1 });
     expect(Object.values(cargarConversaciones(r).conversaciones)[0]!.cerrada).toBe(true);
+  });
+});
+
+describe("Kommo webhook · guardar el texto para leer las conversaciones (con CHATS_LLAVE)", () => {
+  const LLAVE = "c".repeat(64);
+  test("el texto queda cifrado, sin teléfonos y sin el nombre del contacto; se lee con la llave", async () => {
+    const r = ruta();
+    const dirChats = join(r, "..", "chats");
+    const cuerpo = entrante("77", "Hola, quiero Criolipólisis, mi cel 300 123 4567");
+    await procesarAviso({ ...base(r), contentType: FORM, cuerpo, chats: { dir: dirChats, llave: LLAVE } });
+    await procesarAviso({ ...base(r), contentType: FORM, cuerpo: saliente("77", T0 + 60), chats: { dir: dirChats, llave: LLAVE } });
+    const crudo = readdirSync(dirChats).map((f) => readFileSync(join(dirChats, f), "utf8")).join("");
+    expect(crudo).not.toContain("Criolipólisis");
+    const leidos = leerChats(dirChats, LLAVE, "2026-01-01", "2026-12-31");
+    expect(leidos.map((x) => x.texto)).toEqual(["Hola, quiero Criolipólisis, mi cel [número]", "Con gusto"]);
+    expect(leidos[1]).toMatchObject({ dir: "saliente", asesoraId: "55", bot: false });
+    expect(JSON.stringify(leidos)).not.toContain("Nombre De Paciente");
+    expect(JSON.stringify(leidos)).not.toContain('"77"');
+  });
+  test("sin llave no se guarda texto; en modo prueba tampoco", async () => {
+    const r = ruta();
+    const dirChats = join(r, "..", "chats");
+    await procesarAviso({ ...base(r), contentType: FORM, cuerpo: entrante("77", "Hola"), prueba: true, chats: { dir: dirChats, llave: LLAVE } });
+    await procesarAviso({ ...base(r), contentType: FORM, cuerpo: entrante("78", "Hola") });
+    expect(existsSync(dirChats)).toBe(false);
   });
 });
 

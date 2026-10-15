@@ -18,6 +18,7 @@
     "mensajes": "tsx scripts/mensajes.ts",
     "conversaciones": "tsx scripts/conversaciones.ts",
     "conversaciones:cruzar": "tsx scripts/conversaciones-cruzar.ts",
+    "chats": "tsx scripts/chats.ts",
     "drive": "tsx scripts/drive.ts",
     "subir": "tsx scripts/subir.ts",
     "drive:conectar": "tsx scripts/drive-conectar.ts",

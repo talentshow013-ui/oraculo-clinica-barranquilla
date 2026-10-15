@@ -57,3 +57,28 @@ describe("WhatsApp · resumen completo desde los archivos", () => {
     expect(resumenWhatsapp({ desde: "2026-09-21", hasta: "2026-09-21", rutas: { conversaciones: join(dir, "no-existe.json") } })).toBeNull();
   });
 });
+
+describe("WhatsApp · leer las conversaciones (texto cifrado en la VPS)", () => {
+  test("«revisa las de ayer» y «las que vienen de este mensaje»: arma cada conversación con su anuncio", async () => {
+    const { guardarChats } = await import("@/lib/adapters/chats");
+    const { conversacionesLegibles } = await import("./conversaciones");
+    const dir = mkdtempSync(join(tmpdir(), "oraculo-wa-"));
+    const LL = "d".repeat(64);
+    let e = aplicarMensaje(vacio(), { direccion: "entrante", conversacion: "x", lead: null, texto: AD.predeterminado!, creadoEn: T0, asesoraId: null, origen: null }, { secreto: "s", anuncios: [AD] }).estado;
+    e = aplicarMensaje(e, { direccion: "entrante", conversacion: "y", lead: null, texto: "Buenas, ¿dónde quedan?", creadoEn: T0 + 60, asesoraId: null, origen: null }, { secreto: "s", anuncios: [AD] }).estado;
+    writeFileSync(join(dir, "conversaciones.json"), JSON.stringify(e));
+    writeFileSync(join(dir, "mensajes.json"), JSON.stringify({ anuncios: [AD] }));
+    guardarChats(join(dir, "chats"), LL, [
+      { t: T0, conv: huella("s", "x"), dir: "entrante", texto: AD.predeterminado!, tipo: "text", asesoraId: null, bot: false },
+      { t: T0 + 60, conv: huella("s", "y"), dir: "entrante", texto: "Buenas, ¿dónde quedan?", tipo: "text", asesoraId: null, bot: false },
+    ]);
+    const rutas = { chats: join(dir, "chats"), conversaciones: join(dir, "conversaciones.json"), embudo: join(dir, "no.json"), mensajes: join(dir, "mensajes.json") };
+    const todas = conversacionesLegibles({ desde: "2026-09-21", hasta: "2026-09-21", rutas, llave: LL })!;
+    expect(todas.total).toBe(2);
+    expect(todas.texto).toContain("Crio_Video");
+    expect(todas.texto).toContain("Paciente: Buenas, ¿dónde quedan?");
+    const delAnuncio = conversacionesLegibles({ desde: "2026-09-21", hasta: "2026-09-21", rutas, llave: LL, filtro: { texto: AD.predeterminado! } })!;
+    expect(delAnuncio.total).toBe(1);
+    expect(conversacionesLegibles({ desde: "2026-09-21", hasta: "2026-09-21", rutas, llave: undefined as unknown as string })).toBeNull();
+  });
+});

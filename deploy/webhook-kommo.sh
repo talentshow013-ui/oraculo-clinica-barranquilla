@@ -11,6 +11,11 @@ if ! grep -q '^KOMMO_WEBHOOK_SECRETO=.' .env 2>/dev/null; then
 else
   echo "· el secreto ya existía; se conserva"
 fi
+# llave para cifrar el texto de las conversaciones (datos/chats/): sin ella no se guarda texto
+if ! grep -q '^CHATS_LLAVE=.' .env 2>/dev/null; then
+  printf 'CHATS_LLAVE=%s\n' "$(openssl rand -hex 32)" >> .env
+  echo "✓ llave de cifrado de chats creada (si se pierde, los chats guardados no se pueden leer)"
+fi
 mkdir -p entregables
 S="$(grep '^KOMMO_WEBHOOK_SECRETO=' .env | tail -1 | cut -d= -f2-)"
 umask 077

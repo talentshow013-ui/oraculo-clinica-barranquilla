@@ -6,6 +6,9 @@
  * (el comando los pide a la VPS por `/api/conversaciones`).
  */
 import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { filtrarConversaciones, formatearConversaciones, leerChats, unirConversaciones, type FiltroChats } from "@/lib/adapters/chats";
+import { buscarMensajeExacto } from "@/lib/adapters/meta.mensajes";
 import { RUTA_LOTE } from "@/lib/adapters/archivo.adapter";
 import { RUTA_CONVERSACIONES, RUTA_EMBUDO_CONVERSACIONES, cargarConversaciones, cargarEmbudoConversaciones } from "@/lib/adapters/conversaciones.archivo";
 import { resumir, type EstadoConversaciones, type ResumenConversaciones } from "@/lib/adapters/kommo.conversaciones";
@@ -73,4 +76,39 @@ export function resumenWhatsapp(o: { desde: string; hasta: string; ahora?: numbe
     gastoPorAnuncio: sumarGastoPorAnuncio(insightsDelLote(o.rutas?.lote ?? RUTA_LOTE), desdeGasto, o.hasta),
   });
   return { ...r, primerDia, actualizadoEn: estadoCrudo.actualizadoEn || null, cruceEn: cruce?.actualizadoEn || null };
+}
+
+/* ───────────── el texto de las conversaciones (solo en la VPS, con CHATS_LLAVE) ───────────── */
+
+export const DIR_CHATS = join(dirname(RUTA_CONVERSACIONES), "chats");
+const llaveChats = () => (/^[0-9a-f]{64}$/i.test(process.env.CHATS_LLAVE ?? "") ? process.env.CHATS_LLAVE! : null);
+
+export interface FiltroLegibles extends FiltroChats {
+  /** Lo que alguien pegó: nombre de anuncio/campaña o el mensaje predeterminado del anuncio. */
+  texto?: string;
+}
+
+/**
+ * Las conversaciones del rango, legibles (anuncio, asesora, resultado y mensajes), con filtros.
+ * null = este equipo no guarda el texto (no es la VPS o falta CHATS_LLAVE).
+ */
+export function conversacionesLegibles(o: { desde: string; hasta: string; filtro?: FiltroLegibles; max?: number; rutas?: { chats?: string; conversaciones?: string; embudo?: string; mensajes?: string }; llave?: string }): { total: number; mostradas: number; texto: string } | null {
+  const llave = o.llave ?? llaveChats();
+  const dir = o.rutas?.chats ?? DIR_CHATS;
+  if (!llave || !existsSync(dir)) return null;
+  const estado = completarIdsDeAnuncio(cargarConversaciones(o.rutas?.conversaciones ?? RUTA_CONVERSACIONES), anunciosConMensaje(o.rutas?.mensajes));
+  const cruce = cargarEmbudoConversaciones(o.rutas?.embudo ?? RUTA_EMBUDO_CONVERSACIONES);
+  const todas = unirConversaciones(leerChats(dir, llave, o.desde, o.hasta), estado, cruce?.leads ?? {}, cruce?.asesoras ?? {});
+  const f: FiltroChats = { ...o.filtro };
+  if (o.filtro?.texto) {
+    /* si pegaron el mensaje predeterminado, también los anuncios que lo tienen */
+    const { exactos, parecidos } = buscarMensajeExacto(anunciosConMensaje(o.rutas?.mensajes), o.filtro.texto);
+    const ids = new Set([...exactos, ...parecidos].map((a) => a.id));
+    f.anuncio = o.filtro.texto;
+    if (ids.size) f.anuncioIds = ids;
+  }
+  const filtradas = filtrarConversaciones(todas, f);
+  const max = o.max ?? 40;
+  const mostradas = filtradas.slice(-max);
+  return { total: filtradas.length, mostradas: mostradas.length, texto: formatearConversaciones(mostradas) };
 }
