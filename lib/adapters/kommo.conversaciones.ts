@@ -78,7 +78,10 @@ export function extraerMensajes(raiz: unknown): MensajeKommo[] {
       for (const x of nodo) visitar(x, ruta, profundidad + 1);
       return;
     }
-    const esMensaje = typeof nodo.text === "string" && (nodo.talk_id != null || nodo.chat_id != null) && !ruta.some((r) => /^talk/.test(r));
+    // Un mensaje trae texto o, si es foto/audio, su tipo o adjunto (a veces sin el campo `text`). Un aviso de
+    // «conversación» (talk) no trae ninguno de los tres.
+    const traeContenido = typeof nodo.text === "string" || nodo.message_type != null || nodo.attachment != null;
+    const esMensaje = traeContenido && (nodo.talk_id != null || nodo.chat_id != null) && !ruta.some((r) => /^talk/.test(r));
     if (esMensaje) {
       const tipoAutor = String(nodo.author?.type ?? "").toLowerCase();
       const tipo = String(nodo.type ?? "").toLowerCase();
@@ -91,7 +94,7 @@ export function extraerMensajes(raiz: unknown): MensajeKommo[] {
           direccion: saliente ? "saliente" : "entrante",
           conversacion: conv,
           lead: String(nodo.entity_type ?? "") === "lead" ? texto1(nodo.entity_id) : null,
-          texto: nodo.text,
+          texto: typeof nodo.text === "string" ? nodo.text : "",
           creadoEn: Number.isFinite(t) && t > 0 ? t : Math.floor(Date.now() / 1000),
           asesoraId: saliente ? texto1(nodo.author?.user_id) : null,
           origen: texto1(nodo.origin),

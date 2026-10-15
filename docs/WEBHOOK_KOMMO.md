@@ -26,17 +26,21 @@ Diseño «leer y olvidar» (`lib/adapters/kommo.conversaciones.ts`):
 - Prueba sin guardar nada: cabecera `x-oraculo-prueba: 1` → responde qué entendió (dirección, anuncio).
 - Consulta: `npm run conversaciones` (7 días) · `-- --hoy` · `-- --dias 30`.
 
-## Activarlo (lo decide la gerencia de la clínica; hasta entonces no llega nada)
+## Estado: ACTIVO desde el 2026-10-15 (webhook id 47515720 en Kommo)
+Lo activó el equipo de ITERIA por API con la orden expresa del responsable del proyecto. Eventos:
+`add_message` (mensaje entrante) y `add_outgoing_message` (mensaje saliente de una persona o bot).
+
+## Activarlo de nuevo (por si hay que repetirlo)
 1. En la VPS: `sudo -u oraculo bash /home/oraculo/oraculo/deploy/webhook-kommo.sh` y
    `systemctl restart oraculo-panel`. Deja la dirección completa en `entregables/webhook-kommo.txt`.
-2. Kommo → Ajustes → Integraciones → **Web hooks** → pegar la dirección → marcar **Incoming message
-   received** y, si aparece, **Outgoing message sent** → Guardar. (Sin el evento de mensajes salientes
-   se sabe de qué anuncio vino cada conversación, pero no cuánto tardó la asesora.)
+2. En Kommo, por API: `POST /api/v4/webhooks` con `{"destination": "<la dirección>", "settings": ["add_message", "add_outgoing_message"]}`
+   (con una dirección que ya existe, actualiza sus eventos). O a mano: Ajustes → Integraciones → **Web hooks**.
+   Sin el evento saliente se sabe de qué anuncio vino cada conversación, pero no cuánto tardó la asesora.
 3. Con la primera conversación: `npm run conversaciones -- --hoy` y revisar `datos/kommo-webhook-forma.json`
    (debe listar campos como `message[add][0][text]`).
 
 ## Apagarlo
-Kommo → Web hooks → borrar la dirección (o quitar `KOMMO_WEBHOOK_SECRETO` de `.env` y reiniciar el panel:
+Kommo → Web hooks → borrar la dirección, o `DELETE /api/v4/webhooks` con `{"destination": "<la dirección>"}` (o quitar `KOMMO_WEBHOOK_SECRETO` de `.env` y reiniciar el panel:
 la dirección pasa a responder 404). `datos/conversaciones.json` se puede borrar sin consecuencias.
 
 ## Límites que conviene saber

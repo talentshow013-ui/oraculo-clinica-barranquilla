@@ -119,6 +119,34 @@ describe("Kommo webhook · extraer mensajes", () => {
     const raiz = { message: { add: [{ talk_id: "80", text: "", created_at: String(T0), type: "incoming", message_type: "picture" }] } };
     expect(extraerMensajes(raiz)[0]!.texto).toBe("");
   });
+  test("una nota de voz o foto que llega SIN el campo `text` también cuenta", () => {
+    const voz = { message: { add: [{ talk_id: "81", created_at: String(T0), type: "incoming", message_type: "voice", attachment: { type: "voice", link: "x" } }] } };
+    const [m] = extraerMensajes(voz);
+    expect(m).toMatchObject({ direccion: "entrante", conversacion: "81", texto: "" });
+    // y el aviso de una «conversación» (talk) sigue sin contar como mensaje
+    expect(extraerMensajes({ talk: { add: [{ talk_id: "81", chat_id: "c", is_in_work: "1" }] } })).toHaveLength(0);
+  });
+  test("el formato real de Kommo (visto en la VPS): outgoing_message[add][0][...] con author[user_id]", () => {
+    const cuerpo = new URLSearchParams({
+      "account[subdomain]": "vivante",
+      "outgoing_message[add][0][talk_id]": "500",
+      "outgoing_message[add][0][chat_id]": "abc-def",
+      "outgoing_message[add][0][text]": "Hola, con gusto",
+      "outgoing_message[add][0][type]": "outgoing",
+      "outgoing_message[add][0][created_at]": String(T0),
+      "outgoing_message[add][0][author][type]": "internal",
+      "outgoing_message[add][0][author][user_id]": "12345",
+      "outgoing_message[add][0][author][name]": "Asesora",
+      "outgoing_message[add][0][recipient][name]": "Paciente",
+    }).toString();
+    const [m] = extraerMensajes(aObjeto("application/x-www-form-urlencoded", cuerpo));
+    expect(m).toMatchObject({ direccion: "saliente", conversacion: "500", asesoraId: "12345", creadoEn: T0 });
+    expect(JSON.stringify(m)).not.toContain("Paciente");
+  });
+  test("un saliente sin user_id (bot o automatización) no tiene asesora", () => {
+    const [m] = extraerMensajes({ outgoing_message: { add: [{ talk_id: "1", text: "Hola", created_at: String(T0), type: "outgoing", author: { type: "internal", user_id: "" } }] } });
+    expect(m!.asesoraId).toBeNull();
+  });
 });
 
 describe("Kommo webhook · de qué anuncio vino", () => {
