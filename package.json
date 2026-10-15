@@ -17,6 +17,7 @@
     "radios": "tsx scripts/radios.ts",
     "mensajes": "tsx scripts/mensajes.ts",
     "drive": "tsx scripts/drive.ts",
+    "subir": "tsx scripts/subir.ts",
     "drive:conectar": "tsx scripts/drive-conectar.ts",
     "mensajes:sincronizar": "tsx scripts/mensajes-sincronizar.ts",
     "validar-lote": "tsx scripts/validar-lote.ts",
