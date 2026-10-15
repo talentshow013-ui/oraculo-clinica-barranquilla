@@ -132,9 +132,9 @@ const campo = (l: Json, codigo: string): string | null => {
 };
 const epochAFecha = (s: number | null | undefined) => (s ? aFechaBogota(new Date(s * 1000)) : null);
 
-export async function sincronizarKommo(o: OpcionesKommo): Promise<LoteKommo> {
-  const avisos: string[] = [];
-  const pipes = await o.pedir("/api/v4/leads/pipelines");
+/** Las etapas (statuses) de todos los embudos de Kommo. */
+export async function leerEtapas(pedir: PeticionKommo): Promise<EtapaKommo[]> {
+  const pipes = await pedir("/api/v4/leads/pipelines");
   const etapas: EtapaKommo[] = [];
   for (const p of pipes?._embedded?.pipelines ?? []) {
     for (const s of p?._embedded?.statuses ?? []) {
@@ -142,6 +142,12 @@ export async function sincronizarKommo(o: OpcionesKommo): Promise<LoteKommo> {
       etapas.push({ id, nombre: String(s.name ?? id), pipelineId: Number(s.pipeline_id ?? p.id), tipo: id === 142 || s.type === 1 ? "ganado" : id === 143 || s.type === 2 ? "perdido" : "normal", orden: Number(s.sort ?? 0) });
     }
   }
+  return etapas;
+}
+
+export async function sincronizarKommo(o: OpcionesKommo): Promise<LoteKommo> {
+  const avisos: string[] = [];
+  const etapas = await leerEtapas(o.pedir);
   const desdeEpoch = Math.floor(Date.UTC(Number(o.desde.slice(0, 4)), Number(o.desde.slice(5, 7)) - 1, Number(o.desde.slice(8, 10)), 5) / 1000);
   const leads: LeadKommo[] = [];
   for (let page = 1; page <= 200; page++) {

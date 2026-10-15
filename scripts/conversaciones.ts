@@ -1,91 +1,83 @@
 /**
- * Conversaciones de WhatsApp que llegaron a Kommo, por el webhook (la VPS las va guardando sin texto):
- * de qué anuncio vino cada una y cuánto tardó la primera respuesta de la asesora.
+ * Conversaciones de WhatsApp que llegaron a Kommo (webhook): de qué anuncio vino cada una, cuánto tardó
+ * la primera respuesta de la asesora y en qué terminó (cita, asistió, venta), con el gasto del anuncio.
  *
  *   npm run conversaciones                  → últimos 7 días
  *   npm run conversaciones -- --hoy         → hoy
+ *   npm run conversaciones -- --ayer        → ayer
  *   npm run conversaciones -- --dias 30
  *
- * Solo lee `datos/conversaciones.json`. No toca Kommo salvo para poner el nombre de cada asesora
- * (lista de usuarios, solo lectura). Nunca hay texto de mensajes ni datos de pacientes aquí.
+ * En la VPS lee los archivos; en cualquier otro equipo (el PC de la clínica, el Mac) los pide a la VPS
+ * con el usuario y clave del panel (VPS_PANEL_USUARIO / VPS_PANEL_CLAVE, u ORACULO_USUARIO / ORACULO_CLAVE).
+ * Nunca hay texto de mensajes ni datos de pacientes aquí.
  */
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { cargarEnv } from "@/lib/adapters/env";
-import { RUTA_CONVERSACIONES, cargarConversaciones } from "@/lib/adapters/conversaciones.archivo";
-import { crearPeticionKommo } from "@/lib/adapters/kommo";
-import { resumir } from "@/lib/adapters/kommo.conversaciones";
+import { resumenWhatsapp, type ResumenWhatsapp } from "@/lib/conversaciones";
 import { hoyBogota, sumarDias } from "@/lib/format/fechas";
+import { duracion } from "@/lib/notificaciones/whatsapp";
 
 cargarEnv();
-
-const dur = (s: number | null) => {
-  if (s == null) return "—";
-  if (s < 60) return `${s} s`;
-  if (s < 3600) return `${Math.round(s / 60)} min`;
-  const h = Math.floor(s / 3600);
-  const m = Math.round((s % 3600) / 60);
-  return m ? `${h} h ${m} min` : `${h} h`;
-};
+const e = process.env;
 const pct = (n: number, de: number) => (de ? `${Math.round((100 * n) / de)} %` : "—");
+const cop = (v: number | null) => (v == null ? "—" : `$ ${Math.round(v).toLocaleString("es-CO")}`);
 
-async function nombresDeAsesoras(): Promise<Map<string, string>> {
-  const sub = process.env.KOMMO_SUBDOMINIO;
-  const token = process.env.KOMMO_TOKEN;
-  const m = new Map<string, string>();
-  if (!sub || !token) return m;
+async function pedirALaVps(desde: string, hasta: string): Promise<ResumenWhatsapp | null> {
+  const usuario = e.ORACULO_USUARIO ?? e.VPS_PANEL_USUARIO;
+  const clave = e.ORACULO_CLAVE ?? e.VPS_PANEL_CLAVE;
+  if (!usuario || !clave) throw new Error("Las conversaciones viven en la VPS y aquí falta con qué pedirlas: agrega VPS_PANEL_USUARIO y VPS_PANEL_CLAVE (el usuario y la clave del panel) al .env.");
+  let origen = "https://oraculo.vivantemedicinaestetica.com";
   try {
-    const j = await crearPeticionKommo(sub, token)("/api/v4/users", { limit: 250 });
-    for (const u of j?._embedded?.users ?? []) m.set(String(u.id), String(u.name ?? u.id));
+    if (e.ORACULO_URL_PANEL) origen = new URL(e.ORACULO_URL_PANEL).origin;
   } catch {
-    /* sin nombres: se muestra el id */
+    /* se usa la dirección de siempre */
   }
-  return m;
+  const r = await fetch(`${origen}/api/conversaciones?${new URLSearchParams({ desde, hasta })}`, { headers: { authorization: `Basic ${Buffer.from(`${usuario}:${clave}`).toString("base64")}` } });
+  if (r.status === 401) throw new Error("La VPS no aceptó el usuario y clave del panel (VPS_PANEL_USUARIO / VPS_PANEL_CLAVE).");
+  if (!r.ok) throw new Error(`La VPS respondió ${r.status}.`);
+  const j = (await r.json()) as ResumenWhatsapp | { vacio: true };
+  return "vacio" in j ? null : j;
 }
 
 async function main() {
   const hoy = hoyBogota();
   const iDias = process.argv.indexOf("--dias");
-  const dias = process.argv.includes("--hoy") ? 1 : iDias >= 0 ? Number(process.argv[iDias + 1]) || 7 : 7;
-  const desde = sumarDias(hoy, -dias + 1);
+  let desde: string;
+  let hasta = hoy;
+  if (process.argv.includes("--hoy")) desde = hoy;
+  else if (process.argv.includes("--ayer")) desde = hasta = sumarDias(hoy, -1);
+  else desde = sumarDias(hoy, -((iDias >= 0 ? Number(process.argv[iDias + 1]) || 7 : 7) - 1));
 
-  const estado = cargarConversaciones();
-  const todas = Object.values(estado.conversaciones);
-  if (!todas.length) {
-    console.log("Todavía no ha llegado ningún aviso de Kommo.");
-    console.log("El webhook se activa en Kommo → Ajustes → Integraciones → Web hooks (ver docs/WEBHOOK_KOMMO.md).");
+  const local = process.argv.includes("--remoto") ? null : resumenWhatsapp({ desde, hasta });
+  const r = local ?? (await pedirALaVps(desde, hasta));
+  if (!r) {
+    console.log("Todavía no ha llegado ninguna conversación por el webhook de Kommo.");
     return;
   }
-  const primera = todas.reduce((a, c) => (c.dia < a ? c.dia : a), todas[0]!.dia);
-  const r = resumir(estado, { desde, hasta: hoy });
-  const nombres = await nombresDeAsesoras();
 
-  console.log(`Conversaciones de WhatsApp en Kommo · ${desde} → ${hoy}`);
-  console.log(`Fuente: webhook de Kommo, guardando desde ${primera}${primera > desde ? " (antes de esa fecha no hay datos: el webhook solo ve lo que llega después de activarse)" : ""}.`);
+  console.log(`Conversaciones de WhatsApp en Kommo · ${desde} → ${hasta}${local ? "" : " (datos de la VPS)"}`);
+  console.log(`Fuente: webhook de Kommo, guardando desde ${r.primerDia}${r.primerDia > desde ? " (antes no hay datos: solo cuenta desde que se activó)" : ""} · último aviso ${r.actualizadoEn ?? "—"} · cruce con el embudo ${r.cruceEn ?? "aún no"}.`);
   console.log(`Nuevas: ${r.nuevas} · de qué anuncio vienen: ${r.identificadas} (${pct(r.identificadas, r.nuevas)}) · sin identificar: ${r.sinIdentificar.total} (mensaje genérico ${r.sinIdentificar.genericas}, igual en varias campañas ${r.sinIdentificar.ambiguas}, otro texto ${r.sinIdentificar.ninguno})`);
+  const em = r.embudo;
+  console.log(`En qué terminaron (etapa del lead en Kommo): ${em.citas} citas · ${em.asistieron} asistieron · ${em.ventas} ventas${em.valor ? ` (${cop(em.valor)})` : ""} · ${em.conLead} de ${em.conversaciones} conversaciones ya cruzadas con su lead`);
 
   if (r.porAnuncio.length) {
-    console.log("\nPor anuncio (más conversaciones primero):");
+    console.log("\nPor anuncio (primero los que traen ventas y citas):");
     for (const [i, a] of r.porAnuncio.slice(0, 15).entries()) {
-      const marca = a.certeza === "exacto" ? "" : a.certeza === "activo" ? " · [el activo entre anuncios con el mismo mensaje]" : a.certeza === "parecido" ? " · [mensaje parecido]" : " · [solo la campaña]";
-      console.log(`  ${i + 1}. ${a.cuenta} · ${a.campana}${a.anuncio ? ` · ${a.anuncio}` : ""} — ${a.conversaciones} conv. · ${a.atendidas} atendidas · mediana ${dur(a.medianaSeg)}${marca}`);
+      const marca = a.certeza === "exacto" ? "" : a.certeza === "activo" ? " [el activo entre anuncios con el mismo mensaje]" : a.certeza === "parecido" ? " [mensaje parecido]" : " [solo la campaña]";
+      const costos = a.gasto == null ? "" : ` · gasto ${cop(a.gasto)} → ${cop(a.costoConversacion)} por conversación${a.citas ? ` · ${cop(a.costoCita)} por cita` : ""}${a.ventas ? ` · ${cop(a.costoVenta)} por venta` : ""}`;
+      console.log(`  ${i + 1}. ${a.cuenta} · ${a.campana}${a.anuncio ? ` · ${a.anuncio}` : ""}${marca}`);
+      console.log(`     ${a.conversaciones} conv. → ${a.citas} citas → ${a.asistieron} asistieron → ${a.ventas} ventas · respuesta mediana ${duracion(a.medianaSeg)}${costos}`);
     }
     if (r.porAnuncio.length > 15) console.log(`  … y ${r.porAnuncio.length - 15} más.`);
   }
 
   const at = r.atencion;
-  console.log(`\nAtención (primera respuesta de una persona): ${at.atendidas} atendidas · mediana ${dur(at.medianaSeg)} · hasta 5 min ${at.hasta5min} (${pct(at.hasta5min, at.atendidas)}) · hasta 15 min ${at.hasta15min} (${pct(at.hasta15min, at.atendidas)}) · hasta 1 h ${at.hasta60min} (${pct(at.hasta60min, at.atendidas)}) · sin respuesta tras más de 1 h: ${at.sinRespuesta}`);
-  for (const a of at.porAsesora) console.log(`  · ${nombres.get(a.asesoraId) ?? `asesora ${a.asesoraId}`}: ${a.atendidas} atendidas · mediana ${dur(a.medianaSeg)} · ${pct(a.hasta15min, a.atendidas)} en 15 min o menos`);
-  console.log("\nLos tiempos cuentan horas de la noche y fines de semana: una conversación de las 10 p. m. respondida a las 8 a. m. sale con 10 h.");
-
-  const forma = join(dirname(RUTA_CONVERSACIONES), "kommo-webhook-forma.json");
-  if (existsSync(forma)) {
-    const f = JSON.parse(readFileSync(forma, "utf8")) as { avisos?: number; ultimoAviso?: string };
-    console.log(`Webhook: ${f.avisos ?? 0} avisos recibidos · último ${f.ultimoAviso ?? "—"}`);
-  }
+  console.log(`\nAtención (primera respuesta de una persona): ${at.atendidas} atendidas · mediana ${duracion(at.medianaSeg)} · hasta 5 min ${pct(at.hasta5min, at.atendidas)} · hasta 15 min ${pct(at.hasta15min, at.atendidas)} · hasta 1 h ${pct(at.hasta60min, at.atendidas)} · sin respuesta tras más de 1 h: ${at.sinRespuesta}${at.cerradasSinRespuesta ? ` · cerradas sin responder: ${at.cerradasSinRespuesta}` : ""}`);
+  for (const a of at.porAsesora) console.log(`  · ${a.asesora ?? `asesora ${a.asesoraId}`}: ${a.atendidas} atendidas · mediana ${duracion(a.medianaSeg)} · ${pct(a.hasta15min, a.atendidas)} en 15 min o menos`);
+  console.log("\nLos tiempos cuentan noches y fines de semana. Citas y ventas: según la etapa del lead en Kommo (se cruza cada hora).");
 }
 
-main().catch((e) => {
-  console.error(`✗ ${e instanceof Error ? e.message : String(e)}`);
+main().catch((err) => {
+  console.error(`✗ ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
 });

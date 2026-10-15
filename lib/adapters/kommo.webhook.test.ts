@@ -84,6 +84,16 @@ describe("Kommo webhook · procesar un aviso", () => {
   });
 });
 
+describe("Kommo webhook · conversación cerrada (talk[update])", () => {
+  test("cierra la conversación guardada y no guarda nada más", async () => {
+    const r = ruta();
+    await procesarAviso({ ...base(r), contentType: FORM, cuerpo: entrante("77", "gracias") });
+    const a = await procesarAviso({ ...base(r), contentType: FORM, cuerpo: formulario({ "account[subdomain]": "vivante", "talk[update][0][talk_id]": "77", "talk[update][0][is_in_work]": "0" }) });
+    expect(a).toMatchObject({ recibidos: 0, talks: 1 });
+    expect(Object.values(cargarConversaciones(r).conversaciones)[0]!.cerrada).toBe(true);
+  });
+});
+
 describe("Kommo webhook · el secreto de la dirección", () => {
   test("solo el secreto exacto pasa; sin secreto configurado, nadie", () => {
     expect(secretoValido("abc123", "abc123")).toBe(true);

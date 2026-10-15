@@ -10,6 +10,8 @@
  *   npm run notificar -- --alertas [momento]  → resumen corto: gasto, leads, costo por lead, 3 oportunidades y 3 riesgos (Meta y Google)
  *   npm run notificar -- --alertas --detalle  → la lista completa de alertas y de todo lo activo
  *   npm run notificar -- --nuevas             → al momento, solo lo urgente nuevo (anuncio rechazado, medición rota); de 9 p. m. a 6 a. m. calla
+ *   … --simular                               → muestra el mensaje en pantalla y NO lo envía
+ *   npm run notificar -- --sin-respuesta      → conversaciones de WhatsApp con más de 1 h sin respuesta (webhook de Kommo); un mensaje agrupado, máximo uno por hora
  *
  * Necesita en .env: TELEGRAM_BOT_TOKEN (de @BotFather) y TELEGRAM_CHAT_ID (uno o varios, separados por coma). Opcional: ORACULO_URL_PANEL.
  */
@@ -21,6 +23,10 @@ import { componerResumenConciso, resumenConciso } from "@/lib/notificaciones/res
 import { sumarDias } from "@/lib/format/fechas";
 import type { InsightRow } from "@/lib/adapters/types";
 import { existsSync, writeFileSync } from "node:fs";
+import { cargarConversaciones } from "@/lib/adapters/conversaciones.archivo";
+import { pendientesDeRespuesta } from "@/lib/adapters/kommo.conversaciones";
+import { resumenWhatsapp } from "@/lib/conversaciones";
+import { bloqueWhatsapp, componerAvisoSinRespuesta } from "@/lib/notificaciones/whatsapp";
 
 cargarEnv();
 const arg = (n: string) => {
@@ -88,7 +94,10 @@ async function main() {
       const manana = hora < 11;
       const reloj = new Date().toLocaleTimeString("es-CO", { timeZone: "America/Bogota", hour: "numeric", minute: "2-digit" });
       const r = resumenConciso(cuentas, manana ? sumarDias(hoy, -1) : hoy, hoy, UMBRALES_CLINICA);
-      texto = componerResumenConciso(r, { momento, etiquetaDia: manana ? "Ayer (día completo)" : `Hoy hasta las ${reloj}`, urlPanel: process.env.ORACULO_URL_PANEL });
+      /* WhatsApp (webhook de Kommo): solo en la VPS, donde viven las conversaciones */
+      const dia = manana ? sumarDias(hoy, -1) : hoy;
+      const wa = resumenWhatsapp({ desde: dia, hasta: dia });
+      texto = componerResumenConciso(r, { momento, etiquetaDia: manana ? "Ayer (día completo)" : `Hoy hasta las ${reloj}`, urlPanel: process.env.ORACULO_URL_PANEL, whatsapp: wa ? bloqueWhatsapp(wa) : undefined });
     }
     despuesDeEnviar = () => marcarAvisadas(hoy, cuentas.flatMap((c) => evaluarAlertas(c.insights, hoy, UMBRALES_CLINICA).map((a) => claveAlerta(c.nombre, a))));
   } else if (tiene("--nuevas")) {
@@ -121,6 +130,30 @@ async function main() {
     const reloj = new Date().toLocaleTimeString("es-CO", { timeZone: "America/Bogota", hour: "2-digit", minute: "2-digit", hour12: false });
     texto = componerAlertasNuevas(nuevas, reloj, process.env.ORACULO_URL_PANEL);
     despuesDeEnviar = () => writeFileSync(RUTA_AVISADAS, JSON.stringify({ fecha: hoy, claves: [...ya, ...nuevas.map((x) => claveAlerta(x.cuenta, x.alerta))] }));
+  } else if (tiene("--sin-respuesta")) {
+    const hora = horaBogota();
+    if (hora < 6 || hora >= 21) {
+      console.log("· de noche no se avisa");
+      return;
+    }
+    const ahora = Math.floor(Date.now() / 1000);
+    const pendientes = pendientesDeRespuesta(cargarConversaciones(), ahora);
+    const RUTA = "datos/sin-respuesta-avisadas.json";
+    let previo: { ultimoEnvio: number; huellas: Record<string, number> } = { ultimoEnvio: 0, huellas: {} };
+    try {
+      if (existsSync(RUTA)) previo = JSON.parse(readFileSync(RUTA, "utf8"));
+    } catch {}
+    /* se olvidan las de más de 2 días; se avisa solo si hay alguna nueva y como mucho una vez por hora */
+    const huellas = Object.fromEntries(Object.entries(previo.huellas).filter(([, t]) => ahora - t < 2 * 86_400));
+    const nuevas = pendientes.filter((p) => !(p.huella in huellas));
+    if (!nuevas.length || ahora - previo.ultimoEnvio < 3600) {
+      console.log(`· ${pendientes.length} sin respuesta · ${nuevas.length} nuevas · ${nuevas.length ? "ya se avisó hace menos de 1 h" : "nada nuevo que avisar"}`);
+      writeFileSync(RUTA, JSON.stringify({ ultimoEnvio: previo.ultimoEnvio, huellas }));
+      return;
+    }
+    const reloj = new Date().toLocaleTimeString("es-CO", { timeZone: "America/Bogota", hour: "2-digit", minute: "2-digit", hour12: false });
+    texto = componerAvisoSinRespuesta(pendientes, reloj, process.env.ORACULO_URL_PANEL);
+    despuesDeEnviar = () => writeFileSync(RUTA, JSON.stringify({ ultimoEnvio: ahora, huellas: { ...huellas, ...Object.fromEntries(pendientes.map((p) => [p.huella, ahora])) } }));
   } else if (arg("--archivo")) texto = recortar(readFileSync(arg("--archivo")!, "utf8").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]!));
   else {
     const { motor } = await import("@/lib/datos");
@@ -128,6 +161,11 @@ async function main() {
     const cuentas: ResumenCuenta[] = [];
     for (const c of base.cuentas) cuentas.push({ nombre: c.nombre, r: c.id === base.cuenta.id ? base : await motor(c.id) });
     texto = componerResumenDiario(cuentas, { hoy: base.hoy, urlPanel: process.env.ORACULO_URL_PANEL, estado: arg("--estado") });
+  }
+  /* --simular: muestra el mensaje sin enviarlo ni marcar nada (para probar en la VPS sin molestar a nadie) */
+  if (tiene("--simular")) {
+    console.log(texto);
+    return;
   }
   /* varias personas: TELEGRAM_CHAT_ID=111,222 (cada una habló con el bot al menos una vez) */
   /* si una persona no ha abierto el bot todavía, a las demás les llega igual */

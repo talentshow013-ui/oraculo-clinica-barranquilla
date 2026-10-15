@@ -42,10 +42,13 @@ algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar 
   `npm run mensajes -- --buscar "<el mensaje tal cual, CON sus emojis>"`. El emoji es la marca de cada
   anuncio: si sale «coincide exacto», esa es la respuesta (campaña, anuncio, cuenta, si está activo).
 - «¿Qué mensaje tiene cada anuncio?» → `npm run mensajes`
-- «¿De qué anuncio vienen las conversaciones de Kommo?» / «¿cuánto tarda cada asesora en responder?» →
-  `npm run conversaciones` (`-- --hoy`, `-- --dias 30`). Sale del webhook de Kommo: solo cuenta desde que se
-  activó y nunca guarda texto ni datos de pacientes (`docs/WEBHOOK_KOMMO.md`). Si dice que aún no llegó
-  ningún aviso, el webhook no está activo en Kommo: dilo así, no inventes cifras.
+- «¿De qué anuncio vienen las conversaciones de Kommo?» / «¿qué anuncio trae citas y ventas?» / «¿cuánto
+  tarda cada asesora en responder?» → `npm run conversaciones` (`-- --hoy`, `-- --ayer`, `-- --dias 30`). Da por
+  anuncio: conversaciones → citas → asistieron → ventas, gasto y costo por conversación, cita y venta; y la
+  primera respuesta por asesora. Sale del webhook de Kommo (activo desde el 15-oct-2026; antes no hay datos) y
+  nunca guarda texto ni datos de pacientes (`docs/WEBHOOK_KOMMO.md`). Los datos viven en la VPS: en este PC el
+  comando los pide solo (necesita `VPS_PANEL_USUARIO` y `VPS_PANEL_CLAVE` en `.env`). En el panel: Pacientes →
+  «WhatsApp por anuncio».
 
 ## Si el conector no lo trae, la API sí
 El conector de Meta no entrega todo (por ejemplo, el mensaje predeterminado de WhatsApp). Antes de
@@ -84,7 +87,7 @@ límites o privacidad. Sin jerga. Si algo no se puede, una línea y la alternati
 - `npm run hoy` — gasto y resultados de hoy y ayer, en vivo, por cuenta y campaña.
 - `npm run radios` — el «kilometraje» y la segmentación de cada conjunto activo (km, quiénes, edad, género, Advantage+), en vivo. Úsalo ANTES y DESPUÉS de cambiar un radio: nunca digas «ya quedó» sin mostrar esta salida.
 - `npm run mensajes` — el mensaje predeterminado de WhatsApp de cada anuncio activo (lo que la persona envía con un toque y la asesora ve primero en Kommo). `npm run mensajes -- --buscar "texto"` dice de qué anuncio viene un mensaje que llegó a Kommo; `--archivo` lo guarda para compartir.
-- `npm run conversaciones` — conversaciones de WhatsApp que llegaron a Kommo: de qué anuncio vino cada una y cuánto tardó la primera respuesta, por asesora (webhook de Kommo en la VPS; sin texto de mensajes).
+- `npm run conversaciones` — conversaciones de WhatsApp que llegaron a Kommo: de qué anuncio vino cada una, en qué terminó (cita, asistió, venta), cuánto costó y cuánto tardó la primera respuesta, por asesora (webhook de Kommo en la VPS; sin texto de mensajes). Telegram avisa si una conversación lleva más de 1 h sin respuesta.
 - `npm run drive -- listar | buscar "texto" | leer <id|enlace>` — Google Drive de solo lectura (guiones, precios, protocolos). Se conecta una vez con `npm run drive:conectar`. Nunca leas ni repitas datos de pacientes que aparezcan en un archivo.
 - `npm run radar:referencias` — rehace el radar de mercado con las ciudades de referencia (Medellín, Santa Marta, Cartagena, Miami, Los Ángeles, Houston, Nueva York; config/radar-referencias.ts). Barranquilla no entra.
 - `npm run ritmo` — «¿hoy viene lento?»: leads y gasto de hoy hasta la hora contra el promedio de 7 días a la misma hora, y la hora más floja.

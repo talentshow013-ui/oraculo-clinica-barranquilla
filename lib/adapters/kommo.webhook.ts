@@ -9,7 +9,7 @@ import { dirname, join } from "node:path";
 import { cargarMensajes } from "./mensajes.archivo";
 import type { AnuncioMensaje } from "./meta.mensajes";
 import { cargarConversaciones, guardarConversaciones } from "./conversaciones.archivo";
-import { aObjeto, aplicarMensaje, atribuir, cuentaDelAviso, extraerMensajes, purgar } from "./kommo.conversaciones";
+import { aObjeto, aplicarMensaje, aplicarTalk, atribuir, cuentaDelAviso, extraerMensajes, extraerTalks, purgar } from "./kommo.conversaciones";
 
 /** Compara el secreto de la dirección con el configurado, sin dar pistas por el tiempo. */
 export function secretoValido(recibido: string, esperado: string | undefined): boolean {
@@ -38,6 +38,8 @@ export interface RespuestaAviso {
   nuevas: number;
   respuestas: number;
   ignorados: number;
+  /** Avisos de conversación (talk): cerradas o reabiertas en Kommo. */
+  talks?: number;
   prueba?: { direccion: string; nivel: string; campana: string | null; anuncio: string | null }[];
 }
 
@@ -87,7 +89,8 @@ export function procesarAviso(o: OpcionesAviso): Promise<RespuestaAviso> {
   const cuenta = cuentaDelAviso(raiz);
   if (o.subdominio && cuenta && cuenta.toLowerCase() !== o.subdominio.toLowerCase()) return Promise.resolve({ recibidos: 0, nuevas: 0, respuestas: 0, ignorados: 1 });
   const mensajes = extraerMensajes(raiz);
-  if (!mensajes.length) return Promise.resolve({ recibidos: 0, nuevas: 0, respuestas: 0, ignorados: 0 });
+  const talks = extraerTalks(raiz);
+  if (!mensajes.length && !talks.length) return Promise.resolve({ recibidos: 0, nuevas: 0, respuestas: 0, ignorados: 0 });
 
   if (o.prueba) {
     return Promise.resolve({
@@ -113,6 +116,8 @@ export function procesarAviso(o: OpcionesAviso): Promise<RespuestaAviso> {
       else if (res.efecto === "respuesta") r.respuestas++;
       else if (res.efecto === "ignorado") r.ignorados++;
     }
+    for (const t of talks) estado = aplicarTalk(estado, t, o.secreto);
+    if (talks.length) r.talks = talks.length;
     estado = purgar(estado, Math.floor(ahora.getTime() / 1000), 90);
     guardarConversaciones({ ...estado, actualizadoEn: ahora.toISOString() }, o.ruta);
     try {

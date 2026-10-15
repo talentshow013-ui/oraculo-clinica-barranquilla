@@ -64,4 +64,9 @@ describe("resumen conciso (lo que pidió la clínica)", () => {
     expect(t.split("\n").length).toBeLessThanOrEqual(26);
     expect(t).not.toMatch(/🟪|❇️/);
   });
+  test("con WhatsApp (webhook de Kommo) agrega su bloque antes del enlace del panel", () => {
+    const t = componerResumenConciso(r, { momento: "6 p. m.", etiquetaDia: "Hoy", urlPanel: "https://x/panel", whatsapp: ["💬 <b>WhatsApp (Kommo)</b>", "12 conversaciones nuevas"] });
+    expect(t.indexOf("WhatsApp")).toBeGreaterThan(t.indexOf("Riesgos"));
+    expect(t.indexOf("WhatsApp")).toBeLessThan(t.indexOf("https://x/panel"));
+  });
 });

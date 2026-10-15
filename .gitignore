@@ -47,6 +47,9 @@ datos/mensajes-por-avisar.json
 datos/conversaciones.json
 datos/conversaciones.json.tmp
 datos/kommo-webhook-forma.json
+datos/conversaciones-embudo.json
+datos/conversaciones-embudo.json.tmp
+datos/sin-respuesta-avisadas.json
 
 # llaves OAuth de Google (Drive): fuera del repositorio
 client_secret_*.json

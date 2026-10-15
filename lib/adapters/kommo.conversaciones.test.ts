@@ -266,3 +266,86 @@ describe("Kommo webhook · resumen", () => {
     expect(resumir(e, { desde: "2026-09-21", hasta: "2026-09-21", ahora: T0 + 300 }).atencion.sinRespuesta).toBe(0);
   });
 });
+
+/* ───────────── fase 2: embudo, cierre de conversaciones, pendientes y gasto ───────────── */
+import { aplicarTalk, cruzarLeads, extraerTalks, pendientesDeRespuesta } from "./kommo.conversaciones";
+import type { EtapaKommo } from "./kommo";
+
+const ETAPAS: EtapaKommo[] = [
+  { id: 1, nombre: "Leads Entrantes", pipelineId: 10, tipo: "normal", orden: 1 },
+  { id: 3, nombre: "AGENDADO", pipelineId: 10, tipo: "normal", orden: 3 },
+  { id: 4, nombre: "MIS PACIENTES", pipelineId: 10, tipo: "normal", orden: 4 },
+  { id: 142, nombre: "Leads ganados", pipelineId: 10, tipo: "ganado", orden: 99 },
+  { id: 143, nombre: "Leads perdidos", pipelineId: 10, tipo: "perdido", orden: 100 },
+];
+
+describe("Kommo webhook · atribución con id del anuncio (para cruzar con el gasto)", () => {
+  test("el anuncio atribuido trae su id de Meta", () => {
+    expect(atribuir("¡Hola, Vivante! ✨ Quiero información sobre Criolipólisis🔝 ✨", ANUNCIOS).anuncioId).toBe("1");
+    expect(atribuir("Hola 🔥 quiero la promo de Botox", ANUNCIOS).anuncioId).toBeNull();
+  });
+});
+
+describe("Kommo webhook · conversación cerrada en Kommo (talk)", () => {
+  test("talk[update] con is_in_work=0 cierra la conversación; los mensajes no son talks", () => {
+    const raiz = aObjeto("application/x-www-form-urlencoded", new URLSearchParams({ "talk[update][0][talk_id]": "77", "talk[update][0][chat_id]": "c", "talk[update][0][is_in_work]": "0", "talk[update][0][is_read]": "1" }).toString());
+    expect(extraerTalks(raiz)).toEqual([{ conversacion: "77", enTrabajo: false }]);
+    expect(extraerMensajes(raiz)).toHaveLength(0);
+    expect(extraerTalks({ message: { add: [{ talk_id: "77", text: "Hola", type: "incoming" }] } })).toHaveLength(0);
+  });
+  test("una conversación cerrada sin respuesta no queda pendiente; si se reabre, vuelve", () => {
+    let e = aplicarMensaje(vacio(), entrante("77", "gracias", T0), ctx).estado;
+    e = aplicarTalk(e, { conversacion: "77", enTrabajo: false }, ctx.secreto);
+    expect(Object.values(e.conversaciones)[0]!.cerrada).toBe(true);
+    expect(pendientesDeRespuesta(e, T0 + 7200)).toHaveLength(0);
+    e = aplicarTalk(e, { conversacion: "77", enTrabajo: true }, ctx.secreto);
+    expect(pendientesDeRespuesta(e, T0 + 7200)).toHaveLength(1);
+    // un talk de una conversación que no conocemos no crea nada
+    expect(Object.keys(aplicarTalk(vacio(), { conversacion: "9", enTrabajo: false }, ctx.secreto).conversaciones)).toHaveLength(0);
+  });
+});
+
+describe("Kommo webhook · pendientes de respuesta (aviso de más de 1 h)", () => {
+  // T0 = 2026-09-21 ~09:13 en Bogotá (horario de atención)
+  test("más de 60 min sin respuesta de una persona, empezada en horario y no muy vieja", () => {
+    let e = aplicarMensaje(vacio(), entrante("a", "Hola 🔥 quiero la promo de Botox", T0), ctx).estado;
+    e = aplicarMensaje(e, entrante("b", "Hola", T0 + 600), ctx).estado;
+    e = aplicarMensaje(e, saliente("b", T0 + 900), ctx).estado; // respondida
+    const p = pendientesDeRespuesta(e, T0 + 3700);
+    expect(p).toHaveLength(1);
+    expect(p[0]!.esperaSeg).toBe(3700);
+    expect(pendientesDeRespuesta(e, T0 + 1800)).toHaveLength(0); // aún no pasa la hora
+    expect(pendientesDeRespuesta(e, T0 + 13 * 3600)).toHaveLength(0); // demasiado vieja: no se avisa a destiempo
+  });
+  test("lo que entra de noche no se avisa (se ve en el resumen de la mañana)", () => {
+    const noche = T0 + 14 * 3600; // ~23:13 Bogotá
+    const e = aplicarMensaje(vacio(), entrante("n", "Hola", noche), ctx).estado;
+    expect(pendientesDeRespuesta(e, noche + 7200)).toHaveLength(0);
+  });
+});
+
+describe("Kommo webhook · cruce con el embudo de Kommo (cita, asistió, venta)", () => {
+  test("la huella del lead de la conversación se cruza con su etapa actual, sin guardar el id", () => {
+    let e = aplicarMensaje(vacio(), entrante("a", "¡Hola, Vivante! ✨ Quiero información sobre Criolipólisis🔝 ✨", T0, { lead: "500" }), ctx).estado;
+    e = aplicarMensaje(e, entrante("b", "¡Hola, Vivante! ✨ Quiero información sobre Criolipólisis🔝 ✨", T0, { lead: "501" }), ctx).estado;
+    e = aplicarMensaje(e, entrante("c", "¡Hola, Vivante! ✨ Quiero información sobre Criolipólisis🔝 ✨", T0, { lead: "502" }), ctx).estado;
+    const huellas = new Set(Object.values(e.conversaciones).map((c) => c.lead!).filter(Boolean));
+    const leads = [
+      { id: 500, etapaId: 142, precio: 900000 },
+      { id: 501, etapaId: 3, precio: 0 },
+      { id: 502, etapaId: 143, precio: 0 },
+      { id: 999, etapaId: 4, precio: 0 }, // otro lead que no vino por estas conversaciones
+    ];
+    const cruce = cruzarLeads(huellas, leads, ETAPAS, {}, ctx.secreto);
+    expect(Object.keys(cruce)).toHaveLength(3);
+    expect(JSON.stringify(cruce)).not.toContain("500");
+    const r = resumir(e, { desde: "2026-09-21", hasta: "2026-09-21", ahora: T0 + 60, embudo: cruce, gastoPorAnuncio: { "1": 150000 } });
+    expect(r.porAnuncio[0]).toMatchObject({ anuncioId: "1", conversaciones: 3, citas: 2, asistieron: 1, ventas: 1, valor: 900000, gasto: 150000, costoConversacion: 50000, costoCita: 75000, costoVenta: 150000 });
+    expect(r.embudo).toMatchObject({ conversaciones: 3, conLead: 3, citas: 2, asistieron: 1, ventas: 1, valor: 900000 });
+  });
+  test("sin cruce todavía: citas y ventas en cero y costos que dependen de ellas en null", () => {
+    const e = aplicarMensaje(vacio(), entrante("a", "¡Hola, Vivante! ✨ Quiero información sobre Criolipólisis🔝 ✨", T0), ctx).estado;
+    const r = resumir(e, { desde: "2026-09-21", hasta: "2026-09-21", ahora: T0, gastoPorAnuncio: { "1": 30000 } });
+    expect(r.porAnuncio[0]).toMatchObject({ citas: 0, ventas: 0, gasto: 30000, costoConversacion: 30000, costoVenta: null });
+  });
+});

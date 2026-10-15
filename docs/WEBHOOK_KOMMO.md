@@ -28,16 +28,32 @@ Diseño «leer y olvidar» (`lib/adapters/kommo.conversaciones.ts`):
 
 ## Estado: ACTIVO desde el 2026-10-15 (webhook id 47515720 en Kommo)
 Lo activó el equipo de ITERIA por API con la orden expresa del responsable del proyecto. Eventos:
-`add_message` (mensaje entrante) y `add_outgoing_message` (mensaje saliente de una persona o bot).
+`add_message` (mensaje entrante), `add_outgoing_message` (mensaje saliente de una persona o bot) y
+`update_talk` (la conversación se cerró o se reabrió).
 
 ## Activarlo de nuevo (por si hay que repetirlo)
 1. En la VPS: `sudo -u oraculo bash /home/oraculo/oraculo/deploy/webhook-kommo.sh` y
    `systemctl restart oraculo-panel`. Deja la dirección completa en `entregables/webhook-kommo.txt`.
-2. En Kommo, por API: `POST /api/v4/webhooks` con `{"destination": "<la dirección>", "settings": ["add_message", "add_outgoing_message"]}`
+2. En Kommo, por API: `POST /api/v4/webhooks` con `{"destination": "<la dirección>", "settings": ["add_message", "add_outgoing_message", "update_talk"]}`
    (con una dirección que ya existe, actualiza sus eventos). O a mano: Ajustes → Integraciones → **Web hooks**.
    Sin el evento saliente se sabe de qué anuncio vino cada conversación, pero no cuánto tardó la asesora.
 3. Con la primera conversación: `npm run conversaciones -- --hoy` y revisar `datos/kommo-webhook-forma.json`
    (debe listar campos como `message[add][0][text]`).
+
+## Qué se hace con eso (desde el 15-oct-2026)
+- **Cruce con el embudo** (`npm run conversaciones:cruzar`, cada hora en `oraculo-vivo`): lee los leads de Kommo
+  tocados desde la primera conversación, los convierte en huella y guarda solo los que coinciden con una
+  conversación, con su etapa (lead / cita / asistió / venta / perdido) en `datos/conversaciones-embudo.json`.
+  Guarda también los nombres de las asesoras (personal de la clínica, no pacientes).
+- **Panel** → Pacientes → «WhatsApp por anuncio»: conversaciones, citas, asistieron, ventas, gasto y costo por
+  conversación, cita y venta de cada anuncio; primera respuesta por asesora. Sigue el calendario. El gasto se
+  cuenta solo desde el primer día con conversaciones.
+- **Telegram**: bloque de WhatsApp en el resumen de 6, 12 y 18; y `notificar --sin-respuesta` (cada 10 min en
+  `oraculo-vivo`): un mensaje agrupado cuando hay conversaciones con más de 1 h sin respuesta de una persona,
+  empezadas entre 7 a. m. y 7 p. m., no cerradas en Kommo y de menos de 12 h. Como mucho uno por hora; de 9 p. m.
+  a 6 a. m. calla. Las conversaciones que la asesora cierra en Kommo (evento `update_talk`) no se avisan.
+- **Otros equipos** (PC de la clínica, Mac): `npm run conversaciones` pide el resumen a la VPS
+  (`GET /api/conversaciones`, detrás del usuario y clave del panel: `VPS_PANEL_USUARIO` / `VPS_PANEL_CLAVE`).
 
 ## Apagarlo
 Kommo → Web hooks → borrar la dirección, o `DELETE /api/v4/webhooks` con `{"destination": "<la dirección>"}` (o quitar `KOMMO_WEBHOOK_SECRETO` de `.env` y reiniciar el panel:

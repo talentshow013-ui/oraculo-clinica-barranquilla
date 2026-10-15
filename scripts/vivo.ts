@@ -6,6 +6,7 @@
  *   Meta y Google Ads ........ cada 10 minutos (ayer y hoy)
  *   Kommo, orgánico y web .... cada 30 minutos
  *   AgendaPro y mensajes ..... cada hora (los anuncios nuevos y su mensaje se avisan por Telegram)
+ *   WhatsApp (webhook Kommo) . cruce con el embudo cada hora; conversaciones sin respuesta > 1 h, revisión cada 10 min
  *
  * El panel y el bot de Telegram leen los archivos en cada consulta: quedan en vivo solos.
  * El estado de cada fuente queda en `datos/estado-vivo.json` (última vez bien, último error).
@@ -44,6 +45,9 @@ const TAREAS: Tarea[] = [
   { nombre: "AgendaPro", script: "agendapro:sincronizar", args: ["--dias", "45"], cadaMin: 60, activa: !!e.AGENDAPRO_USUARIO && !!e.AGENDAPRO_CLAVE, alertas: false },
   { nombre: "Orgánico", script: "organico:sincronizar", args: ["--dias", "3"], cadaMin: 30, activa: !!e.META_ORGANICO_TOKEN, alertas: false },
   { nombre: "Sitio web", script: "web:sincronizar", args: ["--dias", "3"], cadaMin: 30, activa: !!e.GA4_PROPIEDAD_ID, alertas: false },
+  /* WhatsApp: las conversaciones llegan solas por el webhook; aquí se cruzan con el embudo de Kommo y se vigila lo que lleva > 1 h sin respuesta */
+  { nombre: "WhatsApp · embudo", script: "conversaciones:cruzar", args: [], cadaMin: 60, activa: !!e.KOMMO_TOKEN && !!e.KOMMO_WEBHOOK_SECRETO, alertas: false },
+  { nombre: "WhatsApp · sin respuesta", script: "notificar", args: ["--sin-respuesta"], cadaMin: 10, activa: !!e.KOMMO_WEBHOOK_SECRETO && !!e.TELEGRAM_BOT_TOKEN && !!e.TELEGRAM_CHAT_ID, alertas: false },
 ];
 
 interface EstadoFuente {

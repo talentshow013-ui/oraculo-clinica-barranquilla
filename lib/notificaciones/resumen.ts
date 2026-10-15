@@ -114,7 +114,7 @@ export function resumenConciso(cuentas: ReadonlyArray<{ nombre: string; insights
 
 const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-export function componerResumenConciso(r: ResumenConciso, o: { momento: string; etiquetaDia: string; urlPanel?: string }): string {
+export function componerResumenConciso(r: ResumenConciso, o: { momento: string; etiquetaDia: string; urlPanel?: string; /** líneas de WhatsApp (Kommo), ya en HTML */ whatsapp?: string[] }): string {
   const cplTxt = (c: CifrasResumen) => (c.cpl == null ? "—" : cop(c.cpl));
   const L: string[] = [
     `🔮 <b>Oráculo · ${esc(o.momento)}</b>`,
@@ -132,6 +132,7 @@ export function componerResumenConciso(r: ResumenConciso, o: { momento: string; 
   L.push("", "⚠️ <b>Riesgos</b>");
   if (r.riesgos.length) r.riesgos.forEach((x, i) => L.push(`${i + 1}. ${esc(x.texto)}`));
   else L.push("Sin riesgos importantes.");
+  if (o.whatsapp?.length) L.push("", ...o.whatsapp);
   if (o.urlPanel) L.push("", `Detalle en el panel: ${esc(o.urlPanel)}`);
   return L.join("\n");
 }
