@@ -16,6 +16,7 @@
     "ritmo": "tsx scripts/ritmo.ts",
     "radios": "tsx scripts/radios.ts",
     "mensajes": "tsx scripts/mensajes.ts",
+    "conversaciones": "tsx scripts/conversaciones.ts",
     "drive": "tsx scripts/drive.ts",
     "subir": "tsx scripts/subir.ts",
     "drive:conectar": "tsx scripts/drive-conectar.ts",

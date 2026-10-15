@@ -21,6 +21,7 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Todo menos los archivos estáticos de Next y los creativos del radar (imágenes públicas de la Biblioteca).
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|radar/).*)"],
+  // Todo menos los archivos estáticos de Next, los creativos del radar (imágenes públicas de la Biblioteca)
+  // y el webhook de Kommo (no puede poner usuario y clave: lo protege el secreto de su dirección).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|radar/|api/kommo/webhook/).*)"],
 };

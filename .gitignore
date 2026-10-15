@@ -43,6 +43,11 @@ datos/estado-vivo.json
 datos/mensajes.json
 datos/mensajes-por-avisar.json
 
+# conversaciones de Kommo por webhook (sin texto: solo huellas, anuncio y tiempos) y la forma del aviso
+datos/conversaciones.json
+datos/conversaciones.json.tmp
+datos/kommo-webhook-forma.json
+
 # llaves OAuth de Google (Drive): fuera del repositorio
 client_secret_*.json
 datos/drive-oauth.json

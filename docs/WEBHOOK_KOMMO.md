@@ -1,0 +1,49 @@
+# Webhook de Kommo — de qué anuncio vino cada conversación y cuánto tardó la asesora
+
+Kommo avisa a una dirección nuestra cada vez que entra o sale un mensaje de WhatsApp. La API normal
+de Kommo no entrega el texto de los mensajes; el webhook sí, pero solo de lo que pasa **desde que se
+activa** (el historial anterior no llega por esta vía).
+
+## Qué hace y qué NO hace (Ley 1581 de 2012: son datos de salud)
+Diseño «leer y olvidar» (`lib/adapters/kommo.conversaciones.ts`):
+- El texto del mensaje se lee **en memoria** para dos cosas: de qué anuncio viene (compara con el
+  mensaje predeterminado y los emojis de cada anuncio, `datos/mensajes.json`) y la hora. Después se descarta.
+- **Se guarda** (`datos/conversaciones.json`, modo 600, fuera de git): una huella irreversible de la
+  conversación (HMAC, no el id de Kommo), el día, el anuncio/campaña, los segundos hasta la primera
+  respuesta de una persona y el id de la asesora.
+- **Nunca se guarda ni se imprime**: texto, nombres, teléfonos, el id de Kommo de la conversación, ni
+  el contenido del aviso. El archivo pasa por `validarSinPII`. Se borra lo de más de 90 días.
+- `datos/kommo-webhook-forma.json` guarda solo los **nombres** de los campos del aviso (para verificar
+  el formato real sin guardar contenido).
+
+## Piezas
+- Dirección: `https://oraculo.vivantemedicinaestetica.com/api/kommo/webhook/<KOMMO_WEBHOOK_SECRETO>`
+  (`app/api/kommo/webhook/[secreto]/route.ts`). No lleva usuario y clave del panel (Kommo no puede
+  ponerlos): la protege el secreto de la dirección. Sin `KOMMO_WEBHOOK_SECRETO` responde 404.
+- Un aviso de otra cuenta de Kommo (otro subdominio) se ignora.
+- Kommo exige respuesta 2xx en menos de 2 s; si falla reintenta (5 min, 15 min, 15 min, 1 h). Si manda
+  más de 100 respuestas inválidas en 2 horas, Kommo desactiva el webhook.
+- Prueba sin guardar nada: cabecera `x-oraculo-prueba: 1` → responde qué entendió (dirección, anuncio).
+- Consulta: `npm run conversaciones` (7 días) · `-- --hoy` · `-- --dias 30`.
+
+## Activarlo (lo decide la gerencia de la clínica; hasta entonces no llega nada)
+1. En la VPS: `sudo -u oraculo bash /home/oraculo/oraculo/deploy/webhook-kommo.sh` y
+   `systemctl restart oraculo-panel`. Deja la dirección completa en `entregables/webhook-kommo.txt`.
+2. Kommo → Ajustes → Integraciones → **Web hooks** → pegar la dirección → marcar **Incoming message
+   received** y, si aparece, **Outgoing message sent** → Guardar. (Sin el evento de mensajes salientes
+   se sabe de qué anuncio vino cada conversación, pero no cuánto tardó la asesora.)
+3. Con la primera conversación: `npm run conversaciones -- --hoy` y revisar `datos/kommo-webhook-forma.json`
+   (debe listar campos como `message[add][0][text]`).
+
+## Apagarlo
+Kommo → Web hooks → borrar la dirección (o quitar `KOMMO_WEBHOOK_SECRETO` de `.env` y reiniciar el panel:
+la dirección pasa a responder 404). `datos/conversaciones.json` se puede borrar sin consecuencias.
+
+## Límites que conviene saber
+- Solo cuenta desde la activación. No hay conversaciones anteriores.
+- Una conversación cuenta como «nueva» la primera vez que se ve su `talk_id`; un paciente que vuelve
+  cuando Kommo abre una conversación nueva cuenta otra vez.
+- Si la persona cambia el mensaje predeterminado o el anuncio es de los «hechos desde una publicación»
+  (sin mensaje propio), queda «sin identificar». Dos campañas con el mismo mensaje quedan «ambiguo»:
+  por eso conviene un mensaje distinto (con su emoji) por anuncio.
+- Los tiempos de respuesta incluyen noches y fines de semana.
