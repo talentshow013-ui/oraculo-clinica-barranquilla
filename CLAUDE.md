@@ -55,8 +55,7 @@ algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar 
   anuncio: conversaciones → citas → asistieron → ventas, gasto y costo por conversación, cita y venta; y la
   primera respuesta por asesora. Sale del webhook de Kommo (activo desde el 15-oct-2026; antes no hay datos) y
   nunca guarda texto ni datos de pacientes (`docs/WEBHOOK_KOMMO.md`). Los datos viven en la VPS: en este PC el
-  comando los pide solo (necesita `VPS_PANEL_USUARIO` y `VPS_PANEL_CLAVE` en `.env`). En el panel: Pacientes →
-  «WhatsApp por anuncio».
+  comando los pide solo (necesita `VPS_PANEL_USUARIO` y `VPS_PANEL_CLAVE` en `.env`).
 
 ## Si el conector no lo trae, la API sí
 El conector de Meta no entrega todo (por ejemplo, el mensaje predeterminado de WhatsApp). Antes de

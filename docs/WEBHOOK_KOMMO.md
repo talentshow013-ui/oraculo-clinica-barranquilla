@@ -59,9 +59,9 @@ guarda (`lib/adapters/chats.ts`), solo si hay `CHATS_LLAVE` en la configuración
   tocados desde la primera conversación, los convierte en huella y guarda solo los que coinciden con una
   conversación, con su etapa (lead / cita / asistió / venta / perdido) en `datos/conversaciones-embudo.json`.
   Guarda también los nombres de las asesoras (personal de la clínica, no pacientes).
-- **Panel** → Pacientes → «WhatsApp por anuncio»: conversaciones, citas, asistieron, ventas, gasto y costo por
-  conversación, cita y venta de cada anuncio; primera respuesta por asesora. Sigue el calendario. El gasto se
-  cuenta solo desde el primer día con conversaciones.
+- **Sin pantalla en el panel** (el usuario lo quiere todo en el chat): `npm run conversaciones` da por anuncio
+  conversaciones, citas, asistieron, ventas, gasto y costo por conversación, cita y venta (el gasto se cuenta
+  solo desde el primer día con conversaciones), y la primera respuesta por asesora.
 - **Telegram**: bloque de WhatsApp en el resumen de 6, 12 y 18; y `notificar --sin-respuesta` (cada 10 min en
   `oraculo-vivo`, APAGADO salvo `WHATSAPP_AVISO_SIN_RESPUESTA=1`): un mensaje agrupado cuando hay conversaciones con más de 1 h sin respuesta de una persona,
   empezadas entre 7 a. m. y 7 p. m., no cerradas en Kommo y de menos de 12 h. Como mucho uno por hora; de 9 p. m.

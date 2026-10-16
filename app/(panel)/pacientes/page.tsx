@@ -1,13 +1,12 @@
 import Link from 'next/link'
 import { motor } from '@/lib/datos'
 import { cop, num, pct } from '@/lib/format'
-import { fechaCorta, fechaHora, hoyBogota } from '@/lib/format/fechas'
+import { fechaCorta, fechaHora } from '@/lib/format/fechas'
 import { NOMBRE_FUENTE } from '@/lib/pacientes'
 import { Aviso, Celda, Etiqueta, Grid, Kpi, Panel, Tabla, Th, Titulo, Vacio, type Tono } from '@/components/ui'
 import Ayuda from '@/components/cliente/ayuda'
 import type { CSSProperties } from 'react'
 import { FuenteDelHallazgo } from '@/components/hallazgo-fuente'
-import WhatsappAnuncios from '@/components/cliente/whatsapp-anuncios'
 
 const AVISO_SIN_DATOS = 'Todavía no se ha conectado Kommo. Se conecta una vez con el token de la integración «Oráculo» (guía: docs/CONEXION_KOMMO.md) y después se trae solo cada día.'
 
@@ -74,9 +73,6 @@ export default async function Pacientes() {
               </Tabla>
             </Panel>
           </div>
-
-          {/* sin fechas elegidas en el calendario, WhatsApp llega hasta hoy aunque la pauta venga con retraso */}
-          <WhatsappAnuncios desde={p.desde} hasta={r.periodo.elegido ? p.hasta : hoyBogota()} retraso={500} />
 
           <Panel id="etapas" className="mt-3" rotulo="Cómo se leyó Kommo" titulo="Etapas de Kommo y a qué paso cuentan" retraso={520} extra={<p className="max-w-[46ch] text-[12.5px] leading-snug text-texto-2">Si una etapa debe contar distinto, se ajusta en config/kommo.json.</p>}>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
