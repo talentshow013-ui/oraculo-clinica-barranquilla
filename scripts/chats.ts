@@ -44,8 +44,8 @@ async function main() {
   let r = tiene("--remoto") ? null : conversacionesLegibles({ desde, hasta, filtro, max });
   let deVps = false;
   if (!r) {
-    const usuario = e.ORACULO_USUARIO ?? e.VPS_PANEL_USUARIO;
-    const clave = e.ORACULO_CLAVE ?? e.VPS_PANEL_CLAVE;
+    const usuario = e.ORACULO_USUARIO?.trim() || e.VPS_PANEL_USUARIO?.trim();
+    const clave = e.ORACULO_CLAVE?.trim() || e.VPS_PANEL_CLAVE?.trim();
     if (!usuario || !clave) throw new Error("Las conversaciones viven en la VPS y aquí falta con qué pedirlas: agrega VPS_PANEL_USUARIO y VPS_PANEL_CLAVE (usuario y clave del panel) al .env.");
     let origen = "https://oraculo.vivantemedicinaestetica.com";
     try {
