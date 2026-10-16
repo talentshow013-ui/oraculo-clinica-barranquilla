@@ -62,10 +62,7 @@ guarda (`lib/adapters/chats.ts`), solo si hay `CHATS_LLAVE` en la configuración
 - **Sin pantalla en el panel** (el usuario lo quiere todo en el chat): `npm run conversaciones` da por anuncio
   conversaciones, citas, asistieron, ventas, gasto y costo por conversación, cita y venta (el gasto se cuenta
   solo desde el primer día con conversaciones), y la primera respuesta por asesora.
-- **Telegram**: bloque de WhatsApp en el resumen de 6, 12 y 18; y `notificar --sin-respuesta` (cada 10 min en
-  `oraculo-vivo`, APAGADO salvo `WHATSAPP_AVISO_SIN_RESPUESTA=1`): un mensaje agrupado cuando hay conversaciones con más de 1 h sin respuesta de una persona,
-  empezadas entre 7 a. m. y 7 p. m., no cerradas en Kommo y de menos de 12 h. Como mucho uno por hora; de 9 p. m.
-  a 6 a. m. calla. Las conversaciones que la asesora cierra en Kommo (evento `update_talk`) no se avisan.
+- **Nada va a Telegram** (el usuario solo pidió el acceso para leer y analizar las conversaciones en el chat).
 - **Otros equipos** (PC de la clínica, Mac): `npm run conversaciones` pide el resumen a la VPS
   (`GET /api/conversaciones`, detrás del usuario y clave del panel: `VPS_PANEL_USUARIO` / `VPS_PANEL_CLAVE`).
 
