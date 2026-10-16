@@ -151,7 +151,8 @@ export function unirConversaciones(registros: ReadonlyArray<RegistroChat>, estad
     .map(([huella, rs]) => {
       const c = estado.conversaciones[huella];
       const l = c?.lead ? embudo[c.lead] : undefined;
-      const inicio = c?.inicio ?? rs[0]!.t;
+      /* si la asesora escribió antes que el paciente (chat que ya venía de antes), empieza en su mensaje */
+      const inicio = Math.min(c?.inicio ?? rs[0]!.t, rs[0]!.t);
       return {
         huella,
         inicio,
@@ -210,7 +211,7 @@ export function formatearConversaciones(lista: ReadonlyArray<ConversacionLegible
       const origen = c.anuncio || c.campana ? `${c.cuenta} · ${c.campana}${c.anuncio ? ` · ${c.anuncio}` : ""}${c.certeza && c.certeza !== "exacto" ? ` (${c.certeza})` : ""}` : "sin anuncio identificado";
       return [
         `━━ ${i + 1}/${lista.length} · ${fechaCorta(c.dia)} ${hora(c.inicio)} · ${origen}`,
-        `   Atendió: ${c.asesora ?? "nadie todavía"} · primera respuesta: ${dur(c.primeraRespuestaSeg)} · en Kommo: ${c.resultado ?? "aún sin cruzar"}`,
+        `   Atendió: ${c.asesora ?? "nadie todavía"} · primera respuesta: ${c.primeraRespuestaSeg == null && c.mensajes[0]?.quien !== "Paciente" ? "— (chat que ya venía de antes)" : dur(c.primeraRespuestaSeg)} · en Kommo: ${c.resultado ?? "aún sin cruzar"}`,
         ...c.mensajes.map((m) => `   ${hora(m.t)} ${m.quien}: ${m.texto.replace(/\s*\n\s*/g, " / ")}`),
       ].join("\n");
     })

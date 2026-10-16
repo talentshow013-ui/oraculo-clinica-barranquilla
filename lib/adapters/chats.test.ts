@@ -85,6 +85,14 @@ describe("Chats · conversaciones legibles (para «revisa las de ayer» o «las 
     expect(filtrarConversaciones(lista, { resultado: "cita" }).map((c) => c.huella)).toEqual(["h1"]);
     expect(filtrarConversaciones(lista, { sinRespuesta: true }).map((c) => c.huella)).toEqual(["h2"]);
   });
+  test("chat que ya venía de antes (la asesora escribe primero): no dice «sin respuesta» y empieza en su primer mensaje", () => {
+    const e2: EstadoConversaciones = { version: 1, actualizadoEn: "", conversaciones: { h3: { inicio: T0 + 60, dia: "2026-09-21", origen: null, atribucion: { nivel: "ninguno", cuenta: null, campana: null, anuncio: null }, lead: null, respuesta: null, asesoraId: null, mensajes: 1 } } };
+    const l = unirConversaciones([reg({ conv: "h3", t: T0, dir: "saliente", texto: "¿Pudiste revisar?", asesoraId: "9" }), reg({ conv: "h3", t: T0 + 60, texto: "Sí, gracias" })], e2, {}, { "9": "Laura" });
+    expect(l[0]!.inicio).toBe(T0);
+    const t = formatearConversaciones(l);
+    expect(t).not.toContain("sin respuesta de una persona");
+    expect(t).toContain("ya venía de antes");
+  });
   test("el texto para leer: encabezado por conversación y los mensajes con hora y quién; nunca el nombre del paciente", () => {
     const t = formatearConversaciones(lista);
     expect(t).toContain("Crio_Video");
