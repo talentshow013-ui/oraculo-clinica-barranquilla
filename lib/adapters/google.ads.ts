@@ -10,7 +10,8 @@ import type { Creativo, Estado, InsightRow, Nivel } from "@/lib/adapters/types";
 import { clasificarAngulo, nivelConscienciaTexto } from "@/lib/competitive/angles";
 import { detectarServicio } from "./radar.apify";
 
-export const VERSION_GOOGLE_ADS = process.env.GOOGLE_ADS_API_VERSION || "v22";
+// Google retira cada versión en ~1 año: v22 se bloqueó el 20-oct-2026; v26 probada ese día.
+export const VERSION_GOOGLE_ADS = process.env.GOOGLE_ADS_API_VERSION || "v26";
 const VENTANA = "Google Ads · atribución de la cuenta";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
