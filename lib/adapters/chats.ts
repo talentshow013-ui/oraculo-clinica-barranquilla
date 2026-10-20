@@ -176,6 +176,8 @@ export interface FiltroChats {
   buscar?: ReadonlyArray<string>;
   /** Fuera las conversaciones donde algún mensaje contiene alguno de estos textos (p. ej. difusiones). */
   excluir?: ReadonlyArray<string>;
+  /** Solo las que empezó la persona: deja fuera difusiones y mensajes que abrió la clínica o el bot. */
+  escribioPrimero?: boolean;
   /** Parte del nombre del anuncio, la campaña o la cuenta. */
   anuncio?: string;
   /** Ids de anuncios (p. ej. los que tienen un mensaje predeterminado que alguien pegó). */
@@ -194,6 +196,7 @@ export function filtrarConversaciones(lista: ReadonlyArray<ConversacionLegible>,
   return lista.filter((c) => {
     if (f.buscar?.length && !f.buscar.every((q) => enTexto(c, q))) return false;
     if (f.excluir?.length && f.excluir.some((q) => enTexto(c, q))) return false;
+    if (f.escribioPrimero && c.mensajes[0]?.quien !== "Paciente") return false;
     if (f.anuncio || f.anuncioIds) {
       const porNombre = !!f.anuncio && [c.anuncio, c.campana, c.cuenta].some((x) => n(x).includes(n(f.anuncio)));
       const porId = !!f.anuncioIds && !!c.anuncioId && f.anuncioIds.has(c.anuncioId);

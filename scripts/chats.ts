@@ -12,6 +12,8 @@
  *   npm run chats -- --ayer --sin-respuesta
  *   npm run chats -- --desde 2026-10-18 --hasta 2026-10-20 --buscar "precio"          (solo las que contienen ese texto; se repite)
  *   npm run chats -- --ayer --excluir "lo que digas importa" --excluir "0391"          (quita las que lo contienen; se repite)
+ *   npm run chats -- --ayer --sin-difusion                    (solo las que empezó la persona: fuera difusiones y chats que abrió la clínica)
+ *   npm run chats -- --ayer --contar                          (solo los números, sin el texto)
  *   npm run chats -- --ayer --max 100                         (por defecto TODAS)
  *
  * En la VPS los lee del disco; en otro equipo los pide a la VPS con la clave del panel
@@ -42,7 +44,7 @@ async function main() {
   const resultado = arg("--resultado") as "cita" | "venta" | "sin-cita" | undefined;
   const max = Number(arg("--max")) || undefined;
   const todos = (n: string) => process.argv.flatMap((x, i, t) => (t[i - 1] === n ? [x] : []));
-  const filtro = { texto: arg("--anuncio"), asesora: arg("--asesora"), resultado, sinRespuesta: tiene("--sin-respuesta"), buscar: todos("--buscar"), excluir: todos("--excluir") };
+  const filtro = { texto: arg("--anuncio"), asesora: arg("--asesora"), resultado, sinRespuesta: tiene("--sin-respuesta"), escribioPrimero: tiene("--sin-difusion"), buscar: todos("--buscar"), excluir: todos("--excluir") };
 
   let r = tiene("--remoto") ? null : conversacionesLegibles({ desde, hasta, filtro, max });
   let deVps = false;
@@ -62,6 +64,7 @@ async function main() {
     if (filtro.asesora) q.set("asesora", filtro.asesora);
     if (resultado) q.set("resultado", resultado);
     if (filtro.sinRespuesta) q.set("sin-respuesta", "1");
+    if (filtro.escribioPrimero) q.set("sin-difusion", "1");
     const res = await fetch(`${origen}/api/chats?${q}`, { headers: { authorization: `Basic ${Buffer.from(`${usuario}:${clave}`).toString("base64")}` } });
     if (res.status === 401) throw new Error("La VPS no aceptó el usuario y clave del panel (VPS_PANEL_USUARIO / VPS_PANEL_CLAVE).");
     if (!res.ok) throw new Error(`La VPS respondió ${res.status}.`);
@@ -73,9 +76,9 @@ async function main() {
     r = j;
     deVps = true;
   }
-  console.log(`Conversaciones de WhatsApp · ${desde === hasta ? desde : `${desde} → ${hasta}`}${filtro.texto ? ` · anuncio «${filtro.texto}»` : ""}${filtro.asesora ? ` · asesora ${filtro.asesora}` : ""}${resultado ? ` · resultado ${resultado}` : ""}${filtro.sinRespuesta ? " · sin respuesta" : ""}${filtro.buscar.length ? ` · con «${filtro.buscar.join("» y «")}»` : ""}${filtro.excluir.length ? ` · sin «${filtro.excluir.join("», «")}»` : ""}${deVps ? " (de la VPS)" : ""}`);
+  console.log(`Conversaciones de WhatsApp · ${desde === hasta ? desde : `${desde} → ${hasta}`}${filtro.texto ? ` · anuncio «${filtro.texto}»` : ""}${filtro.asesora ? ` · asesora ${filtro.asesora}` : ""}${resultado ? ` · resultado ${resultado}` : ""}${filtro.sinRespuesta ? " · sin respuesta" : ""}${filtro.escribioPrimero ? " · sin difusiones (las empezó la persona)" : ""}${filtro.buscar.length ? ` · con «${filtro.buscar.join("» y «")}»` : ""}${filtro.excluir.length ? ` · sin «${filtro.excluir.join("», «")}»` : ""}${deVps ? " (de la VPS)" : ""}`);
   console.log(`${r.total} conversaciones${r.mostradas < r.total ? ` · se muestran las últimas ${r.mostradas}` : ""}. Fuente: webhook de Kommo (texto completo guardado desde el 15-oct-2026).\n`);
-  console.log(r.texto || "(ninguna con ese filtro)");
+  if (!tiene("--contar")) console.log(r.texto || "(ninguna con ese filtro)");
 }
 
 main().catch((err) => {

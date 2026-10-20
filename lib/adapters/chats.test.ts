@@ -84,6 +84,10 @@ describe("Chats · conversaciones legibles (para «revisa las de ayer» o «las 
     expect(filtrarConversaciones(lista, { excluir: ["quiero información"] }).map((c) => c.huella)).toEqual(["h1"]);
     expect(filtrarConversaciones(lista, { excluir: ["informacion", "criolipolisis"] })).toHaveLength(0);
   });
+  test("sin difusiones: solo las conversaciones que empezó la persona (las que abrió la clínica o el bot quedan fuera)", () => {
+    const conDifusion = [...lista, { ...lista[0]!, huella: "dif", mensajes: [{ t: T0, quien: "Bot", texto: "¿Y si este mes llegas a tu peso ideal?" }] }];
+    expect(filtrarConversaciones(conDifusion, { escribioPrimero: true }).map((c) => c.huella).sort()).toEqual(["h1", "h2"]);
+  });
   test("filtros: por anuncio o campaña (sin importar tildes ni mayúsculas), por asesora, por resultado y sin respuesta", () => {
     expect(filtrarConversaciones(lista, { anuncio: "crio" }).map((c) => c.huella)).toEqual(["h1"]);
     expect(filtrarConversaciones(lista, { asesora: "laura" }).map((c) => c.huella)).toEqual(["h1"]);

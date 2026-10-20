@@ -26,6 +26,7 @@ export function GET(req: Request) {
       texto: q.get("anuncio") || undefined,
       buscar: q.getAll("buscar").filter(Boolean),
       excluir: q.getAll("excluir").filter(Boolean),
+      escribioPrimero: q.get("sin-difusion") === "1",
       asesora: q.get("asesora") || undefined,
       resultado: resultado === "cita" || resultado === "venta" || resultado === "sin-cita" ? resultado : undefined,
       sinRespuesta: q.get("sin-respuesta") === "1",

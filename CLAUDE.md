@@ -49,7 +49,8 @@ algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar 
   (`--hoy`, `--fecha AAAA-MM-DD`, `--anuncio "<nombre o el mensaje predeterminado pegado>"`, `--asesora "…"`,
   `--resultado cita|venta|sin-cita`, `--sin-respuesta`, `--buscar "texto"`, `--excluir "texto"`; buscar y
   excluir se repiten y miran TODAS las conversaciones del rango). Sin tope: trae todas. Para sacar
-  difusiones: `--excluir "<frase de la difusión>"`. Lees el texto y das el análisis: qué preguntan,
+  difusiones y chats que abrió la clínica: `--sin-difusion` (solo los que empezó la persona). Solo el número:
+  `--contar`. Para los leads de PAUTA el número oficial sigue siendo `npm run hoy` (columna Resultados de Meta). Lees el texto y das el análisis: qué preguntan,
   objeciones, cómo responde cada asesora, qué funcionó en las que agendaron y qué falló en las que no.
   Hay texto desde el 15-oct-2026 (hasta el 20-oct se guardó sin teléfonos; desde entonces, completo).
 - «¿De qué anuncio vienen las conversaciones de Kommo?» / «¿qué anuncio trae citas y ventas?» / «¿cuánto
