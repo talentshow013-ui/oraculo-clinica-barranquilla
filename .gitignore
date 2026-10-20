@@ -56,3 +56,6 @@ datos/chats/
 # llaves OAuth de Google (Drive): fuera del repositorio
 client_secret_*.json
 datos/drive-oauth.json
+
+# anuncios capturados de los referentes del mercado (Biblioteca de Meta)
+datos/referentes/
