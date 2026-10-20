@@ -10,8 +10,7 @@ import { cargarMensajes } from "./mensajes.archivo";
 import type { AnuncioMensaje } from "./meta.mensajes";
 import { cargarConversaciones, guardarConversaciones } from "./conversaciones.archivo";
 import { aObjeto, aplicarMensaje, aplicarTalk, atribuir, cuentaDelAviso, extraerMensajes, extraerTalks, huella, purgar } from "./kommo.conversaciones";
-import { guardarChats, purgarChats, redactar } from "./chats";
-import { aFechaBogota } from "@/lib/format/fechas";
+import { guardarChats } from "./chats";
 
 /** Compara el secreto de la dirección con el configurado, sin dar pistas por el tiempo. */
 export function secretoValido(recibido: string, esperado: string | undefined): boolean {
@@ -33,7 +32,7 @@ export interface OpcionesAviso {
   anuncios: ReadonlyArray<AnuncioMensaje>;
   /** Solo dice qué entendió; no guarda nada. */
   prueba?: boolean;
-  /** Guardar también el TEXTO (cifrado, sin teléfonos, 30 días) para leer las conversaciones. Sin esto no se guarda texto. */
+  /** Guardar también el TEXTO completo (cifrado) para leer las conversaciones. Sin esto no se guarda texto. */
   chats?: { dir: string; llave: string };
 }
 
@@ -122,8 +121,7 @@ export function procesarAviso(o: OpcionesAviso): Promise<RespuestaAviso> {
     }
     for (const t of talks) estado = aplicarTalk(estado, t, o.secreto);
     if (o.chats && mensajes.length) {
-      guardarChats(o.chats.dir, o.chats.llave, mensajes.map((m) => ({ t: m.creadoEn, conv: huella(o.secreto, m.conversacion), dir: m.direccion, texto: redactar(m.texto), tipo: m.tipo ?? null, asesoraId: m.asesoraId, bot: !!m.bot })));
-      purgarChats(o.chats.dir, aFechaBogota(ahora), 30);
+      guardarChats(o.chats.dir, o.chats.llave, mensajes.map((m) => ({ t: m.creadoEn, conv: huella(o.secreto, m.conversacion), dir: m.direccion, texto: m.texto, tipo: m.tipo ?? null, asesoraId: m.asesoraId, bot: !!m.bot })));
     }
     if (talks.length) r.talks = talks.length;
     estado = purgar(estado, Math.floor(ahora.getTime() / 1000), 90);

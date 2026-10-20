@@ -47,9 +47,11 @@ algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar 
 - «Revisa las conversaciones de ayer, ¿qué tal les fue?» / «revisa las que vienen de este anuncio / de
   este mensaje» / «las que no terminaron en cita» / «cómo atiende Laura» → `npm run chats -- --ayer`
   (`--hoy`, `--fecha AAAA-MM-DD`, `--anuncio "<nombre o el mensaje predeterminado pegado>"`, `--asesora "…"`,
-  `--resultado cita|venta|sin-cita`, `--sin-respuesta`, `--max 100`). Lees el texto y das el análisis: qué
-  preguntan, objeciones, cómo responde cada asesora, qué funcionó en las que agendaron y qué falló en las
-  que no. Solo hay texto desde el 15-oct-2026 y de los últimos 30 días.
+  `--resultado cita|venta|sin-cita`, `--sin-respuesta`, `--buscar "texto"`, `--excluir "texto"`; buscar y
+  excluir se repiten y miran TODAS las conversaciones del rango). Sin tope: trae todas. Para sacar
+  difusiones: `--excluir "<frase de la difusión>"`. Lees el texto y das el análisis: qué preguntan,
+  objeciones, cómo responde cada asesora, qué funcionó en las que agendaron y qué falló en las que no.
+  Hay texto desde el 15-oct-2026 (hasta el 20-oct se guardó sin teléfonos; desde entonces, completo).
 - «¿De qué anuncio vienen las conversaciones de Kommo?» / «¿qué anuncio trae citas y ventas?» / «¿cuánto
   tarda cada asesora en responder?» → `npm run conversaciones` (`-- --hoy`, `-- --ayer`, `-- --dias 30`). Da por
   anuncio: conversaciones → citas → asistieron → ventas, gasto y costo por conversación, cita y venta; y la
@@ -94,7 +96,7 @@ límites o privacidad. Sin jerga. Si algo no se puede, una línea y la alternati
 - `npm run hoy` — gasto y resultados de hoy y ayer, en vivo, por cuenta y campaña.
 - `npm run radios` — el «kilometraje» y la segmentación de cada conjunto activo (km, quiénes, edad, género, Advantage+), en vivo. Úsalo ANTES y DESPUÉS de cambiar un radio: nunca digas «ya quedó» sin mostrar esta salida.
 - `npm run mensajes` — el mensaje predeterminado de WhatsApp de cada anuncio activo (lo que la persona envía con un toque y la asesora ve primero en Kommo). `npm run mensajes -- --buscar "texto"` dice de qué anuncio viene un mensaje que llegó a Kommo; `--archivo` lo guarda para compartir.
-- `npm run chats -- --ayer` — el texto de las conversaciones de WhatsApp (cifrado en la VPS, 30 días, sin teléfonos), con su anuncio, asesora y resultado en Kommo, para leerlas y analizarlas. Filtros: `--anuncio`, `--asesora`, `--resultado`, `--sin-respuesta`.
+- `npm run chats -- --ayer` — el texto completo de las conversaciones de WhatsApp (cifrado en la VPS, sin tope ni borrado), con su anuncio, asesora y resultado en Kommo. Filtros: `--buscar`, `--excluir`, `--anuncio`, `--asesora`, `--resultado`, `--sin-respuesta`.
 - `npm run conversaciones` — conversaciones de WhatsApp que llegaron a Kommo: de qué anuncio vino cada una, en qué terminó (cita, asistió, venta), cuánto costó y cuánto tardó la primera respuesta, por asesora (webhook de Kommo en la VPS; sin texto de mensajes).
 - `npm run drive -- listar | buscar "texto" | leer <id|enlace>` — Google Drive de solo lectura (guiones, precios, protocolos). Se conecta una vez con `npm run drive:conectar`. Nunca leas ni repitas datos de pacientes que aparezcan en un archivo.
 - `npm run radar:referencias` — rehace el radar de mercado con las ciudades de referencia (Medellín, Santa Marta, Cartagena, Miami, Los Ángeles, Houston, Nueva York; config/radar-referencias.ts). Barranquilla no entra.

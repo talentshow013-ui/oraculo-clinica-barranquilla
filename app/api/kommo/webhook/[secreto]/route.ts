@@ -2,7 +2,7 @@
  * Dirección que recibe los avisos de Kommo (webhook): cada mensaje de WhatsApp que entra o sale.
  * https://oraculo.vivantemedicinaestetica.com/api/kommo/webhook/<KOMMO_WEBHOOK_SECRETO>
  * De cada mensaje se saca el anuncio y la hora (lib/adapters/kommo.webhook.ts); el texto se guarda solo si
- * hay CHATS_LLAVE: cifrado, sin teléfonos ni correos, 30 días (lib/adapters/chats.ts).
+ * hay CHATS_LLAVE: completo y cifrado (lib/adapters/chats.ts).
  * Kommo exige respuesta 2xx en menos de 2 s; un error nuestro devuelve 500 para que reintente.
  * Esta ruta no está detrás del usuario y clave del panel (Kommo no puede ponerlos): la protege el
  * secreto de la dirección. Sin KOMMO_WEBHOOK_SECRETO configurado responde 404 y no hace nada.
@@ -36,7 +36,7 @@ export async function POST(req: Request, { params }: Contexto) {
       subdominio: process.env.KOMMO_SUBDOMINIO ?? null,
       anuncios: anunciosConMensaje(),
       prueba: req.headers.get("x-oraculo-prueba") === "1",
-      /* el texto (cifrado, sin teléfonos, 30 días) solo si hay CHATS_LLAVE: así se pueden leer y analizar las conversaciones */
+      /* el texto completo (cifrado) solo si hay CHATS_LLAVE: así se pueden leer y analizar las conversaciones */
       chats: /^[0-9a-f]{64}$/i.test(process.env.CHATS_LLAVE ?? "") ? { dir: join(dirname(RUTA_CONVERSACIONES), "chats"), llave: process.env.CHATS_LLAVE! } : undefined,
     });
     return Response.json({ ok: true, ...r });

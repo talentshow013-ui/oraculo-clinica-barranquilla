@@ -62,13 +62,12 @@ async function main() {
 
   if (r.porAnuncio.length) {
     console.log("\nPor anuncio (primero los que traen ventas y citas):");
-    for (const [i, a] of r.porAnuncio.slice(0, 15).entries()) {
+    for (const [i, a] of r.porAnuncio.entries()) {
       const marca = a.certeza === "exacto" ? "" : a.certeza === "activo" ? " [el activo entre anuncios con el mismo mensaje]" : a.certeza === "parecido" ? " [mensaje parecido]" : " [solo la campaña]";
       const costos = a.gasto == null ? "" : ` · gasto ${cop(a.gasto)} → ${cop(a.costoConversacion)} por conversación${a.citas ? ` · ${cop(a.costoCita)} por cita` : ""}${a.ventas ? ` · ${cop(a.costoVenta)} por venta` : ""}`;
       console.log(`  ${i + 1}. ${a.cuenta} · ${a.campana}${a.anuncio ? ` · ${a.anuncio}` : ""}${marca}`);
       console.log(`     ${a.conversaciones} conv. → ${a.citas} citas → ${a.asistieron} asistieron → ${a.ventas} ventas · respuesta mediana ${duracion(a.medianaSeg)}${costos}`);
     }
-    if (r.porAnuncio.length > 15) console.log(`  … y ${r.porAnuncio.length - 15} más.`);
   }
 
   const at = r.atencion;

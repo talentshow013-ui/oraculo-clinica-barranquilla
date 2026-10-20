@@ -172,6 +172,10 @@ export function unirConversaciones(registros: ReadonlyArray<RegistroChat>, estad
 }
 
 export interface FiltroChats {
+  /** Solo las conversaciones donde algún mensaje contiene TODOS estos textos (frase o número). */
+  buscar?: ReadonlyArray<string>;
+  /** Fuera las conversaciones donde algún mensaje contiene alguno de estos textos (p. ej. difusiones). */
+  excluir?: ReadonlyArray<string>;
   /** Parte del nombre del anuncio, la campaña o la cuenta. */
   anuncio?: string;
   /** Ids de anuncios (p. ej. los que tienen un mensaje predeterminado que alguien pegó). */
@@ -186,7 +190,10 @@ export interface FiltroChats {
 export function filtrarConversaciones(lista: ReadonlyArray<ConversacionLegible>, f: FiltroChats): ConversacionLegible[] {
   const n = (t: string | null | undefined) => normalizarMensaje(t ?? "");
   const conCita = (r: string | null) => r === "cita agendada" || r === "asistió" || r === "venta";
+  const enTexto = (c: ConversacionLegible, q: string) => c.mensajes.some((m) => n(m.texto).includes(n(q)));
   return lista.filter((c) => {
+    if (f.buscar?.length && !f.buscar.every((q) => enTexto(c, q))) return false;
+    if (f.excluir?.length && f.excluir.some((q) => enTexto(c, q))) return false;
     if (f.anuncio || f.anuncioIds) {
       const porNombre = !!f.anuncio && [c.anuncio, c.campana, c.cuenta].some((x) => n(x).includes(n(f.anuncio)));
       const porId = !!f.anuncioIds && !!c.anuncioId && f.anuncioIds.has(c.anuncioId);

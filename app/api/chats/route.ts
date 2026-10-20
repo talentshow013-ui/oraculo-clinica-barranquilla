@@ -1,7 +1,8 @@
 /**
  * El texto de las conversaciones de WhatsApp para `npm run chats` en otros equipos (el PC de la clínica):
  * vive solo en la VPS. Detrás del usuario y clave del panel. Sin teléfonos ni nombres de contacto.
- *   GET /api/chats?desde=&hasta=&anuncio=&asesora=&resultado=cita|venta|sin-cita&sin-respuesta=1&max=40
+ *   GET /api/chats?desde=&hasta=&buscar=&excluir=&anuncio=&asesora=&resultado=cita|venta|sin-cita&sin-respuesta=1[&max=N]
+ *   buscar y excluir se pueden repetir. Sin max: todas.
  */
 import { conversacionesLegibles } from "@/lib/conversaciones";
 import { hoyBogota } from "@/lib/format/fechas";
@@ -20,9 +21,11 @@ export function GET(req: Request) {
   const r = conversacionesLegibles({
     desde,
     hasta,
-    max: Math.min(500, Math.max(1, Number(q.get("max")) || 40)),
+    max: Number(q.get("max")) || undefined,
     filtro: {
       texto: q.get("anuncio") || undefined,
+      buscar: q.getAll("buscar").filter(Boolean),
+      excluir: q.getAll("excluir").filter(Boolean),
       asesora: q.get("asesora") || undefined,
       resultado: resultado === "cita" || resultado === "venta" || resultado === "sin-cita" ? resultado : undefined,
       sinRespuesta: q.get("sin-respuesta") === "1",

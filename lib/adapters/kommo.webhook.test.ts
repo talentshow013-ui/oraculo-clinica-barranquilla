@@ -97,7 +97,7 @@ describe("Kommo webhook · conversación cerrada (talk[update])", () => {
 
 describe("Kommo webhook · guardar el texto para leer las conversaciones (con CHATS_LLAVE)", () => {
   const LLAVE = "c".repeat(64);
-  test("el texto queda cifrado, sin teléfonos y sin el nombre del contacto; se lee con la llave", async () => {
+  test("el texto queda cifrado y completo; se lee con la llave", async () => {
     const r = ruta();
     const dirChats = join(r, "..", "chats");
     const cuerpo = entrante("77", "Hola, quiero Criolipólisis, mi cel 300 123 4567");
@@ -106,7 +106,8 @@ describe("Kommo webhook · guardar el texto para leer las conversaciones (con CH
     const crudo = readdirSync(dirChats).map((f) => readFileSync(join(dirChats, f), "utf8")).join("");
     expect(crudo).not.toContain("Criolipólisis");
     const leidos = leerChats(dirChats, LLAVE, "2026-01-01", "2026-12-31");
-    expect(leidos.map((x) => x.texto)).toEqual(["Hola, quiero Criolipólisis, mi cel [número]", "Con gusto"]);
+    // sin recortes: el texto se guarda tal cual llegó (cifrado)
+    expect(leidos.map((x) => x.texto)).toEqual(["Hola, quiero Criolipólisis, mi cel 300 123 4567", "Con gusto"]);
     expect(leidos[1]).toMatchObject({ dir: "saliente", asesoraId: "55", bot: false });
     expect(JSON.stringify(leidos)).not.toContain("Nombre De Paciente");
     expect(JSON.stringify(leidos)).not.toContain('"77"');

@@ -10,7 +10,9 @@
  *   npm run chats -- --ayer --asesora "Laura"
  *   npm run chats -- --ayer --resultado cita | venta | sin-cita
  *   npm run chats -- --ayer --sin-respuesta
- *   npm run chats -- --ayer --max 100                         (por defecto las últimas 40)
+ *   npm run chats -- --desde 2026-10-18 --hasta 2026-10-20 --buscar "precio"          (solo las que contienen ese texto; se repite)
+ *   npm run chats -- --ayer --excluir "lo que digas importa" --excluir "0391"          (quita las que lo contienen; se repite)
+ *   npm run chats -- --ayer --max 100                         (por defecto TODAS)
  *
  * En la VPS los lee del disco; en otro equipo los pide a la VPS con la clave del panel
  * (VPS_PANEL_USUARIO / VPS_PANEL_CLAVE). Para analizar: resume y saca patrones; no copies a
@@ -38,8 +40,9 @@ async function main() {
   if (arg("--hasta")) hasta = arg("--hasta")!;
   if (arg("--dias")) desde = sumarDias(hoy, -(Number(arg("--dias")) || 1) + 1);
   const resultado = arg("--resultado") as "cita" | "venta" | "sin-cita" | undefined;
-  const max = Number(arg("--max")) || 40;
-  const filtro = { texto: arg("--anuncio"), asesora: arg("--asesora"), resultado, sinRespuesta: tiene("--sin-respuesta") };
+  const max = Number(arg("--max")) || undefined;
+  const todos = (n: string) => process.argv.flatMap((x, i, t) => (t[i - 1] === n ? [x] : []));
+  const filtro = { texto: arg("--anuncio"), asesora: arg("--asesora"), resultado, sinRespuesta: tiene("--sin-respuesta"), buscar: todos("--buscar"), excluir: todos("--excluir") };
 
   let r = tiene("--remoto") ? null : conversacionesLegibles({ desde, hasta, filtro, max });
   let deVps = false;
@@ -51,7 +54,10 @@ async function main() {
     try {
       if (e.ORACULO_URL_PANEL) origen = new URL(e.ORACULO_URL_PANEL).origin;
     } catch {}
-    const q = new URLSearchParams({ desde, hasta, max: String(max) });
+    const q = new URLSearchParams({ desde, hasta });
+    if (max) q.set("max", String(max));
+    for (const b of filtro.buscar) q.append("buscar", b);
+    for (const x of filtro.excluir) q.append("excluir", x);
     if (filtro.texto) q.set("anuncio", filtro.texto);
     if (filtro.asesora) q.set("asesora", filtro.asesora);
     if (resultado) q.set("resultado", resultado);
@@ -67,8 +73,8 @@ async function main() {
     r = j;
     deVps = true;
   }
-  console.log(`Conversaciones de WhatsApp · ${desde === hasta ? desde : `${desde} → ${hasta}`}${filtro.texto ? ` · anuncio «${filtro.texto}»` : ""}${filtro.asesora ? ` · asesora ${filtro.asesora}` : ""}${resultado ? ` · resultado ${resultado}` : ""}${filtro.sinRespuesta ? " · sin respuesta" : ""}${deVps ? " (de la VPS)" : ""}`);
-  console.log(`${r.total} conversaciones${r.mostradas < r.total ? ` · se muestran las últimas ${r.mostradas} (usa --max para más)` : ""}. Fuente: webhook de Kommo (texto guardado desde el 15-oct-2026, 30 días, sin teléfonos).\n`);
+  console.log(`Conversaciones de WhatsApp · ${desde === hasta ? desde : `${desde} → ${hasta}`}${filtro.texto ? ` · anuncio «${filtro.texto}»` : ""}${filtro.asesora ? ` · asesora ${filtro.asesora}` : ""}${resultado ? ` · resultado ${resultado}` : ""}${filtro.sinRespuesta ? " · sin respuesta" : ""}${filtro.buscar.length ? ` · con «${filtro.buscar.join("» y «")}»` : ""}${filtro.excluir.length ? ` · sin «${filtro.excluir.join("», «")}»` : ""}${deVps ? " (de la VPS)" : ""}`);
+  console.log(`${r.total} conversaciones${r.mostradas < r.total ? ` · se muestran las últimas ${r.mostradas}` : ""}. Fuente: webhook de Kommo (texto completo guardado desde el 15-oct-2026).\n`);
   console.log(r.texto || "(ninguna con ese filtro)");
 }
 

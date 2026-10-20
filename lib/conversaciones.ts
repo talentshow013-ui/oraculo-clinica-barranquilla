@@ -108,7 +108,7 @@ export function conversacionesLegibles(o: { desde: string; hasta: string; filtro
     if (ids.size) f.anuncioIds = ids;
   }
   const filtradas = filtrarConversaciones(todas, f);
-  const max = o.max ?? 40;
-  const mostradas = filtradas.slice(-max);
+  /* sin tope: todas, salvo que pidan un máximo */
+  const mostradas = o.max ? filtradas.slice(-o.max) : filtradas;
   return { total: filtradas.length, mostradas: mostradas.length, texto: formatearConversaciones(mostradas) };
 }

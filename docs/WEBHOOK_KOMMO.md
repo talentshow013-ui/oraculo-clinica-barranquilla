@@ -42,17 +42,15 @@ Lo activó el equipo de ITERIA por API con la orden expresa del responsable del 
    (debe listar campos como `message[add][0][text]`).
 
 ## El texto de las conversaciones (desde el 15-oct-2026, autorizado por el responsable del proyecto)
-Para poder decir «revisa las conversaciones de ayer» o «las que vienen de este anuncio», el texto se
-guarda (`lib/adapters/chats.ts`), solo si hay `CHATS_LLAVE` en la configuración de la VPS:
+Se guarda el texto COMPLETO de cada mensaje (`lib/adapters/chats.ts`), solo si hay `CHATS_LLAVE` en la VPS:
 - `datos/chats/AAAA-MM-DD.chat`, una línea cifrada (AES-256-GCM) por mensaje, archivos modo 600, fuera de git.
-- Antes de guardar se quitan teléfonos, correos y números de documento (`[número]`, `[correo]`). Los
-  precios y horas se quedan. Lo que la persona escriba de sí misma (su nombre, su caso) sí queda en el
-  texto: por eso solo vive cifrado en la VPS y se borra a los 30 días.
-- No se guarda el nombre ni el teléfono del contacto ni el id de Kommo: la conversación va por su huella.
-- Leer: `npm run chats -- --ayer` (filtros `--anuncio`, `--asesora`, `--resultado`, `--sin-respuesta`). En
-  otro equipo pide el texto a la VPS (`GET /api/chats`, detrás del usuario y clave del panel).
-- Apagar: quitar `CHATS_LLAVE` y reiniciar `oraculo-panel` (deja de guardar); borrar `datos/chats/`.
-  Si la llave se pierde, lo guardado no se puede leer.
+- Sin recortes ni borrado automático (pedido del usuario el 20-oct: «sin límites»). Del 15 al 20-oct se guardó
+  con teléfonos y correos reemplazados por [número]/[correo]; desde el 20-oct va completo.
+- Leer: `npm run chats -- --ayer`, sin tope. Filtros: `--buscar`, `--excluir` (se repiten, miran todo el rango),
+  `--anuncio`, `--asesora`, `--resultado`, `--sin-respuesta`. En otro equipo pide a la VPS (`GET /api/chats`,
+  detrás del usuario y clave del panel).
+- Apagar: quitar `CHATS_LLAVE` y reiniciar `oraculo-panel`; borrar `datos/chats/`. Si la llave se pierde, lo
+  guardado no se puede leer.
 
 ## Qué se hace con eso (desde el 15-oct-2026)
 - **Cruce con el embudo** (`npm run conversaciones:cruzar`, cada hora en `oraculo-vivo`): lee los leads de Kommo

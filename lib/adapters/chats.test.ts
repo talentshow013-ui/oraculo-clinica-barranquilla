@@ -79,6 +79,11 @@ describe("Chats · conversaciones legibles (para «revisa las de ayer» o «las 
     expect(c).toMatchObject({ anuncio: "Crio_Video", campana: "Crio_Frio", asesora: "Laura", resultado: "cita agendada", primeraRespuestaSeg: 240 });
     expect(c.mensajes.map((m) => m.quien)).toEqual(["Paciente", "Bot", "Laura"]);
   });
+  test("buscar y excluir por texto en TODAS las conversaciones (frase o número, sin importar tildes ni mayúsculas)", () => {
+    expect(filtrarConversaciones(lista, { buscar: ["PRECIOS"] }).map((c) => c.huella)).toEqual(["h1"]);
+    expect(filtrarConversaciones(lista, { excluir: ["quiero información"] }).map((c) => c.huella)).toEqual(["h1"]);
+    expect(filtrarConversaciones(lista, { excluir: ["informacion", "criolipolisis"] })).toHaveLength(0);
+  });
   test("filtros: por anuncio o campaña (sin importar tildes ni mayúsculas), por asesora, por resultado y sin respuesta", () => {
     expect(filtrarConversaciones(lista, { anuncio: "crio" }).map((c) => c.huella)).toEqual(["h1"]);
     expect(filtrarConversaciones(lista, { asesora: "laura" }).map((c) => c.huella)).toEqual(["h1"]);
