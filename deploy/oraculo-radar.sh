@@ -9,6 +9,7 @@ mkdir -p reportes
 {
   echo "== radar $(TZ=America/Bogota date '+%F %H:%M') =="
   npm run -s radar:referencias && echo "radar: al día" || echo "radar: FALLÓ (ver arriba)"
+  npm run -s organico:referentes >/dev/null && echo "orgánico de referentes: al día" || echo "orgánico de referentes: FALLÓ"
   # las imágenes nuevas de public/radar se sirven al reiniciar el panel
   sudo -n systemctl restart oraculo-panel && echo "panel: reiniciado"
 } >>reportes/radar.log 2>&1
