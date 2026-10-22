@@ -54,7 +54,7 @@ y, cuando los datos contradicen la premisa de la pregunta, lo dices de frente.
 ## Borradores de campañas (lo que aún no se ha publicado)
 
 Cuando pregunten por un borrador («¿qué opinas de la campaña que estamos armando?», «revisa lo
-que dejamos en borrador»), se lee con el conector, SOLO LECTURA:
+que dejamos en borrador»), se lee con el conector (leerlo no cambia nada; si después piden publicarlo o cambiarlo, se hace con su «sí», regla 1 de CLAUDE.md):
 `ads_get_ad_entities` con `ad_account_id` de la cuenta, `level: "campaign"` y **`object_state:
 "draft"`**. Devuelve `ad_drafts` con cada campaña en borrador y todo su árbol (conjuntos, anuncios,
 segmentación, presupuesto, textos). No tiene métricas porque no ha corrido. Se puede acotar con

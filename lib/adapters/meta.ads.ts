@@ -223,6 +223,20 @@ export function urlInsights(cuentaId: string, nivel: "campaign" | "adset" | "ad"
   return `${API}/${cuentaId}/insights?${p.toString()}`;
 }
 
+/** Petición de un periodo ya SUMADO (sin día a día): una fila por campaña/conjunto/anuncio. Para `npm run periodo`. */
+export function urlInsightsPeriodo(cuentaId: string, nivel: "campaign" | "adset" | "ad", rango: { desde: string; hasta: string }, token: string): string {
+  const p = new URLSearchParams({
+    level: nivel,
+    time_range: JSON.stringify({ since: rango.desde, until: rango.hasta }),
+    fields: ["campaign_id", "campaign_name", "adset_id", "adset_name", "ad_id", "ad_name", "objective", "optimization_goal", "results", "spend", "impressions", "clicks", "actions"].join(","),
+    action_attribution_windows: JSON.stringify(["7d_click", "1d_view"]),
+    filtering: JSON.stringify([{ field: "spend", operator: "GREATER_THAN", value: 0 }]),
+    limit: "500",
+    access_token: token,
+  });
+  return `${API}/${cuentaId}/insights?${p.toString()}`;
+}
+
 /** Petición del estado (activo, pausado, rechazado…) de las entidades de un nivel. */
 export function urlEntidades(cuentaId: string, nivel: "campaigns" | "adsets" | "ads", token: string, despues?: string): string {
   const p = new URLSearchParams({ fields: "id,name,status,effective_status", limit: "500", access_token: token });

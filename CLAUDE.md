@@ -38,6 +38,11 @@ algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar 
 
 ## Preguntas típicas → comando (respóndelas de una, sin preguntar nada)
 - «¿Cuánto llevamos hoy / ayer?» → `npm run hoy`
+- «¿Cómo nos fue en mayo?» / «compara mayo con los últimos 31 días / con septiembre» / cualquier fecha pasada →
+  `npm run periodo -- --mes 2026-05 --vs-ultimos 31` (también `--vs-mes 2026-09`, `--desde … --hasta …`,
+  `--vs-anterior`, `--cuenta "F3"`, `--json`). Directo de la API de Meta, ya sumado, en segundos y sin límite de
+  historial (Meta guarda 37 meses). No armes consultas a mano ni uses `datos/lote.json` para fechas viejas: ese
+  archivo empieza el 15-jun-2026.
 - «¿Hoy viene lento?» → `npm run ritmo`
 - «¿Qué kilometraje tienen los conjuntos?» o después de cambiar un radio → `npm run radios`
 - Te pegan un mensaje y preguntan «¿a qué campaña / anuncio pertenece este mensaje (predeterminado)?» →
@@ -67,6 +72,15 @@ tiene permiso de leer y administrar anuncios): `curl "https://graph.facebook.com
 Así funcionan `npm run hoy`, `radios` y `mensajes`. Si lo que buscas se va a preguntar seguido,
 proponlo como comando nuevo. «No se puede» solo después de probar la API.
 
+**Para CAMBIAR (presupuestos, pausar, prender) usa primero el conector de Meta**, que actúa como la persona
+conectada. `META_ORGANICO_TOKEN` es un token de PÁGINA (de «María Vivante», app ANALITICA MARKETING): sirve
+para leer, pero Meta le rechaza cambios en campañas cuyos conjuntos usan listas de clientes subidas
+(`contactos_meta.csv`, `CONTACTOS DE TODAS WHATSAPP`…) con el error **1870090** («No se aceptaron las
+Condiciones de los públicos personalizados»): una página no puede aceptar esas condiciones. Las cuentas solo
+tienen aceptadas las de públicos del sitio web (`web_custom_audience_tos`). Si el conector también falla,
+dilo y muestra el error COMPLETO (`error_user_title`, `error_user_msg`, `fbtrace_id`): la salida es un token de
+usuario del sistema del negocio con esas condiciones aceptadas (docs/LECCIONES.md, 22-oct-2026).
+
 ## Subir videos o imágenes a Meta
 El conector NO puede tomar archivos del computador (corre en los servidores de Meta y solo acepta
 enlaces públicos): no pidas enlaces públicos ni dejes videos de la clínica abiertos en internet. Usa
@@ -95,6 +109,7 @@ límites o privacidad. Sin jerga. Si algo no se puede, una línea y la alternati
 
 ## Comandos del proyecto (skills en `.claude/skills/`)
 - `npm run hoy` — gasto y resultados de hoy y ayer, en vivo, por cuenta y campaña.
+- `npm run periodo -- --mes 2026-05 [--vs-ultimos 31 | --vs-mes 2026-09 | --vs-anterior]` — cualquier periodo de Meta (hasta 37 meses atrás) por cuenta y campaña, y comparado con otro, en segundos.
 - `npm run radios` — el «kilometraje» y la segmentación de cada conjunto activo (km, quiénes, edad, género, Advantage+), en vivo. Úsalo ANTES y DESPUÉS de cambiar un radio: nunca digas «ya quedó» sin mostrar esta salida.
 - `npm run mensajes` — el mensaje predeterminado de WhatsApp de cada anuncio activo (lo que la persona envía con un toque y la asesora ve primero en Kommo). `npm run mensajes -- --buscar "texto"` dice de qué anuncio viene un mensaje que llegó a Kommo; `--archivo` lo guarda para compartir.
 - `npm run chats -- --ayer` — el texto completo de las conversaciones de WhatsApp (cifrado en la VPS, sin tope ni borrado), con su anuncio, asesora y resultado en Kommo. Filtros: `--buscar`, `--excluir`, `--anuncio`, `--asesora`, `--resultado`, `--sin-respuesta`.

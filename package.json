@@ -13,6 +13,7 @@
     "seed": "tsx scripts/seed.ts",
     "verificar": "tsx scripts/verificar.ts",
     "hoy": "tsx scripts/hoy.ts",
+    "periodo": "tsx scripts/periodo.ts",
     "ritmo": "tsx scripts/ritmo.ts",
     "radios": "tsx scripts/radios.ts",
     "mensajes": "tsx scripts/mensajes.ts",
