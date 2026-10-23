@@ -46,8 +46,11 @@ algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar 
 - «Sube / baja el presupuesto de Google», «pausa / activa la campaña X de Google» → `npm run google -- campanas`
   y luego `npm run google -- presupuesto --campana "<nombre o id>" --diario 50000` (o `pausar` / `activar`):
   sin `--confirmar` solo muestra y valida con Google; dices el cambio, esperas el «sí» y repites con
-  `--confirmar` (aplica, comprueba y anota en `datos/experimentos.json`). Google Ads SÍ se edita: no digas
-  que solo puedes leer.
+  `--confirmar` (aplica, comprueba y anota en `datos/experimentos.json`). **Con Google Ads tienes vía libre,
+  igual que con Meta:** crear y editar campañas, grupos, anuncios, palabras clave, negativas, pujas, extensiones,
+  lo que pidan. Para eso: `npm run google -- consulta "SELECT …"` (leer cualquier cosa con GAQL) y
+  `npm run google -- mutar <servicio> '<json del :mutate>'` (valida sin aplicar; con el «sí», `--confirmar`).
+  Nunca digas que solo puedes leer Google.
 - «¿Hoy viene lento?» → `npm run ritmo`
 - «¿Qué kilometraje tienen los conjuntos?» o después de cambiar un radio → `npm run radios`
 - Te pegan un mensaje y preguntan «¿a qué campaña / anuncio pertenece este mensaje (predeterminado)?» →
