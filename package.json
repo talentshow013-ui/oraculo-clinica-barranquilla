@@ -14,6 +14,7 @@
     "verificar": "tsx scripts/verificar.ts",
     "hoy": "tsx scripts/hoy.ts",
     "periodo": "tsx scripts/periodo.ts",
+    "google": "tsx scripts/google.ts",
     "ritmo": "tsx scripts/ritmo.ts",
     "radios": "tsx scripts/radios.ts",
     "mensajes": "tsx scripts/mensajes.ts",

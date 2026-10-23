@@ -4,7 +4,8 @@
  * Se mapea AL contrato (`InsightRow` con `fuente: "google"`, `Creativo`) y se guarda en
  * `datos/googleads.json`; la fuente de archivo lo fusiona con el lote como la cuenta
  * `ga_<customer_id>`. Credenciales solo en `.env` (token de desarrollador, cliente OAuth y token de
- * actualización). Nunca se llama a `mutate`: solo consultas GAQL.
+ * actualización). Este archivo solo LEE (consultas GAQL); para EDITAR (presupuesto, pausar, activar) está
+ * `google.ads.editar.ts` y `npm run google`.
  */
 import type { Creativo, Estado, InsightRow, Nivel } from "@/lib/adapters/types";
 import { clasificarAngulo, nivelConscienciaTexto } from "@/lib/competitive/angles";

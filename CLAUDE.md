@@ -43,6 +43,11 @@ algo más fresco que eso, lo traes tú en el momento (`npm run meta:sincronizar 
   `--vs-anterior`, `--cuenta "F3"`, `--json`). Directo de la API de Meta, ya sumado, en segundos y sin límite de
   historial (Meta guarda 37 meses). No armes consultas a mano ni uses `datos/lote.json` para fechas viejas: ese
   archivo empieza el 15-jun-2026.
+- «Sube / baja el presupuesto de Google», «pausa / activa la campaña X de Google» → `npm run google -- campanas`
+  y luego `npm run google -- presupuesto --campana "<nombre o id>" --diario 50000` (o `pausar` / `activar`):
+  sin `--confirmar` solo muestra y valida con Google; dices el cambio, esperas el «sí» y repites con
+  `--confirmar` (aplica, comprueba y anota en `datos/experimentos.json`). Google Ads SÍ se edita: no digas
+  que solo puedes leer.
 - «¿Hoy viene lento?» → `npm run ritmo`
 - «¿Qué kilometraje tienen los conjuntos?» o después de cambiar un radio → `npm run radios`
 - Te pegan un mensaje y preguntan «¿a qué campaña / anuncio pertenece este mensaje (predeterminado)?» →
@@ -110,6 +115,7 @@ límites o privacidad. Sin jerga. Si algo no se puede, una línea y la alternati
 ## Comandos del proyecto (skills en `.claude/skills/`)
 - `npm run hoy` — gasto y resultados de hoy y ayer, en vivo, por cuenta y campaña.
 - `npm run periodo -- --mes 2026-05 [--vs-ultimos 31 | --vs-mes 2026-09 | --vs-anterior]` — cualquier periodo de Meta (hasta 37 meses atrás) por cuenta y campaña, y comparado con otro, en segundos.
+- `npm run google -- campanas | presupuesto --campana "…" --diario N | pausar --campana "…" | activar --campana "…" [--confirmar]` — ver y EDITAR Google Ads directo por la API (valida primero; aplica solo con `--confirmar`).
 - `npm run radios` — el «kilometraje» y la segmentación de cada conjunto activo (km, quiénes, edad, género, Advantage+), en vivo. Úsalo ANTES y DESPUÉS de cambiar un radio: nunca digas «ya quedó» sin mostrar esta salida.
 - `npm run mensajes` — el mensaje predeterminado de WhatsApp de cada anuncio activo (lo que la persona envía con un toque y la asesora ve primero en Kommo). `npm run mensajes -- --buscar "texto"` dice de qué anuncio viene un mensaje que llegó a Kommo; `--archivo` lo guarda para compartir.
 - `npm run chats -- --ayer` — el texto completo de las conversaciones de WhatsApp (cifrado en la VPS, sin tope ni borrado), con su anuncio, asesora y resultado en Kommo. Filtros: `--buscar`, `--excluir`, `--anuncio`, `--asesora`, `--resultado`, `--sin-respuesta`.
